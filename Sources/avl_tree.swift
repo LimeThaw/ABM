@@ -13,35 +13,42 @@ class AVLNode<T: Comparable> {
 	var left_child: AVLNode<T>? = nil
 	var right_child: AVLNode<T>? = nil
 
+	var root: AVLTree<T>
+
 	// Constructor
-	init(value: T) {
+	init(value: T, root: AVLTree<T>) {
 		self.value = value
+		self.root = root
+		self.parent = nil
 	}
 
 	// Inserts a value in the subtree of which the node is the root.
 	// If the length of the subtree increased, the function returns true, otherwise false.
 	func insert(value new_value: T) -> Bool {
 
-		let target_child = new_value <= self.value ? left_child : right_child
+		let target_child = ((new_value <= self.value) ? left_child : right_child)
 		if target_child == nil {
+			print("inserts ")
+			print(new_value)
 
 			// Insert new child node directly inder this one
-			if target_child === left_child {
-				left_child = AVLNode<T>(value: new_value)
+			if new_value <= self.value {
+				left_child = AVLNode<T>(value: new_value, root: root)
 				left_child!.parent = self
 			} else {
-				right_child = AVLNode<T>(value: new_value)
+				right_child = AVLNode<T>(value: new_value, root: root)
 				right_child!.parent = self
 			}
 
 			// Update balance and return as appropriate
-			balance = target_child === left_child ? balance - 1 : balance + 1;
+			balance = new_value <= self.value ? balance - 1 : balance + 1;
 			return balance == 0 ? false : true
 
 		} else {
 
 			// Instruct the next node to insert the value and update balance if needed
-			if target_child!.insert(value: new_value) {
+			var upin = target_child!.insert(value: new_value)
+			if upin {
 				balance = target_child === left_child ? balance - 1 : balance + 1;
 			}
 
@@ -58,7 +65,7 @@ class AVLNode<T: Comparable> {
 				} else { // Same reasoning as 1st case
 					double_rotate(Direction.left)
 				}
-			} else if balance == 0 {
+			} else if balance != 0 && upin {
 				return true // Subtree grew higher
 			}
 
@@ -86,6 +93,8 @@ class AVLNode<T: Comparable> {
 			} else {
 				parent!.right_child = child
 			}
+		} else {
+			root.parent_node = child
 		}
 		child!.parent = parent
 
@@ -93,7 +102,7 @@ class AVLNode<T: Comparable> {
 		if side == Direction.right {
 			child!.right_child = self
 		} else {
-			child!.right_child = self
+			child!.left_child = self
 		}
 		parent = child
 
@@ -106,6 +115,11 @@ class AVLNode<T: Comparable> {
 		if grand_child != nil {
 			grand_child!.parent = self
 		}
+
+		// Update balances
+		update_balance()
+		child!.update_balance()
+		grand_child?.update_balance()
 	}
 
 	private func double_rotate(_ side: Direction) {
@@ -135,13 +149,9 @@ class AVLNode<T: Comparable> {
 			}
 		} else {
 			child!.left_child = grand_child!.right_child
-			if child!.left_child != nil {
-				child!.left_child!.parent = child
-			}
+			child!.left_child?.parent = child
 			right_child = grand_child!.left_child
-			if right_child != nil {
-				right_child!.parent = self
-			}
+			right_child?.parent = self
 		}
 
 		// Append grandchild to parent
@@ -166,18 +176,54 @@ class AVLNode<T: Comparable> {
 			grand_child!.left_child = self
 			parent = grand_child
 		}
+
+		// Update balances
+		update_balance()
+		child!.update_balance()
+		grand_child!.update_balance()
+	}
+
+	func depth() -> Int {
+		return max(left_child?.depth() ?? 0, right_child?.depth() ?? 0) + 1
+	}
+
+	private func update_balance() {
+		balance = (right_child?.depth() ?? 0) - (left_child?.depth() ?? 0)
+	}
+
+	func to_list() -> [T] {
+		return (left_child?.to_list() ?? []) + ([value] + (right_child?.to_list() ?? []))
+	}
+
+	func print_all() {
+		print(value, terminator: "; ")
+		print("(", terminator:"")
+		left_child?.print_all()
+		print("|", terminator:"")
+		print(balance, terminator: "")
+		print("|", terminator:"")
+		right_child?.print_all()
+		print(")", terminator:"")
 	}
 }
 
 // A generic AVL-Tree.
-struct AVLTree<T: Comparable> {
-	private var parent_node: AVLNode<T>?
+class AVLTree<T: Comparable> {
+	var parent_node: AVLNode<T>?
 
-	mutating func insert(value val: T) {
+	func insert(value val: T) {
 		if parent_node == nil {
-			parent_node = AVLNode<T>(value: val)
+			parent_node = AVLNode<T>(value: val, root: self)
 		} else {
 			_ = parent_node!.insert(value: val)
 		}
+	}
+
+	func to_list() -> [T] {
+		return parent_node?.to_list() ?? []
+	}
+
+	func print() {
+		parent_node?.print_all()
 	}
 }
