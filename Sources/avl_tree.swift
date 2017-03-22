@@ -28,8 +28,6 @@ class AVLNode<T: Comparable> {
 
 		let target_child = ((new_value <= self.value) ? left_child : right_child)
 		if target_child == nil {
-			print("inserts ")
-			print(new_value)
 
 			// Insert new child node directly inder this one
 			if new_value <= self.value {
@@ -47,7 +45,7 @@ class AVLNode<T: Comparable> {
 		} else {
 
 			// Instruct the next node to insert the value and update balance if needed
-			var upin = target_child!.insert(value: new_value)
+			let upin = target_child!.insert(value: new_value)
 			if upin {
 				balance = target_child === left_child ? balance - 1 : balance + 1;
 			}
@@ -72,6 +70,41 @@ class AVLNode<T: Comparable> {
 			return false // No need to worry
 		}
 
+	}
+
+	func remove(value val: T) {
+		if value == val {
+			// Remove this node
+			if left_child != nil && right_child != nil { // No children - no worries
+				if parent?.left_child === self {
+					parent!.left_child = nil
+				} else {
+					parent!.right_child = nil
+				}
+				parent?.balance_remove()
+			}
+			//let pred = left_child?.max_node() ?? right_child?.min_node()
+			//let next_pred = pred!.parent
+		} else if val < value {
+			// Remove from left subtree
+			left_child?.remove(value: val)
+		} else {
+			// Remove from right subtree
+			right_child?.remove(value:val)
+		}
+	}
+
+	private func balance_remove() {
+		update_balance()
+		// Propagate up
+	}
+
+	func max_node() -> AVLNode<T> {
+		return right_child?.max_node() ?? self
+	}
+
+	func min_node() -> AVLNode<T> {
+		return left_child?.min_node() ?? self
 	}
 
 	// Rotates the node according to AVL procedures. Used to keep the AVL condition true.
@@ -112,9 +145,7 @@ class AVLNode<T: Comparable> {
 		} else {
 			right_child = grand_child
 		}
-		if grand_child != nil {
-			grand_child!.parent = self
-		}
+		grand_child?.parent = self
 
 		// Update balances
 		update_balance()
@@ -122,6 +153,7 @@ class AVLNode<T: Comparable> {
 		grand_child?.update_balance()
 	}
 
+	// Double rotation according to AVL procedures. Right is Left-Right, Left is Right-Left.
 	private func double_rotate(_ side: Direction) {
 		// The child to stay in place
 		let child = side == Direction.right ? left_child : right_child
@@ -183,26 +215,30 @@ class AVLNode<T: Comparable> {
 		grand_child!.update_balance()
 	}
 
+	// The depth of the subtree starting at this node
 	func depth() -> Int {
 		return max(left_child?.depth() ?? 0, right_child?.depth() ?? 0) + 1
 	}
 
+	// Updates the balance - Used in rotations
 	private func update_balance() {
 		balance = (right_child?.depth() ?? 0) - (left_child?.depth() ?? 0)
 	}
 
+	// Returns an ordered list of all elements in the tree
 	func to_list() -> [T] {
 		return (left_child?.to_list() ?? []) + ([value] + (right_child?.to_list() ?? []))
 	}
 
-	func print_all() {
+	// Returns a formatted output that is meant to demonstrate the dtructure of the tree.
+	func print_structure() {
 		print(value, terminator: "; ")
 		print("(", terminator:"")
-		left_child?.print_all()
+		left_child?.print_structure()
 		print("|", terminator:"")
 		print(balance, terminator: "")
 		print("|", terminator:"")
-		right_child?.print_all()
+		right_child?.print_structure()
 		print(")", terminator:"")
 	}
 }
@@ -224,6 +260,6 @@ class AVLTree<T: Comparable> {
 	}
 
 	func print() {
-		parent_node?.print_all()
+		parent_node?.print_structure()
 	}
 }
