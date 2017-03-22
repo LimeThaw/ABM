@@ -1,34 +1,62 @@
 // Generic node class. Simply stores a value of a chosen type.
-class Node<T> {
-	var value: T
+class Node<T: Hashable> {
+	private(set) var value: T // The value assigned to a specific node
+	private(set) var edges: AVLTree<Int, Edge<T>> // The connections to other nodes with a weight
+	// Note: For undirected edges the other node should have an edge to this one with
+	// 	     the same assigned weight
 
+	// Constructor
 	init(value: T) {
 		self.value = value
+		edges = AVLTree<Int, Edge<T>>()
+	}
+
+	// Add an edge to this node
+	func add_edge(to other: Node<T>, weight: Float = 0) {
+		let edge = Edge(to: other, weight: weight)
+		edges.insert(key: other.value.hashValue, payload: edge)
 	}
 }
 
-// Generic edge class. Connects two nodes of the same type. The edge specifies the data type the nodes need to store.
-// Additionally the edge stores a weight value of type Int.
-class Edge<T> {
-	let fst_node: Node<T>
-	let snd_node: Node<T>
-	var weight: Int
+// A simple connection to another node
+struct Edge<T: Hashable> {
+	let next: Node<T> // The other node of the edge
+	var weight: Float // The weight of the edge
 
-	init(fst_node: Node<T>, snd_node: Node<T>, weight: Int) {
-		self.fst_node = fst_node
-		self.snd_node = snd_node
+	init(to other: Node<T>, weight: Float) {
+		next = other
 		self.weight = weight
 	}
 }
 
+enum EdgeKind {
+	case DIRECTED
+	case UNDIRECTED
+}
+
 // Generic graph class. Contains a list of nodes and a list of edges connecting the nodes.
-class Graph<T> {
-	private var nodes: [Node<T>] = []
-	private var edges: [Edge<T>] = []
+class Graph<T: Hashable> {
+	private var nodes: AVLTree<Int, Node<T>> = AVLTree<Int, Node<T>>()
 
 	// Adds a new node with the given value to the graph
-	func add_node(new_node_value new_value: T) {
+	func add_node(with_value new_value: T) {
 		let new_node = Node(value: new_value)
-		nodes.append(new_node)
+		nodes.insert(key: new_node.value.hashValue, payload: new_node)
+	}
+
+	// Adds an edge with the specified weights between nodes with the specified keys.
+	// Unless requested otherwise it will be an undirected/bidirectional edge
+	func add_edge(from first: Int, to second: Int, weight: Float, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
+		let fst = nodes.search(input: first)
+		let snd = nodes.search(input:second)
+		if fst == nil || snd == nil {
+			print("!Warning: Tried to insert edge between non-existing nodes")
+			return
+		} else {
+			fst!.add_edge(to: snd!, weight: weight)
+			if kind == EdgeKind.UNDIRECTED {
+				snd!.add_edge(to: fst!, weight: weight)
+			}
+		}
 	}
 }
