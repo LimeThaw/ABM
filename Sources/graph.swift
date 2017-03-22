@@ -44,6 +44,20 @@ class Graph<T: Hashable> {
 		nodes.insert(key: new_node.value.hashValue, payload: new_node)
 	}
 
+	func add_node(_ new_node: Node<T>) {
+		nodes.insert(key: new_node.value.hashValue, payload: new_node)
+	}
+
+	// Find node with a payload
+	func find(node: T) -> Node<T>? {
+		return nodes[node.hashValue]
+	}
+
+	// Find with the node's hash value
+	func find(hash: Int) -> Node<T>? {
+		return nodes[hash]
+	}
+
 	// Adds an edge with the specified weights between nodes with the specified keys.
 	// Unless requested otherwise it will be an undirected/bidirectional edge
 	func add_edge(from first: Int, to second: Int, weight: Float, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
