@@ -6,15 +6,29 @@
 //
 //
 
+
 enum AVLTreeE<T: Comparable> {
     case Leaf
-    indirect case Node(T, AVLTreeE<T>, AVLTreeE<T>)
+    indirect case Node(T, AVLTreeE<T>, AVLTreeE<T>, Int)
+    
+    init(){
+        self = .Leaf
+    }
+    
+    func rootValue() -> T? {
+        switch self {
+        case .Leaf:
+            return nil
+        case let .Node(val, _, _, _):
+            return val
+        }
+    }
     
     func contains(val: T) -> Bool {
         switch self {
         case .Leaf:
             return false
-        case let .Node(cur, t1, t2):
+        case let .Node(cur, t1, t2, _):
             return cur == val || t1.contains(val: val) || t2.contains(val: val)
         }
     }
@@ -29,9 +43,11 @@ enum AVLTreeE<T: Comparable> {
     
     func removeSmallest() -> (T?, AVLTreeE<T>) {
         switch self {
-        case let .Node(v, l, r):
+        case let .Node(v, l, r, h):
             let next = l.removeSmallest()
-            return next.0 == nil ? (v, r) : (next.0, .Node(v, next.1, r))
+            let retTree = next.0 == nil ? r : .Node(v, next.1, r, max(r.height(), h-1))
+            let retVal = next.0 == nil ? v : next.0
+            return (retVal, retTree.balance())
         default:
             return (nil, .Leaf)
         }
@@ -39,9 +55,11 @@ enum AVLTreeE<T: Comparable> {
     
     func removeLargest() -> (T?, AVLTreeE<T>) {
         switch self {
-        case let .Node(v, l, r):
+        case let .Node(v, l, r, h):
             let next = r.removeLargest()
-            return next.0 == nil ? (v, l) : (next.0, .Node(v, l, next.1))
+            let retTree = next.0 == nil ? l : .Node(v, l, next.1, max(l.height(), h-1))
+            let retVal = next.0 == nil ? v : next.0
+            return (retVal, retTree.balance())
         default:
             return (nil, .Leaf)
         }
@@ -51,8 +69,8 @@ enum AVLTreeE<T: Comparable> {
         switch self {
         case .Leaf:
             return 0
-        case let .Node(_, t1, t2):
-            return 1 + max(t1.height(), t2.height())
+        case let .Node(_, _, _, b):
+            return b
         }
     }
     
@@ -60,33 +78,53 @@ enum AVLTreeE<T: Comparable> {
         switch self {
         case .Leaf:
             return .Center
-        case let .Node(_, t1, t2):
-            return BalanceType(arg: t1.height() - t2.height())
+        case let .Node(_, l, r, _):
+            return BalanceType(r.height()-l.height())
         }
     }
     
-    func balance() -> AVLTreeE<T> {
+    private func balance() -> AVLTreeE<T> {
+        func rotateRight() -> AVLTreeE<T> {
+            switch self {
+            case .Leaf:
+                return self
+            case let .Node(v, l, r, _):
+                switch l {
+                case let .Node(vl, ll, rl, _):
+                    let nuR = AVLTreeE<T>.Node(v, rl, r, max(rl.height(), r.height()) + 1)
+                    return .Node(vl, ll, nuR, max(ll.height(), nuR.height()) + 1)
+                default:
+                    assert(false)
+                }
+            }
+        }
+        
+        func rotateLeft() -> AVLTreeE<T> {
+            switch self {
+            case let .Node(v, l, r, _):
+                switch r {
+                case let .Node(vr, lr, rr, _):
+                    let nuL = AVLTreeE<T>.Node(v, l, lr, max(l.height(), lr.height()) + 1)
+                    return .Node(vr, nuL, rr, max(nuL.height(), rr.height()) + 1)
+                default:
+                    assert(false)
+                }
+            default:
+                return self
+            }
+        }
+        
         switch self {
         case .Leaf:
             return self
-        case let .Node(cur, t1, t2):
-            switch self.balanced() {
+        case let .Node(_, t1, t2, _):
+            switch BalanceType(t2.height() - t1.height()) {
             case .Center:
                 return self
             case .Left:
-                switch t1.balance() {
-                case let .Node(v, l, r):
-                    return .Node(v, l, .Node(cur, r, t2.balance()))
-                default:
-                    assert(false)
-                }
+                return rotateRight()
             case .Right:
-                switch t2.balance() {
-                case let .Node(v, l, r):
-                    return .Node(v, .Node(cur, t1.balance(), l), r)
-                default:
-                    assert(false)
-                }
+                return rotateLeft()
             }
         }
     }
@@ -94,9 +132,9 @@ enum AVLTreeE<T: Comparable> {
     func insert(val: T) -> AVLTreeE<T> {
         switch self {
         case .Leaf:
-            return .Node(val, .Leaf, .Leaf)
-        case let .Node(v, l, r):
-            let n = (v > val) ? AVLTreeE<T>.Node(v, l.insert(val: val), r) : AVLTreeE<T>.Node(v, l, r.insert(val:val))
+            return .Node(val, .Leaf, .Leaf, 1)
+        case let .Node(v, l, r, _):
+            let n = (v > val) ? AVLTreeE<T>.Node(v, l.insert(val: val), r, max(l.height() + 1, r.height())) : v < val ? AVLTreeE<T>.Node(v, l, r.insert(val:val), max(l.height(), r.height()+1)) : self
             return n.balance()
         }
     }
@@ -105,19 +143,27 @@ enum AVLTreeE<T: Comparable> {
         switch self {
         case .Leaf:
             return self
-        case let .Node(v, l, r):
-            let delL = l.removeLargest()
-            let delR = r.removeSmallest()
-            let res1 = AVLTreeE<T>.Node(v, l, delR.1)
-            let res2 = AVLTreeE<T>.Node(v, delL.1, r)
-            let tmp = delL.0 == nil ? delR.0 == nil ? .Leaf : res1 : res2
-            return tmp.balance()
+        case let .Node(v, l, r, _):
+            if v == val {
+                let delL = l.removeLargest()
+                let delR = r.removeSmallest()
+                let res1 = AVLTreeE<T>.Node(v, l, delR.1, max(l.height(), delR.1.height()))
+                let res2 = AVLTreeE<T>.Node(v, delL.1, r, max(delL.1.height(), r.height()))
+                let tmp = delL.0 == nil ? delR.0 == nil ? .Leaf : res1 : res2
+                return tmp.balance()
+            } else if val > v {
+                return r.delete(val: val)
+            } else {
+                return l.delete(val: val)
+            }
         }
     }
-    
+}
+
+extension AVLTreeE {
     func toList() -> [T] {
         switch self {
-        case let .Node(v,l,r):
+        case let .Node(v,l,r,_):
             let left = l.toList()
             let right = r.toList()
             return  [v] + left + right
@@ -129,7 +175,7 @@ enum AVLTreeE<T: Comparable> {
 
 private enum BalanceType {
     case Left, Center, Right
-    init(arg: Int) {
-        self = arg > 1 ? .Left : arg < -1 ? .Right : .Center
+    init(_ arg: Int) {
+        self = arg < -1 ? .Left : arg > 1 ? .Right : .Center
     }
 }

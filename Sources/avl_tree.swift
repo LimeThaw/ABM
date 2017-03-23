@@ -28,8 +28,6 @@ class AVLNode<T: Comparable> {
 
 		let target_child = ((new_value <= self.value) ? left_child : right_child)
 		if target_child == nil {
-			print("inserts ")
-			print(new_value)
 
 			// Insert new child node directly inder this one
 			if new_value <= self.value {
@@ -47,7 +45,7 @@ class AVLNode<T: Comparable> {
 		} else {
 
 			// Instruct the next node to insert the value and update balance if needed
-			var upin = target_child!.insert(value: new_value)
+			let upin = target_child!.insert(value: new_value)
 			if upin {
 				balance = target_child === left_child ? balance - 1 : balance + 1;
 			}
