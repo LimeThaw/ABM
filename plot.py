@@ -3,10 +3,9 @@ import re
 
 infile = open("out.txt", "r")
 values = infile.read()
-values = values[1:-1].split(", ")
-for val in values:
-	print val
 infile.close()
+
+values = values[1:-1].split(", ")
 values = [int(stringval) for stringval in values]
 
 plt.plot(
@@ -15,5 +14,5 @@ plt.plot(
 	'r-')
 plt.xlabel("Day")
 plt.ylabel("Crimes")
-plt.axis([0, 3650, 0, 100])
+plt.axis([0, 3650, 0, 1000])
 plt.show()
