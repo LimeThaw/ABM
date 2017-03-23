@@ -9,7 +9,7 @@ class Agent : Hashable {
 	var owns_gun: Bool = false
 
 	init() {
-		ID = Counter.get_next()
+		ID = counter.next()!
 		hashValue = ID
 	}
 
