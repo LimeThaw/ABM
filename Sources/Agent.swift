@@ -5,14 +5,15 @@ class Agent : Hashable {
 	let hashValue: Int
 
 	var happiness: Float = 0.5
+	var enthusiasm: Float = 0.5
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
 	var daily_cost: Float = 115.936986301*/
 	var connectedness: Float = 0
-	var owns_gun: Bool = false
+	var ownsGun: Bool = false
 
 	init() {
-		ID = Counter.get_next()
+		ID = Counter.getNext()
 		hashValue = ID
 	}
 
@@ -20,30 +21,27 @@ class Agent : Hashable {
 		return first.ID == second.ID
 	}
 
-	func check_crime() -> Int {
-		if happiness < 0.5 {
-		//if connectedness < 1.5 {
+	func checkCrime() -> Int {
+		//if happiness < 0.5 {
+		if connectedness * happiness < 2.5 {
+			if enthusiasm > 1 {
+				return 2
+			}
 			return 1
 		} else {
 			return 0
 		}
 	}
 
-	func execute_crime(type: Int, on other: Agent) {
+	func executeCrime(type: Int, on other: Agent) {
 		self.happiness += 0.2
 		other.happiness -= 0.2
 	}
 
-	func update_connectedness(node: Node<Agent>) {
+	func updateConnectedness(node: Node<Agent>) {
 		connectedness = 0
-		var i = 0
-		repeat {
-			let edge = node.edges.search(IndexedObject<Edge<Agent>>(value: i))
-			if edge == nil {
-				break;
-			}
-			connectedness += pow(edge!.object!.weight, 2.0)
-			i += 1
-		} while true
+		for edge in node.edges.toList() {
+			connectedness += pow(edge.object?.weight ?? 0, 2)
+		}
 	}
 }

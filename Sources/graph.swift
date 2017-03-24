@@ -52,13 +52,13 @@ class Graph<T: Hashable> {
 	private var nodes: AVLTree<IndexedObject<Node<T>>> = AVLTree<IndexedObject<Node<T>>>()
 
 	// Adds a new node with the given value to the graph
-	func add_node(with_value new_value: T) {
-		let new_node = IndexedObject<Node<T>>(from: Node(value: new_value))
-		nodes = nodes.insert(val: new_node)
+	func addNode(withValue newValue: T) {
+		let newNode = IndexedObject<Node<T>>(from: Node(value: newValue))
+		nodes = nodes.insert(val: newNode)
 	}
 
-	func add_node(_ new_node: Node<T>) {
-		nodes = nodes.insert(val: IndexedObject<Node<T>>(from: new_node))
+	func addNode(_ newNode: Node<T>) {
+		nodes = nodes.insert(val: IndexedObject<Node<T>>(from: newNode))
 	}
 
 	// Find node with a payload
@@ -73,7 +73,7 @@ class Graph<T: Hashable> {
 
 	// Adds an edge with the specified weights between nodes with the specified keys.
 	// Unless requested otherwise it will be an undirected/bidirectional edge
-	func add_edge(from first: Int, to second: Int, weight: Float, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
+	func addEdge(from first: Int, to second: Int, weight: Float, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
 		let fst = nodes.search(IndexedObject<Node<T>>(value: first))?.object
 		let snd = nodes.search(IndexedObject<Node<T>>(value: second))?.object
 		if fst === nil || snd === nil {
