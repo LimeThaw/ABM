@@ -19,14 +19,14 @@ for i in 0..<n {
 }
 
 for i in 0...3*n {
-	var fst = Int(Random.get_next()%101)
-	var snd = Int(Random.get_next()%101)
+	var fst = Int(Random.get_next()%n)
+	var snd = Int(Random.get_next()%n)
 	graph.add_edge(from: fst, to: snd, weight: Float(Random.get_next_normal(mu: 1.0)))
 }
 
 for i in 0..<n {
 	var node = graph.find(hash: i)
-	node?.value.update_connectedness(node: node!)
+	//node?.value.update_connectedness(node: node!)
 }
 
 var crime_counts: [Int] = []

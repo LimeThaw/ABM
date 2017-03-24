@@ -6,7 +6,7 @@
 //
 //
 
-import Foundation
+/*import Foundation
 
 private var start: UInt64 = 0
 private var passed: UInt64 = 0
@@ -27,3 +27,4 @@ func tec() -> Int {
     start = 0
     return Int(passed)
 }
+*/

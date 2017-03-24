@@ -38,11 +38,11 @@ class Agent : Hashable {
 		connectedness = 0
 		var i = 0
 		repeat {
-			let edge = node.edges[i]
+			let edge = node.edges.search(IndexedObject<Edge<Agent>>(value: i))
 			if edge == nil {
 				break;
 			}
-			connectedness += pow(edge!.weight, 2.0)
+			connectedness += pow(edge!.object!.weight, 2.0)
 			i += 1
 		} while true
 	}

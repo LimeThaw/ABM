@@ -1,31 +1,44 @@
 // Generic node class. Simply stores a value of a chosen type.
-class Node<T: Hashable> {
+class Node<T: Hashable>: Hashable {
 	private(set) var value: T // The value assigned to a specific node
-	private(set) var edges: AVLTree<Int, Edge<T>> // The connections to other nodes with a weight
+	private(set) var edges: AVLTree<IndexedObject<Edge<T>>> // The connections to other nodes with a weight
 	// Note: For undirected edges the other node should have an edge to this one with
 	// 	     the same assigned weight
+
+	var hashValue: Int
 
 	// Constructor
 	init(value: T) {
 		self.value = value
-		edges = AVLTree<Int, Edge<T>>()
+		edges = AVLTree<IndexedObject<Edge<T>>>()
+		hashValue = value.hashValue
 	}
 
 	// Add an edge to this node
 	func add_edge(to other: Node<T>, weight: Float = 0) {
 		let edge = Edge(to: other, weight: weight)
-		edges.insert(key: other.value.hashValue, payload: edge)
+		edges = edges.insert(val: IndexedObject<Edge<T>>(from: edge))
+	}
+
+	static func ==(_ one: Node<T>, _ two: Node<T>) -> Bool {
+		return one.value == two.value
 	}
 }
 
 // A simple connection to another node
-struct Edge<T: Hashable> {
+struct Edge<T: Hashable>: Hashable {
 	let next: Node<T> // The other node of the edge
 	var weight: Float // The weight of the edge
+
+	var hashValue: Int { return next.value.hashValue }
 
 	init(to other: Node<T>, weight: Float) {
 		next = other
 		self.weight = weight
+	}
+
+	static func ==(_ one: Edge<T>, _ two: Edge<T>) -> Bool {
+		return one.hashValue == two.hashValue && one.weight == two.weight
 	}
 }
 
@@ -36,34 +49,34 @@ enum EdgeKind {
 
 // Generic graph class. Contains a list of nodes and a list of edges connecting the nodes.
 class Graph<T: Hashable> {
-	private var nodes: AVLTree<Int, Node<T>> = AVLTree<Int, Node<T>>()
+	private var nodes: AVLTree<IndexedObject<Node<T>>> = AVLTree<IndexedObject<Node<T>>>()
 
 	// Adds a new node with the given value to the graph
 	func add_node(with_value new_value: T) {
-		let new_node = Node(value: new_value)
-		nodes.insert(key: new_node.value.hashValue, payload: new_node)
+		let new_node = IndexedObject<Node<T>>(from: Node(value: new_value))
+		nodes = nodes.insert(val: new_node)
 	}
 
 	func add_node(_ new_node: Node<T>) {
-		nodes.insert(key: new_node.value.hashValue, payload: new_node)
+		nodes = nodes.insert(val: IndexedObject<Node<T>>(from: new_node))
 	}
 
 	// Find node with a payload
 	func find(node: T) -> Node<T>? {
-		return nodes[node.hashValue]
+		return nodes.search(IndexedObject<Node<T>>(value: node.hashValue))?.object
 	}
 
 	// Find with the node's hash value
 	func find(hash: Int) -> Node<T>? {
-		return nodes[hash]
+		return nodes.search(IndexedObject<Node<T>>(value: hash))?.object
 	}
 
 	// Adds an edge with the specified weights between nodes with the specified keys.
 	// Unless requested otherwise it will be an undirected/bidirectional edge
 	func add_edge(from first: Int, to second: Int, weight: Float, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
-		let fst = nodes.search(input: first)
-		let snd = nodes.search(input:second)
-		if fst == nil || snd == nil {
+		let fst = nodes.search(IndexedObject<Node<T>>(value: first))?.object
+		let snd = nodes.search(IndexedObject<Node<T>>(value: second))?.object
+		if fst === nil || snd === nil {
 			print("!Warning: Tried to insert edge between non-existing nodes")
 			return
 		} else {

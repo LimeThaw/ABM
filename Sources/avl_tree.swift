@@ -5,18 +5,18 @@ enum Direction {
 }
 
 // A single, generic node in an AVL tree.
-class AVLNode<T: Comparable> {
+class AVLNodee<T: Comparable> {
 	var value: T
 	var balance: Int = 0
 
-	var parent: AVLNode<T>? = nil
-	var left_child: AVLNode<T>? = nil
-	var right_child: AVLNode<T>? = nil
+	var parent: AVLNodee<T>? = nil
+	var left_child: AVLNodee<T>? = nil
+	var right_child: AVLNodee<T>? = nil
 
-	var root: AVLTree<T>
+	var root: AVLTreee<T>
 
 	// Constructor
-	init(value: T, root: AVLTree<T>) {
+	init(value: T, root: AVLTreee<T>) {
 		self.value = value
 		self.root = root
 		self.parent = nil
@@ -31,10 +31,10 @@ class AVLNode<T: Comparable> {
 
 			// Insert new child node directly inder this one
 			if new_value <= self.value {
-				left_child = AVLNode<T>(value: new_value, root: root)
+				left_child = AVLNodee<T>(value: new_value, root: root)
 				left_child!.parent = self
 			} else {
-				right_child = AVLNode<T>(value: new_value, root: root)
+				right_child = AVLNodee<T>(value: new_value, root: root)
 				right_child!.parent = self
 			}
 
@@ -206,12 +206,12 @@ class AVLNode<T: Comparable> {
 }
 
 // A generic AVL-Tree.
-class AVLTree<T: Comparable> {
-	var parent_node: AVLNode<T>?
+class AVLTreee<T: Comparable> {
+	var parent_node: AVLNodee<T>?
 
 	func insert(value val: T) {
 		if parent_node == nil {
-			parent_node = AVLNode<T>(value: val, root: self)
+			parent_node = AVLNodee<T>(value: val, root: self)
 		} else {
 			_ = parent_node!.insert(value: val)
 		}
