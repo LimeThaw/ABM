@@ -20,6 +20,15 @@ class Node<T: Hashable>: Hashable {
 		edges = edges.insert(val: IndexedObject<Edge<T>>(from: edge))
 	}
 
+	// Removes the edge from this node to the given one if it exists
+	func removeEdge(to other: Node<T>) {
+		let edge = edges.search(IndexedObject<Edge<T>>(value: other.hashValue))
+		if edge != nil {
+			edges = edges.delete(val: edge!)
+		}
+	}
+
+	// Conforming to Equatable for Hashable.
 	static func ==(_ one: Node<T>, _ two: Node<T>) -> Bool {
 		return one.value == two.value
 	}
@@ -42,6 +51,7 @@ struct Edge<T: Hashable>: Hashable {
 	}
 }
 
+// What kind of edge would the Sir prefer?
 enum EdgeKind {
 	case DIRECTED
 	case UNDIRECTED
@@ -51,14 +61,38 @@ enum EdgeKind {
 class Graph<T: Hashable> {
 	private var nodes: AVLTree<IndexedObject<Node<T>>> = AVLTree<IndexedObject<Node<T>>>()
 
+	var nodeCount: Int { return nodes.toList().count }
+
 	// Adds a new node with the given value to the graph
 	func addNode(withValue newValue: T) {
 		let newNode = IndexedObject<Node<T>>(from: Node(value: newValue))
 		nodes = nodes.insert(val: newNode)
 	}
 
+	// Inserts a node into the graph
 	func addNode(_ newNode: Node<T>) {
 		nodes = nodes.insert(val: IndexedObject<Node<T>>(from: newNode))
+	}
+
+	// Removes a node from the graph, and takes care of all undirected edges to/from it.
+	// Directed edges to it are not deleted, unless there is an undirected edge in the opposite
+	// direction.
+	func removeNode(node: Node<T>) {
+		let ourNode = find(node: node.value)
+		if  ourNode == nil {
+			print("!Warning: Tried to remove node which wasn't in the graph")
+			return
+		}
+
+		for edge in ourNode!.edges.toList() {
+			edge.object?.next.removeEdge(to: ourNode!)
+		}
+
+		nodes = nodes.delete(val: IndexedObject<Node<T>>(value: node.hashValue))
+	}
+
+	func removeNode(withValue value: T) {
+		removeNode(node: Node<T>(value: value))
 	}
 
 	// Find node with a payload

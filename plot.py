@@ -5,26 +5,34 @@ infile = open("out.txt", "r")
 values = infile.read()
 infile.close()
 
-vals1 = []
-vals2 = []
+crimes1 = []
+crimes2 = []
+population = []
 target = 0
 values = values[1:-1].split(", ")
-for tup in values:
+for val in values:
 	if target == 0:
-		vals1.append(int(tup))
+		crimes1.append(int(val))
 		target = 1
 	elif target == 1:
-		vals2.append(int(tup))
+		crimes2.append(int(val))
+		target = 2
+	elif target == 2:
+		population.append(int(val))
 		target = 0
 
 plt.plot(
 	range(0, 3650),
-	vals1,
+	crimes1,
 	'r-')
 plt.plot(
-range(0, 3650),
-vals2,
-'b-')
+	range(0, 3650),
+	crimes2,
+	'b-')
+plt.plot(
+	range(0, 3650),
+	population,
+	'g-')
 plt.xlabel("Day")
 plt.ylabel("Crimes")
 plt.axis([0, 3650, 0, 100])

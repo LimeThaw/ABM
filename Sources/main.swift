@@ -39,15 +39,15 @@ for d in 0..<3650 {
 		var decision = agent?.checkCrime() ?? 0
 		if decision == 1 {
 			//print("-> Crime on day \(d) by agent \(i)")
-			agent?.executeCrime(type: 1, on: graph.find(hash: Random.getNext()%n)!.value)
+			agent?.executeCrime(type: 1, on: graph.find(hash: Random.getNext()%n)?.value, within: graph)
 			crimeCount1 += 1
 		} else if decision == 2 {
 			//print("-> Crime on day \(d) by agent \(i)")
-			agent?.executeCrime(type: 2, on: graph.find(hash: Random.getNext()%n)!.value)
+			agent?.executeCrime(type: 2, on: graph.find(hash: Random.getNext()%n)?.value, within: graph)
 			crimeCount2 += 1
 		}
 	}
-	crimeCounts += [crimeCount1, crimeCount2]
+	crimeCounts += [crimeCount1, crimeCount2, graph.nodeCount/10]
 }
 
 //print(crime_counts)

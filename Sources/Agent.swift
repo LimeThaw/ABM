@@ -33,9 +33,20 @@ class Agent : Hashable {
 		}
 	}
 
-	func executeCrime(type: Int, on other: Agent) {
-		self.happiness += 0.2
-		other.happiness -= 0.2
+	func executeCrime(type: Int, on other: Agent?, within graph: Graph<Agent>) {
+		if other != nil {
+			switch type {
+			case 1:
+				self.happiness += 0.2
+				other!.happiness -= 0.2
+			case 2:
+				graph.removeNode(withValue: other!)
+				self.happiness += 0.2
+				other!.happiness -= 0.2
+			default:
+				_ = 1 // The hackszs!
+			}
+		}
 	}
 
 	func updateConnectedness(node: Node<Agent>) {
