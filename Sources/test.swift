@@ -2,14 +2,14 @@ import Foundation
 
 func test_all() {
     
-    var tree2 = AVLTreeE<Int>.Leaf
+    var tree2 = AVLTree<Int>.Leaf
     let start2 = DispatchTime.now().uptimeNanoseconds
     for i in 0...100000 {
         for j in 0...10 {
-            tree2 = tree2.insert(val: i*j)
+            tree2 = tree2.insert(i*j)
         }
         for j in 0...7 {
-            tree2 = tree2.delete(val: i*j)
+            tree2 = tree2.delete(i*j)
         }
     }
     let end2 = DispatchTime.now().uptimeNanoseconds
@@ -17,7 +17,7 @@ func test_all() {
     print("Tierry time \(diff2)")
     
 	// AVL tree testing
-	let tree = AVLTree<Int>()
+	let tree = AVLTreee<Int>()
     let start1 = DispatchTime.now().uptimeNanoseconds
 	for i in 0...100000 {
         for j in 0...10 {
