@@ -13,21 +13,21 @@ public struct Random{
     }
 
 	// Returns a random Int
-	mutating func next() -> Int {
+	public mutating func next() -> Int {
 		current = (1103515245 * current + 12345) % 2147483647
 		return current
 	}
     
-    mutating func next() -> Bool {
+    public mutating func next() -> Bool {
         return next() % 2 == 0
     }
     
-    mutating func next(max v: Int) -> Int{
+    public mutating func next(max v: Int) -> Int{
         return next() % v
     }
 
 	// Returns a random, normal-distributed Float.
-	mutating func next_normal(mu: Double = 0, sig2: Double = 1) -> Double {
+	public mutating func next_normal(mu: Double = 0, sig2: Double = 1) -> Double {
 		let u1 = (Double(next()) / 10000.0).truncatingRemainder(dividingBy: 1.0)
 		let u2 = (Double(next()) / 10000.0).truncatingRemainder(dividingBy: 1.0)
 		let u3 = sqrt(-1*log(u1)) * cos(2*M_PI*u2) // Box-Muller transform

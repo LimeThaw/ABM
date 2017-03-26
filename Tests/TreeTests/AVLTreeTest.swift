@@ -1,16 +1,19 @@
 import XCTest
-import ABM
+@testable import Util
+@testable import Datastructures
 
 /**
  Tests for the purely functional AVLTree
  */
 class AVLTreeTest : XCTestCase {
+    #if os(Linux)
     static var allTests = {
        return [
             ("test_insert", test_insert),
             ("test_contains", test_contains)
         ]
     }()
+    #endif
     
     /**
      Tests whether the given tree satisfies invariants of an AVLTree

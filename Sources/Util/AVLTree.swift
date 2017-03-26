@@ -24,11 +24,11 @@ public enum AVLTree<T: Comparable> {
         }
     }
     
-    func contains(_ val: T) -> Bool {
+    public func contains(_ val: T) -> Bool {
         return find(val) != nil
     }
     
-    func find(_ val: T) -> T? {
+    public func find(_ val: T) -> T? {
         switch self {
         case let .Node(v, l, r, _):
             if v == val {
@@ -43,15 +43,15 @@ public enum AVLTree<T: Comparable> {
         }
     }
     
-    func smallest() -> T? {
+    public func smallest() -> T? {
         return removeSmallest().0
     }
     
-    func largest() -> T? {
+    public func largest() -> T? {
         return removeLargest().0
     }
     
-    func removeSmallest() -> (T?, AVLTree<T>) {
+    public func removeSmallest() -> (T?, AVLTree<T>) {
         switch self {
         case let .Node(v, l, r, h):
             let next = l.removeSmallest()
@@ -63,7 +63,7 @@ public enum AVLTree<T: Comparable> {
         }
     }
     
-    func removeLargest() -> (T?, AVLTree<T>) {
+    public func removeLargest() -> (T?, AVLTree<T>) {
         switch self {
         case let .Node(v, l, r, h):
             let next = r.removeLargest()
@@ -75,7 +75,7 @@ public enum AVLTree<T: Comparable> {
         }
     }
     
-    func height() -> Int {
+    public func height() -> Int {
         switch self {
         case .Leaf:
             return 0
@@ -139,7 +139,7 @@ public enum AVLTree<T: Comparable> {
         }
     }
     
-    func insert(_ val: T) -> AVLTree<T> {
+    public func insert(_ val: T) -> AVLTree<T> {
         switch self {
         case .Leaf:
             return .Node(val, .Leaf, .Leaf, 1)
@@ -149,7 +149,7 @@ public enum AVLTree<T: Comparable> {
         }
     }
     
-    func delete(_ val: T) -> AVLTree<T> {
+    public func delete(_ val: T) -> AVLTree<T> {
         switch self {
         case .Leaf:
             return self
@@ -171,7 +171,7 @@ public enum AVLTree<T: Comparable> {
 }
 
 public extension AVLTree {
-    func toList() -> [T] {
+    public func toList() -> [T] {
         switch self {
         case let .Node(v,l,r,_):
             let left = l.toList()

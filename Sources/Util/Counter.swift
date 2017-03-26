@@ -1,19 +1,19 @@
 /// A simple counter
-struct Counter: Sequence, IteratorProtocol {
+public struct Counter: Sequence, IteratorProtocol {
     /// The current value of this counter
-    private(set) var cur: Int
+    public private(set) var cur: Int
     
     /**
      Creates a new counter with the specified starting value
      - parameter start: The initial value of this counter
     */
-    init(_ start: Int){
+    public init(_ start: Int){
         cur = start
     }
     /**
      Creates a new counter with a start value of 0.
     */
-    init(){
+    public init(){
         self.init(0)
     }
     
@@ -21,7 +21,7 @@ struct Counter: Sequence, IteratorProtocol {
      Counts this counter up by one and returns the new value
      - returns: the next value of this counter or nil if the current value is equal to Int.max
     */
-    mutating func next() -> Int? {
+    public mutating func next() -> Int? {
         if cur == Int.max {
             return nil
         } else {
@@ -35,7 +35,7 @@ struct Counter: Sequence, IteratorProtocol {
      - parameter by: the amount that should be skipped
      - returns: the amount skipped
      */
-    mutating func skip(by: Int) -> Int {
+    public mutating func skip(by: Int) -> Int {
         if Int.max - cur < by {
             cur = Int.max
             return Int.max - cur
