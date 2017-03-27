@@ -1,8 +1,9 @@
 import Foundation
+import Util
 
 func test_all() {
     
-    var tree2 = AVLTree<Int>.Leaf
+    var tree2 = AVLTree<Int>()
     let start2 = DispatchTime.now().uptimeNanoseconds
     for i in 0...100000 {
         for j in 0...10 {

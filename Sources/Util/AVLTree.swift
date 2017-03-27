@@ -11,11 +11,11 @@ public enum AVLTree<T: Comparable> {
     case Leaf
     indirect case Node(T, AVLTree<T>, AVLTree<T>, Int)
     
-    init(){
+    public init(){
         self = .Leaf
     }
     
-    func rootValue() -> T? {
+    public func rootValue() -> T? {
         switch self {
         case .Leaf:
             return nil
@@ -144,7 +144,9 @@ public enum AVLTree<T: Comparable> {
         case .Leaf:
             return .Node(val, .Leaf, .Leaf, 1)
         case let .Node(v, l, r, _):
-            let n = (v > val) ? AVLTree<T>.Node(v, l.insert(val), r, max(l.height() + 1, r.height())) : v < val ? AVLTree<T>.Node(v, l, r.insert(val), max(l.height(), r.height()+1)) : self
+            let newL = val < v ? l.insert(val) : l
+            let newR = val > v ? r.insert(val) : r
+            let n = v == val ? self : .Node(v, newL, newR, max(newL.height(), newR.height()) + 1)
             return n.balance()
         }
     }

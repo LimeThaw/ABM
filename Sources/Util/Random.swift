@@ -3,18 +3,19 @@ import Foundation
 // Simple, non-thread-safe, non-cryptographic pseudo-random number generator
 // using linear congruence
 public struct Random{
-	private(set) var current: Int
+	public private(set) var current: Int
     
-    init(_ seed: Int){
+    public init(_ seed: Int){
         current = seed
     }
-    init(){
+    public init(){
         current = Int(DispatchTime.now().uptimeNanoseconds)
     }
 
 	// Returns a random Int
 	public mutating func next() -> Int {
-		current = (1103515245 * current + 12345) % 2147483647
+        let tmp = abs((1103515245 &* current &+ 12345) % 2147483647)
+		current = tmp
 		return current
 	}
     
@@ -34,5 +35,3 @@ public struct Random{
 		return u3 * sqrt(sig2) + mu // Transformation to requested distribution
 	}
 }
-
-var rand = Random(13579)

@@ -5,7 +5,7 @@ enum Direction {
 }
 
 // A single, generic node in an AVL tree.
-class AVLNodee<T: Comparable> {
+public class AVLNodee<T: Comparable> {
 	var value: T
 	var balance: Int = 0
 
@@ -16,7 +16,7 @@ class AVLNodee<T: Comparable> {
 	var root: AVLTreee<T>
 
 	// Constructor
-	init(value: T, root: AVLTreee<T>) {
+	public init(value: T, root: AVLTreee<T>) {
 		self.value = value
 		self.root = root
 		self.parent = nil
@@ -24,7 +24,7 @@ class AVLNodee<T: Comparable> {
 
 	// Inserts a value in the subtree of which the node is the root.
 	// If the length of the subtree increased, the function returns true, otherwise false.
-	func insert(value new_value: T) -> Bool {
+	public func insert(value new_value: T) -> Bool {
 
 		let target_child = ((new_value <= self.value) ? left_child : right_child)
 		if target_child == nil {
@@ -181,7 +181,7 @@ class AVLNodee<T: Comparable> {
 		grand_child!.update_balance()
 	}
 
-	func depth() -> Int {
+	public func depth() -> Int {
 		return max(left_child?.depth() ?? 0, right_child?.depth() ?? 0) + 1
 	}
 
@@ -189,11 +189,11 @@ class AVLNodee<T: Comparable> {
 		balance = (right_child?.depth() ?? 0) - (left_child?.depth() ?? 0)
 	}
 
-	func to_list() -> [T] {
+	public func to_list() -> [T] {
 		return (left_child?.to_list() ?? []) + ([value] + (right_child?.to_list() ?? []))
 	}
 
-	func print_all() {
+	public func print_all() {
 		print(value, terminator: "; ")
 		print("(", terminator:"")
 		left_child?.print_all()
@@ -206,10 +206,12 @@ class AVLNodee<T: Comparable> {
 }
 
 // A generic AVL-Tree.
-class AVLTreee<T: Comparable> {
+public class AVLTreee<T: Comparable> {
 	var parent_node: AVLNodee<T>?
+    
+    public init() {}
 
-	func insert(value val: T) {
+	public func insert(value val: T) {
 		if parent_node == nil {
 			parent_node = AVLNodee<T>(value: val, root: self)
 		} else {
@@ -217,11 +219,11 @@ class AVLTreee<T: Comparable> {
 		}
 	}
 
-	func to_list() -> [T] {
+	public func to_list() -> [T] {
 		return parent_node?.to_list() ?? []
 	}
 
-	func print() {
+	public func print() {
 		parent_node?.print_all()
 	}
 }

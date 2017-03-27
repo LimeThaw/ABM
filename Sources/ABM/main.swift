@@ -1,4 +1,5 @@
 import Foundation
+import Util
 
 var graph = Graph<Agent>()
 for i in 0...100 {
@@ -24,7 +25,7 @@ var crime_counts: [Int] = []
 for d in 0..<3650 {
 	var crime_count = 0
 	for i in 0...100 {
-        /* FIXME
+        /* FIXME:
 		var agent = graph.find(hash: i)?.value
 		if agent?.check_crime() != 0 {
 			//print("-> Crime on day \(d) by agent \(i)")

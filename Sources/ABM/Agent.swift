@@ -1,3 +1,5 @@
+import Util
+
 class Agent : Hashable {
 	let ID: Int
 	let hashValue: Int

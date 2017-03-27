@@ -1,3 +1,5 @@
+var counter = Counter()
+
 // Generic node class. Simply stores a value of a chosen type.
 public class Node<T: Hashable>: Comparable {
     public let id: Int
@@ -56,6 +58,8 @@ public enum EdgeKind {
 // Generic graph class. Contains a list of nodes and a list of edges connecting the nodes.
 public class Graph<T: Hashable> {
 	private var nodes: AVLTree<Node<T>> = AVLTree<Node<T>>()
+    
+    public init() {}
 
 	// Adds a new node with the given value to the graph
 	public func add_node(with_value new_value: T) {

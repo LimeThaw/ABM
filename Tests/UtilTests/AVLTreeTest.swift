@@ -1,6 +1,5 @@
 import XCTest
 @testable import Util
-@testable import Datastructures
 
 /**
  Tests for the purely functional AVLTree
@@ -10,7 +9,8 @@ class AVLTreeTest : XCTestCase {
     static var allTests = {
        return [
             ("test_insert", test_insert),
-            ("test_contains", test_contains)
+            ("test_contains", test_contains),
+            ("test_delete", test_delete)
         ]
     }()
     #endif
@@ -24,13 +24,13 @@ class AVLTreeTest : XCTestCase {
         case let .Node(v, l, r, h):
             let lh = l.height()
             let rh = r.height()
-            XCTAssert(abs(lh-rh) <= 1, "invalid balance: \(rh-lh)")
+            XCTAssert(abs(rh-lh) <= 1, "invalid balance: \(rh-lh)")
             XCTAssert(lh+1 == h || lh + 2 == h, "invalid left height: \(lh) with own height: \(h)")
             XCTAssert(rh+1 == h || rh + 2 == h, "invalid right height: \(rh) with own height: \(h)")
             let lv = l.rootValue()
             let rv = r.rootValue()
             XCTAssert(lv == nil || lv! < v, "invalid left value: \(lv) with own value: \(v)")
-            XCTAssert(rv == nil || rv! < v, "invalid right value: \(rv) with own value: \(v)")
+            XCTAssert(rv == nil || rv! > v, "invalid right value: \(rv) with own value: \(v)")
         default:
             XCTAssert(true)
         }
@@ -76,7 +76,7 @@ class AVLTreeTest : XCTestCase {
     func generateRandomTree(size: Int) -> AVLTree<Int> {
         var tree = AVLTree<Int>()
         var rand = Random()
-        for _ in 0...(rand.next() % size) {
+        for _ in 0...rand.next(max: size) {
             tree = insert(value: rand.next(), into: tree)
         }
         return tree
@@ -87,8 +87,8 @@ class AVLTreeTest : XCTestCase {
     */
     func test_insert(){
         var tree = AVLTree<Int>()
-        let min = -1000
-        let max = 1000
+        let min = -100
+        let max = 100
         let entries: [Int] = Array(min...max)
         var remaining = entries
         var rand = Random()
@@ -108,8 +108,8 @@ class AVLTreeTest : XCTestCase {
     */
     func test_contains(){
         var rand = Random()
-        let maxIterations = 1000
-        let tree = generateRandomTree(size: 10000)
+        let maxIterations = 100
+        let tree = generateRandomTree(size: 1000)
         let array = tree.toList()
         for _ in 0...rand.next(max: maxIterations) {
             // test equally if contains and if does not contain
@@ -127,10 +127,10 @@ class AVLTreeTest : XCTestCase {
     */
     func test_delete(){
         var rand = Random()
-        let maxIterations = 1000
-        var tree = generateRandomTree(size: 10000)
+        let maxIterations = 100
+        var tree = generateRandomTree(size: 1000)
         var array = tree.toList()
-        for _ in 0...rand.next(max: maxIterations) {
+        for _ in 0...abs(rand.next(max: maxIterations)) {
             let val = array.remove(at: rand.next(max: array.count))
             tree = delete(value: val, from: tree)
             XCTAssert(!tree.contains(val))
