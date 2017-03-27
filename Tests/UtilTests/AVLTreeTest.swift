@@ -20,15 +20,15 @@ class AVLTreeTest : XCTestCase {
      - parameter tree: the tree to test for invariants
     */
     func invariants(_ tree: AVLTree<Int>){
-        switch tree {
+        switch tree.root {
         case let .Node(v, l, r, h):
             let lh = l.height()
             let rh = r.height()
             XCTAssert(abs(rh-lh) <= 1, "invalid balance: \(rh-lh)")
             XCTAssert(lh+1 == h || lh + 2 == h, "invalid left height: \(lh) with own height: \(h)")
             XCTAssert(rh+1 == h || rh + 2 == h, "invalid right height: \(rh) with own height: \(h)")
-            let lv = l.rootValue()
-            let rv = r.rootValue()
+            let lv = l.value()
+            let rv = r.value()
             XCTAssert(lv == nil || lv! < v, "invalid left value: \(lv) with own value: \(v)")
             XCTAssert(rv == nil || rv! > v, "invalid right value: \(rv) with own value: \(v)")
         default:
@@ -41,14 +41,17 @@ class AVLTreeTest : XCTestCase {
      - parameter tree: The tree to be checked
     */
     func invariantsRecursive(_ tree: AVLTree<Int>){
+        func help(_ tree: AVLTreeNode<Int>){
         switch tree {
         case let .Node(_, l, r, _):
-            invariants(tree)
-            invariantsRecursive(l)
-            invariantsRecursive(r)
+            invariants(AVLTree<Int>(tree))
+            invariantsRecursive(AVLTree<Int>(l))
+            invariantsRecursive(AVLTree<Int>(r))
         default:
             XCTAssert(true)
         }
+        }
+        help(tree.root)
     }
     
     /**
@@ -116,8 +119,8 @@ class AVLTreeTest : XCTestCase {
             if rand.next() {
                 XCTAssert(tree.contains(array[rand.next(max: array.count)]))
             } else {
-                while array.contains(rand.next(max: array.count)) {}
-                XCTAssert(!tree.contains(array[rand.current % array.count]))
+                while array.contains(rand.next()) {}
+                XCTAssert(!tree.contains(rand.current))
             }
         }
     }
