@@ -29,7 +29,7 @@ class Agent : Hashable {
 	func checkCrime() -> Int {
 		//if happiness < 0.5 {
 		if connectedness * happiness < 1 {
-			if enthusiasm > 2 {
+			if enthusiasm > 10 && happiness < 0.5 {
 				return 2
 			}
 			return 1
@@ -39,13 +39,15 @@ class Agent : Hashable {
 	}
 
 	func executeCrime(type: Int, on other: Agent?, within graph: Graph<Agent>) {
-		if other != nil {
+		if other != nil && other != self{
 			switch type {
 			case 1:
 				self.happiness += 0.2
 				other!.happiness -= 0.2
+				self.enthusiasm += self.enthusiasm / 10
 			case 2:
 				graph.removeNode(withValue: other!)
+				enthusiasm *= 0.2
 			default:
 				_ = 1 // The hackszs!
 			}

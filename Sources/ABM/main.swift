@@ -30,7 +30,7 @@ for i in 0..<n {
 	node?.value.updateConnectedness(node: node!)
 }
 
-var crimeCounts: [Int] = []
+var crimeCounts: [(Int, Int, Int, Int)] = []
 for d in 0..<3650 {
 	var crimeCount1 = 0
 	var crimeCount2 = 0
@@ -49,7 +49,7 @@ for d in 0..<3650 {
 			crimeCount2 += 1
 		}
 	}
-	crimeCounts += [crimeCount1, crimeCount2, cnt, Int(hap*50)]
+	crimeCounts += [(crimeCount1, crimeCount2, cnt, Int(hap*50))]
 }
 
 //print(crime_counts)
