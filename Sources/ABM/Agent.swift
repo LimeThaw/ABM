@@ -1,4 +1,5 @@
 import Foundation
+import Util
 
 class Agent : Hashable {
 	let ID: Int
@@ -12,9 +13,13 @@ class Agent : Hashable {
 	var connectedness: Float = 0
 	var ownsGun: Bool = false
 
-	init() {
-		ID = Counter.getNext()
+	init(_ id: Int) {
+		ID = id
 		hashValue = ID
+	}
+
+	convenience init() {
+		self.init(counter.next() ?? -1)
 	}
 
 	static func ==(_ first: Agent, _ second: Agent) -> Bool {
@@ -23,8 +28,8 @@ class Agent : Hashable {
 
 	func checkCrime() -> Int {
 		//if happiness < 0.5 {
-		if connectedness * happiness < 2.5 {
-			if enthusiasm > 1 {
+		if connectedness * happiness < 1 {
+			if enthusiasm > 2 {
 				return 2
 			}
 			return 1
@@ -41,8 +46,6 @@ class Agent : Hashable {
 				other!.happiness -= 0.2
 			case 2:
 				graph.removeNode(withValue: other!)
-				self.happiness += 0.2
-				other!.happiness -= 0.2
 			default:
 				_ = 1 // The hackszs!
 			}
@@ -51,8 +54,8 @@ class Agent : Hashable {
 
 	func updateConnectedness(node: Node<Agent>) {
 		connectedness = 0
-		for edge in node.edges.toList() {
-			connectedness += pow(edge.object?.weight ?? 0, 2)
+		for edge in node.edgeList() {
+			connectedness += pow(edge?.weight ?? 0, 2)
 		}
 	}
 }

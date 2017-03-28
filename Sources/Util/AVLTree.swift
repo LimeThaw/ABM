@@ -30,15 +30,73 @@ struct IndexedObject<T: Hashable>: Comparable {
 	}
 }
 
-enum AVLTree<T: Comparable> {
+public struct AVLTree<T: Comparable> {
+    let root: AVLTreeNode<T>
+
+    public init(){
+        root = .Leaf
+    }
+
+    init(_ root: AVLTreeNode<T>){
+        self.root = root
+    }
+
+    public func value() -> T? {
+        return root.value()
+    }
+
+    public func contains(_ val: T) -> Bool {
+        return root.contains(val)
+    }
+
+    public func find(_ val: T) -> T? {
+        return root.find(val)
+    }
+
+    public func smallest() -> T? {
+        return root.smallest()
+    }
+
+    public func largest() -> T? {
+        return root.largest()
+    }
+
+    public func removeSmallest() -> (T?, AVLTree<T>) {
+        let tmp = root.removeSmallest()
+        return (tmp.0, AVLTree(tmp.1))
+    }
+
+    public func removeLargest() -> (T?, AVLTree<T>) {
+        let tmp = root.removeLargest()
+        return (tmp.0, AVLTree(tmp.1))
+    }
+
+    public func height() -> Int {
+        return root.height()
+    }
+
+    public func insert(_ val: T) -> AVLTree<T> {
+        return AVLTree<T>(root.insert(val))
+    }
+
+    public func delete(_ val: T) -> AVLTree<T> {
+        return AVLTree<T>(root.delete(val))
+    }
+}
+
+enum AVLTreeNode<T: Comparable> {
     case Leaf
-    indirect case Node(T, AVLTree<T>, AVLTree<T>, Int)
+    indirect case Node(T, AVLTreeNode<T>, AVLTreeNode<T>, Int)
 
     init(){
         self = .Leaf
     }
 
-    func rootValue() -> T? {
+    private init(_ val: T, _ l: AVLTreeNode<T>, _ r: AVLTreeNode<T>){
+        self = .Node(val, l, r, max(l.height(), r.height())+1)
+    }
+
+    func value() -> T? {
         switch self {
         case .Leaf:
             return nil
@@ -47,29 +105,24 @@ enum AVLTree<T: Comparable> {
         }
     }
 
-    func contains(val: T) -> Bool {
-        switch self {
-        case .Leaf:
-            return false
-        case let .Node(cur, t1, t2, _):
-            return cur == val || t1.contains(val: val) || t2.contains(val: val)
-        }
+    func contains(_ val: T) -> Bool {
+        return find(val) != nil
     }
 
-	func search(_ val: T) -> T? {
-		switch self {
-		case let .Node(v, l, r, _):
-			if v == val {
-				return v
-			} else if val < v {
-				return l.search(val)
-			} else {
-				return r.search(val)
-			}
-		default:
-			return nil
-		}
-	}
+    func find(_ val: T) -> T? {
+        switch self {
+        case let .Node(v, l, r, _):
+            if v == val {
+                return v
+            } else if val < v {
+                return l.find(val)
+            } else {
+                return r.find(val)
+            }
+        default:
+            return nil
+        }
+    }
 
     func smallest() -> T? {
         return removeSmallest().0
@@ -79,11 +132,11 @@ enum AVLTree<T: Comparable> {
         return removeLargest().0
     }
 
-    func removeSmallest() -> (T?, AVLTree<T>) {
+    func removeSmallest() -> (T?, AVLTreeNode<T>) {
         switch self {
-        case let .Node(v, l, r, h):
+        case let .Node(v, l, r, _):
             let next = l.removeSmallest()
-            let retTree = next.0 == nil ? r : .Node(v, next.1, r, max(r.height(), h-1))
+            let retTree = next.0 == nil ? r : AVLTreeNode<T>(v, next.1, r)
             let retVal = next.0 == nil ? v : next.0
             return (retVal, retTree.balance())
         default:
@@ -91,11 +144,11 @@ enum AVLTree<T: Comparable> {
         }
     }
 
-    func removeLargest() -> (T?, AVLTree<T>) {
+    func removeLargest() -> (T?, AVLTreeNode<T>) {
         switch self {
-        case let .Node(v, l, r, h):
+        case let .Node(v, l, r, _):
             let next = r.removeLargest()
-            let retTree = next.0 == nil ? l : .Node(v, l, next.1, max(l.height(), h-1))
+            let retTree = next.0 == nil ? l : AVLTreeNode<T>(v, l, next.1)
             let retVal = next.0 == nil ? v : next.0
             return (retVal, retTree.balance())
         default:
@@ -112,51 +165,57 @@ enum AVLTree<T: Comparable> {
         }
     }
 
-    private func balanced() -> BalanceType {
+    private func balance() -> BalanceType {
+        return BalanceType(balance())
+    }
+
+    private func balance() -> Int {
         switch self {
-        case .Leaf:
-            return .Center
         case let .Node(_, l, r, _):
-            return BalanceType(r.height()-l.height())
+            return r.height()-l.height()
+        default:
+            return 0
         }
     }
 
-    private func balance() -> AVLTree<T> {
-        func rotateRight() -> AVLTree<T> {
-            switch self {
-            case .Leaf:
-                return self
-            case let .Node(v, l, r, _):
-                switch l {
-                case let .Node(vl, ll, rl, _):
-                    let nuR = AVLTree<T>.Node(v, rl, r, max(rl.height(), r.height()) + 1)
-                    return .Node(vl, ll, nuR, max(ll.height(), nuR.height()) + 1)
-                default:
-                    assert(false)
-                }
-            }
-        }
-
-        func rotateLeft() -> AVLTree<T> {
-            switch self {
-            case let .Node(v, l, r, _):
-                switch r {
-                case let .Node(vr, lr, rr, _):
-                    let nuL = AVLTree<T>.Node(v, l, lr, max(l.height(), lr.height()) + 1)
-                    return .Node(vr, nuL, rr, max(nuL.height(), rr.height()) + 1)
-                default:
-                    assert(false)
-                }
-            default:
-                return self
-            }
-        }
-
+    private func rotateRight() -> AVLTreeNode<T> {
         switch self {
         case .Leaf:
             return self
-        case let .Node(_, t1, t2, _):
-            switch BalanceType(t2.height() - t1.height()) {
+        case let .Node(v, l, r, _):
+            let newL = l.balance() > 0 ? l.rotateLeft() : l
+            switch newL {
+            case let .Node(vl, ll, rl, _):
+                let nuR = AVLTreeNode<T>(v, rl, r)
+                return AVLTreeNode<T>(vl, ll, nuR)
+            default:
+                assert(false)
+            }
+        }
+    }
+
+    private func rotateLeft() -> AVLTreeNode<T> {
+        switch self {
+        case let .Node(v, l, r, _):
+            let newR = r.balance() < 0 ? r.rotateRight() : r
+            switch newR {
+            case let .Node(vr, lr, rr, _):
+                let nuL = AVLTreeNode<T>(v, l, lr)
+                return AVLTreeNode<T>(vr, nuL, rr)
+            default:
+                assert(false)
+            }
+        default:
+            return self
+        }
+    }
+
+    private func balance() -> AVLTreeNode<T> {
+        switch self {
+        case .Leaf:
+            return self
+        case .Node:
+            switch balance() as BalanceType {
             case .Center:
                 return self
             case .Left:
@@ -167,47 +226,62 @@ enum AVLTree<T: Comparable> {
         }
     }
 
-    func insert(val: T) -> AVLTree<T> {
+    func insert(_ val: T) -> AVLTreeNode<T> {
         switch self {
         case .Leaf:
             return .Node(val, .Leaf, .Leaf, 1)
         case let .Node(v, l, r, _):
-            let n = (v > val) ? AVLTree<T>.Node(v, l.insert(val: val), r, max(l.height() + 1, r.height())) : v < val ? AVLTree<T>.Node(v, l, r.insert(val:val), max(l.height(), r.height()+1)) : self
+            let newL = val < v ? l.insert(val) : l
+            let newR = val > v ? r.insert(val) : r
+            let n = v == val ? self : AVLTreeNode<T>(v, newL, newR)
             return n.balance()
         }
     }
 
-    func delete(val: T) -> AVLTree<T> {
+    func delete(_ val: T) -> AVLTreeNode<T> {
         switch self {
         case .Leaf:
             return self
         case let .Node(v, l, r, _):
             if v == val {
-                let delL = l.removeLargest()
-                let delR = r.removeSmallest()
-                let res1 = AVLTree<T>.Node(v, l, delR.1, max(l.height(), delR.1.height()))
-                let res2 = AVLTree<T>.Node(v, delL.1, r, max(delL.1.height(), r.height()))
-                let tmp = delL.0 == nil ? delR.0 == nil ? .Leaf : res1 : res2
-                return tmp.balance()
+                let lh = l.height()
+                let rh = r.height()
+                if lh == 0 && rh == 0 {
+                    return .Leaf
+                }
+                if lh > rh {
+                    let delL = l.removeLargest()
+                    return AVLTreeNode<T>(delL.0!, delL.1, r).balance()
+                } else {
+                    let delR = r.removeSmallest()
+                    return AVLTreeNode<T>(delR.0!, l, delR.1).balance()
+                }
             } else if val > v {
-                return r.delete(val: val)
+                return AVLTreeNode<T>(v, l, r.delete(val))
             } else {
-                return l.delete(val: val)
+                return AVLTreeNode<T>(v, l.delete(val), r)
             }
         }
     }
 }
 
-extension AVLTree {
+extension AVLTreeNode {
     func toList() -> [T] {
         switch self {
         case let .Node(v,l,r,_):
             let left = l.toList()
             let right = r.toList()
-            return  [v] + left + right
+            return left + [v] + right
         default:
             return []
         }
+    }
+}
+
+
+public extension AVLTree {
+    public func toList() -> [T] {
+        return root.toList()
     }
 }
 

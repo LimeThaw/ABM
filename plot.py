@@ -8,6 +8,7 @@ infile.close()
 crimes1 = []
 crimes2 = []
 population = []
+happiness = []
 target = 0
 values = values[1:-1].split(", ")
 for val in values:
@@ -19,6 +20,9 @@ for val in values:
 		target = 2
 	elif target == 2:
 		population.append(int(val))
+		target = 3
+	elif target == 3:
+		happiness.append(int(val))
 		target = 0
 
 plt.plot(
@@ -33,6 +37,10 @@ plt.plot(
 	range(0, 3650),
 	population,
 	'g-')
+plt.plot(
+	range(0, 3650),
+	happiness,
+	'y-')
 plt.xlabel("Day")
 plt.ylabel("Crimes")
 plt.axis([0, 3650, 0, 100])
