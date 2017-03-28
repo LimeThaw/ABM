@@ -10,7 +10,10 @@ class AVLTreeTest : XCTestCase {
        return [
             ("test_insert", test_insert),
             ("test_contains", test_contains),
-            ("test_delete", test_delete)
+            ("test_delete", test_delete),
+            ("test_toList", test_toList),
+            ("test_removeSmallest", test_removeSmallest),
+            ("test_removeLargest", test_removeLargest)
         ]
     }()
     #endif
@@ -74,15 +77,36 @@ class AVLTreeTest : XCTestCase {
     
     /**
      Generates a tree with random entries
+     - parameter size: The maximum size of the tree
      - returns: A tree with random entries
     */
     func generateRandomTree(size: Int) -> AVLTree<Int> {
+        return generateRandomTreeWithList(size: size).0
+    }
+    
+    /**
+     Generates a tree with random entries and returns the list with the numbers inserted
+     - parameter size: The maximum size of the tree
+     - returns: A tuple with a tree with random entries and a list with those entries
+     */
+    func generateRandomTreeWithList(size: Int) -> (AVLTree<Int>, [Int]) {
         var tree = AVLTree<Int>()
         var rand = Random()
+        var array: [Int] = []
         for _ in 0...rand.next(max: size) {
-            tree = insert(value: rand.next(), into: tree)
+            let val: Int = rand.next()
+            tree = insert(value: val, into: tree)
+            array.append(val)
         }
-        return tree
+        return (tree, array)
+    }
+    
+    /**
+     Tests the convertion of a tree to a list
+    */
+    func test_toList(){
+        let tmp = generateRandomTreeWithList(size: 1000)
+        XCTAssert(tmp.0.toList() == tmp.1.sorted())
     }
     
     /**
@@ -112,8 +136,9 @@ class AVLTreeTest : XCTestCase {
     func test_contains(){
         var rand = Random()
         let maxIterations = 100
-        let tree = generateRandomTree(size: 1000)
-        let array = tree.toList()
+        let tmp = generateRandomTreeWithList(size: 1000)
+        let tree = tmp.0
+        let array = tmp.1
         for _ in 0...rand.next(max: maxIterations) {
             // test equally if contains and if does not contain
             if rand.next() {
@@ -126,15 +151,51 @@ class AVLTreeTest : XCTestCase {
     }
     
     /**
+     Tests the removeSmallest function
+    */
+    func test_removeSmallest(){
+        let tmp = generateRandomTreeWithList(size: 1000)
+        let array = tmp.1.sorted()
+        var tree = tmp.0
+        for x in array {
+            XCTAssert(tree.contains(x))
+            let ret = tree.removeSmallest()
+            XCTAssert(ret.0! == x)
+            tree = ret.1
+            XCTAssert(!tree.contains(x))
+            invariantsRecursive(tree)
+        }
+    }
+    
+    /**
+     Tests the removeLargest function
+     */
+    func test_removeLargest(){
+        let tmp = generateRandomTreeWithList(size: 1000)
+        let array = tmp.1.sorted(by: >)
+        var tree = tmp.0
+        for x in array {
+            XCTAssert(tree.contains(x))
+            let ret = tree.removeLargest()
+            XCTAssert(ret.0! == x)
+            tree = ret.1
+            XCTAssert(!tree.contains(x))
+            invariantsRecursive(tree)
+        }
+    }
+    
+    /**
      Tests the delete function
     */
     func test_delete(){
         var rand = Random()
         let maxIterations = 100
-        var tree = generateRandomTree(size: 1000)
-        var array = tree.toList()
+        let tmp = generateRandomTreeWithList(size: 1000)
+        var tree = tmp.0
+        var array = tmp.1
         for _ in 0...abs(rand.next(max: maxIterations)) {
             let val = array.remove(at: rand.next(max: array.count))
+            XCTAssert(tree.contains(val))
             tree = delete(value: val, from: tree)
             XCTAssert(!tree.contains(val))
         }

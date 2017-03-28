@@ -68,6 +68,10 @@ enum AVLTreeNode<T: Comparable> {
         self = .Leaf
     }
     
+    private init(_ val: T, _ l: AVLTreeNode<T>, _ r: AVLTreeNode<T>){
+        self = .Node(val, l, r, max(l.height(), r.height())+1)
+    }
+    
     func value() -> T? {
         switch self {
         case .Leaf:
@@ -106,9 +110,9 @@ enum AVLTreeNode<T: Comparable> {
     
     func removeSmallest() -> (T?, AVLTreeNode<T>) {
         switch self {
-        case let .Node(v, l, r, h):
+        case let .Node(v, l, r, _):
             let next = l.removeSmallest()
-            let retTree = next.0 == nil ? r : .Node(v, next.1, r, max(r.height(), h-1))
+            let retTree = next.0 == nil ? r : AVLTreeNode<T>(v, next.1, r)
             let retVal = next.0 == nil ? v : next.0
             return (retVal, retTree.balance())
         default:
@@ -118,9 +122,9 @@ enum AVLTreeNode<T: Comparable> {
     
     func removeLargest() -> (T?, AVLTreeNode<T>) {
         switch self {
-        case let .Node(v, l, r, h):
+        case let .Node(v, l, r, _):
             let next = r.removeLargest()
-            let retTree = next.0 == nil ? l : .Node(v, l, next.1, max(l.height(), h-1))
+            let retTree = next.0 == nil ? l : AVLTreeNode<T>(v, l, next.1)
             let retVal = next.0 == nil ? v : next.0
             return (retVal, retTree.balance())
         default:
@@ -158,8 +162,8 @@ enum AVLTreeNode<T: Comparable> {
             let newL = l.balance() > 0 ? l.rotateLeft() : l
             switch newL {
             case let .Node(vl, ll, rl, _):
-                let nuR = AVLTreeNode<T>.Node(v, rl, r, rl.height() + 1)
-                return .Node(vl, ll, nuR, max(ll.height(), nuR.height()) + 1)
+                let nuR = AVLTreeNode<T>(v, rl, r)
+                return AVLTreeNode<T>(vl, ll, nuR)
             default:
                 assert(false)
             }
@@ -172,8 +176,8 @@ enum AVLTreeNode<T: Comparable> {
             let newR = r.balance() < 0 ? r.rotateRight() : r
             switch newR {
             case let .Node(vr, lr, rr, _):
-                let nuL = AVLTreeNode<T>.Node(v, l, lr, lr.height() + 1)
-                return .Node(vr, nuL, rr, max(nuL.height(), rr.height()) + 1)
+                let nuL = AVLTreeNode<T>(v, l, lr)
+                return AVLTreeNode<T>(vr, nuL, rr)
             default:
                 assert(false)
             }
@@ -186,8 +190,8 @@ enum AVLTreeNode<T: Comparable> {
         switch self {
         case .Leaf:
             return self
-        case let .Node(_, t1, t2, _):
-            switch BalanceType(t2.height() - t1.height()) {
+        case .Node:
+            switch balance() as BalanceType {
             case .Center:
                 return self
             case .Left:
@@ -205,7 +209,7 @@ enum AVLTreeNode<T: Comparable> {
         case let .Node(v, l, r, _):
             let newL = val < v ? l.insert(val) : l
             let newR = val > v ? r.insert(val) : r
-            let n = v == val ? self : .Node(v, newL, newR, max(newL.height(), newR.height()) + 1)
+            let n = v == val ? self : AVLTreeNode<T>(v, newL, newR)
             return n.balance()
         }
     }
@@ -216,16 +220,22 @@ enum AVLTreeNode<T: Comparable> {
             return self
         case let .Node(v, l, r, _):
             if v == val {
-                let delL = l.removeLargest()
-                let delR = r.removeSmallest()
-                let res1 = AVLTreeNode<T>.Node(v, l, delR.1, max(l.height(), delR.1.height()))
-                let res2 = AVLTreeNode<T>.Node(v, delL.1, r, max(delL.1.height(), r.height()))
-                let tmp = delL.0 == nil ? delR.0 == nil ? .Leaf : res1 : res2
-                return tmp.balance()
+                let lh = l.height()
+                let rh = r.height()
+                if lh == 0 && rh == 0 {
+                    return .Leaf
+                }
+                if lh > rh {
+                    let delL = l.removeLargest()
+                    return AVLTreeNode<T>(delL.0!, delL.1, r).balance()
+                } else {
+                    let delR = r.removeSmallest()
+                    return AVLTreeNode<T>(delR.0!, l, delR.1).balance()
+                }
             } else if val > v {
-                return r.delete(val)
+                return AVLTreeNode<T>(v, l, r.delete(val))
             } else {
-                return l.delete(val)
+                return AVLTreeNode<T>(v, l.delete(val), r)
             }
         }
     }
