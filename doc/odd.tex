@@ -1,0 +1,114 @@
+\documentclass{article}
+\title{ODD description of the model}
+
+\begin{document}
+
+	\maketitle
+
+	\section{Purpose}
+		The purpose of the model is to model human behavior in regard to ciminal activity involving
+		firearms and to help identify ways in which we can reduce the number of incidences of such
+		activity.\\
+		TODO: Get more precise $\Rightarrow$ hypothesis?
+
+	\section{Entities, state variables, and scales}
+		The entities in our simulation are people. They are characterized by the following attributes:
+
+		\begin{itemize}
+			\item Moral
+			\item Enthusiasm
+			\item Gun possession
+			\item Age
+		\end{itemize}
+
+		All agents together are supposed to approximate a small town or similar social group or structure.
+		Each simulation epoch corresponds to a single day, and the whole simulation runs for 10 years.\\
+		TODO: Describe each attribute, explain the constraints, interactions, computed attributes.
+
+	\section{Process overview and scheduling}
+		Time is modeled in discrete steps of one day. For each day, every agent (that is alive)
+		updates its attributes based on the state of the simulation at the end of the last day.
+		It then decides wether to commit a crime, and if so, what kind of crime to commit. based
+		on that decision it then goes on to execute the crime.\\
+		TODO: Better description, Pseudocode (Maybe later when model is more worked out)
+
+	\section{Design principles}
+		\subsection{Basic Principles}
+			We have considered several theories and models from sociology, and tried to incorporate
+			their core aspects into a decision making scheme for our agents. These are:
+			\begin{itemize}
+				\item Rational choice theory:\\
+					\verb|https://books.google.ch/books?hl=en&lr=&id=QaUgne7fgYUC&oi=fnd&pg=PA126&dq=Rational+choice+theory&ots=2zRVUwh29g&sig=KwCK6O8B1nuldtPBOVwF5sOVcWs#v=onepage&q=Rational%20choice%20theory&f=false|
+
+				\item Social learning theory:\\
+					\verb|https://books.google.ch/books?hl=en&lr=&id=6vnOPg_tpBUC&oi=fnd&pg=PA106&dq=Social+learning+theory&ots=hY9zMSEr64&sig=iOYC2COKt8159Ezojs2RcQrIQj8#v=onepage&q=Social%20learning%20theory&f=false|
+			\end{itemize}
+			TODO: Maybe find more theories, describe them further and how they are used in our model.\\
+			TODO: How do moral values spread?
+
+		\subsection{Emergence}
+			The most important output of the simulation is the rate of violent crimes involving
+			firearms. Thus it is naturally meant to be emergent. The gun possession rate is part
+			of the simulation input and is not actively changed during it, which makes it imposed.
+			The age parameter changes in natural, linear fashion independent of the state of the
+			simulation, so it is not emergent either.\\
+			TODO: Check all parameters, search for imposed ones to constrain others.
+
+		\subsection{Adaptation}
+			Primarily the moral ideas of individuals vary depending on their neighbors in the social
+			graph. The idea is to mimic the emergence of social values and principle within real
+			societies.\\
+			TODO: Add specific rules, maybe additional adapting attributes
+
+		\subsection{Objectives}
+			TODO: Do our agents have specific objectives? Which ones?
+
+		\subsection{Learning}
+			TODO: Do our agents learn over time? If so how?
+
+		\subsection{Prediction}
+			TODO: How do our agents attempt to predict the outcome of their actions (if they do)?
+
+		\subsection{Sensing}
+			The agents do not perceive any state of the physical world, since it is not part of our
+			model. They do, however, perceive the moral values of their neighbors in the social
+			graph. The graph structure is primarily imposed as starting condition, but can change
+			in the course of the simulation. The edges of the graph are weighted, and the weight
+			indicates the intimacy of the connection between two agents. The higher this value is,
+			the more are the agents influenced by each other's moral values. The idea is that
+			people have more trust towards people they know well, and that interactions are usually
+			more frequent between close friends or family members.
+
+		\subsection{Interaction}
+			The moral values of the agents are influenced by those of their neighbors. Apart from
+			that Agents interact when someone commits a crime, including the neighbors of the victim.\\
+			TODO: Describe these interactions in more detail.
+
+		\subsection{Stochasticity}
+			We assume that the selection of a victim occurs randomly within the graph.\\
+			TODO: Add other random approximations
+
+		\subsection{Collectives}
+			TODO: Do we want to add some kind of collectives? Maybe too complex?
+
+		\subsection{Observation}
+			The main output data of the simulation is the rate of criminal activity. We divide
+			those incidents into categories. The data is the output to a file in the form of a
+			list of tuples, where each list entry carries the data for a single day, and the
+			values in the tuples represent the different categories. For better visualization and
+			analyzation they are then rendered intofigures and processed into tables using a
+			seperate program.\\
+			TODO: Add categories
+
+	\section{Initialization}
+		TODO: Is our data generated randomly, taken from a dataset or a hybrid?
+
+	\section{Input data}
+		TODO: Do we have or can we obtain data to feed into the simulation as it runs instead of
+		simulating it?
+
+	\section{Submodels}
+		TODO: Describe in detail the concepts from 'Process overview and scheduling' - add
+		Pseudocode and literature references.
+
+\end{document}
