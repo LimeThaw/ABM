@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Dispatch
 
 private var start: UInt64 = 0
 private var passed: UInt64 = 0

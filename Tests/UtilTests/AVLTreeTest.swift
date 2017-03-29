@@ -13,7 +13,8 @@ class AVLTreeTest : XCTestCase {
             ("test_delete", test_delete),
             ("test_toList", test_toList),
             ("test_removeSmallest", test_removeSmallest),
-            ("test_removeLargest", test_removeLargest)
+            ("test_removeLargest", test_removeLargest),
+            ("test_print", test_print)
         ]
     }()
     #endif
@@ -85,16 +86,36 @@ class AVLTreeTest : XCTestCase {
     }
     
     /**
+     Generates a tree with random entries
+     - parameter size: The maximum size of the tree
+     - parameter max: The maximum entry in the tree
+     - returns: A tree with random entries
+     */
+    func generateRandomTree(size: Int, max: Int) -> AVLTree<Int> {
+        return generateRandomTreeWithList(size: size, max: max).0
+    }
+    
+    /**
      Generates a tree with random entries and returns the list with the numbers inserted
      - parameter size: The maximum size of the tree
      - returns: A tuple with a tree with random entries and a list with those entries
      */
     func generateRandomTreeWithList(size: Int) -> (AVLTree<Int>, [Int]) {
+        return generateRandomTreeWithList(size: size, max: Int.max)
+    }
+    
+    /**
+     Generates a tree with random entries and returns the list with the numbers inserted
+     - parameter size: The maximum size of the tree
+     - parameter max: The maximum entry in the tree
+     - returns: A tuple with a tree with random entries and a list with those entries
+     */
+    func generateRandomTreeWithList(size: Int, max: Int) -> (AVLTree<Int>, [Int]) {
         var tree = AVLTree<Int>()
         var rand = Random()
         var array: [Int] = []
         for _ in 0...rand.next(max: size) {
-            let val: Int = rand.next()
+            let val: Int = rand.next(max: max)
             tree = insert(value: val, into: tree)
             array.append(val)
         }
@@ -199,5 +220,13 @@ class AVLTreeTest : XCTestCase {
             tree = delete(value: val, from: tree)
             XCTAssert(!tree.contains(val))
         }
+    }
+    
+    /**
+     Tests the print functionality
+    */
+    func test_print(){
+        let tree = generateRandomTree(size: 30, max: 50)
+        tree.printTree()
     }
 }

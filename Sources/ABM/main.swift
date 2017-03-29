@@ -1,6 +1,8 @@
 import Foundation
 import Util
 
+test_all()
+
 var graph = Graph<Agent>()
 for i in 0...100 {
 	var new_agent = Agent()

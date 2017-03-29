@@ -5,6 +5,7 @@
 //  Created by Tierry Hörmann on 21.03.17.
 //
 //
+import Foundation
 
 public struct AVLTree<T: Comparable> {
     let root: AVLTreeNode<T>
@@ -166,6 +167,7 @@ enum AVLTreeNode<T: Comparable> {
                 return AVLTreeNode<T>(vl, ll, nuR)
             default:
                 assert(false)
+                return self
             }
         }
     }
@@ -180,6 +182,7 @@ enum AVLTreeNode<T: Comparable> {
                 return AVLTreeNode<T>(vr, nuL, rr)
             default:
                 assert(false)
+                return self
             }
         default:
             return self
@@ -252,12 +255,140 @@ extension AVLTreeNode {
             return []
         }
     }
+    
+    func printTree() {
+        var help: [[T?]] = [] // an array that hold the entries in the correct order for every level
+        var levels = self.height()
+        for _ in 0..<self.height() {
+            help.append([])
+        }
+        
+        func insertIntoHelp(tree: AVLTreeNode<T>, level: Int) {
+            switch tree {
+            case let .Node(v, l, r, _):
+                var levelArray = help[level]
+                levelArray.append(v)
+                help[level] = levelArray
+                insertIntoHelp(tree: l, level: level+1)
+                insertIntoHelp(tree: r, level: level+1)
+            default:
+                var inserts = 1
+                var curLevel = level
+                while curLevel < levels { // level with only leafs won't be printed
+                    var levelArray = help[curLevel]
+                    for _ in 0..<inserts {
+                        levelArray.append(nil)
+                    }
+                    help[curLevel] = levelArray
+                    curLevel += 1
+                    inserts *= 2
+                }
+            }
+        }
+        
+        insertIntoHelp(tree: self, level: 0)
+        var strHelp: [[String]] = [] // holds the string representations for every entry in the level
+        var longestString = 0
+        for i in help {
+            var cur: [String] = []
+            for j in i {
+                if j == nil {
+                    cur.append("")
+                    if longestString < 6 {
+                        longestString = 6
+                    }
+                } else {
+                    let str = String(describing: j!)
+                    if str.characters.count > longestString {
+                        longestString = str.characters.count
+                    }
+                    cur.append(str)
+                }
+            }
+            strHelp.append(cur)
+        }
+        
+        longestString += 1 // every item is printed with at least one leading space
+        // center the strings
+        for i in 0..<strHelp.count {
+            for j in 0..<strHelp[i].count {
+                var cur = strHelp[i][j]
+                let padding = (longestString - cur.characters.count) / 2
+                var pad = ""
+                for _ in 0..<padding{
+                    pad += " "
+                }
+                cur = (longestString - cur.characters.count) % 2 == 0 ? pad + cur + pad : " " + pad + cur + pad
+                strHelp[i][j] = cur
+            }
+        }
+        
+        // create the lines
+        let width = longestString*2^^(levels-1)
+        var lines: [String] = [] // the lines that are printed to the console
+        var firstLine = true
+        for i in 0..<levels {
+            var cur = ""
+            // whitespaces
+            let boxSize = width / 2^^i
+            var paddingStart = ""
+            for _ in 0 ..< (boxSize - longestString) / 2 {
+                paddingStart += " "
+            }
+            let paddingEnd = (boxSize - longestString) % 2 == 0 ? paddingStart : paddingStart + " "
+            
+            // write the line
+            for j in 0..<2^^i {
+                cur += paddingStart + strHelp[i][j] + paddingEnd
+            }
+            
+            // add the connection line
+            if !firstLine {
+                // whitespaces
+                let gapStartSize = (boxSize*2-2) / 3
+                var gapStart = ""
+                for _ in 0 ..< gapStartSize {
+                    gapStart += " "
+                }
+                var gapEnd = gapStart
+                for _ in 3*gapStartSize ..< boxSize*2-2 {
+                    gapEnd += " "
+                }
+                
+                var conLn = ""
+                for j in 0..<2^^(i-1) {
+                    conLn += gapStart
+                    conLn += help[i][j*2] == nil ? " " : "/"
+                    conLn += gapStart
+                    conLn += help[i][j*2+1] == nil ? " " : "\\"
+                    conLn += gapEnd
+                }
+                lines.append(conLn)
+            }
+            
+            lines.append(cur)
+            
+            firstLine = false
+        }
+        
+        // print lines
+        for l in lines {
+            print(l)
+        }
+    }
 }
 
 
 public extension AVLTree {
     public func toList() -> [T] {
         return root.toList()
+    }
+    
+    /**
+     Prints this AVLTree nicely to the console
+     */
+    public func printTree() {
+        return root.printTree()
     }
 }
 

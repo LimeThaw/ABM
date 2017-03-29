@@ -1,4 +1,5 @@
 import Foundation
+import Dispatch
 
 // Simple, non-thread-safe, non-cryptographic pseudo-random number generator
 // using linear congruence
