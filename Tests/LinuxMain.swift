@@ -7,7 +7,7 @@
 //
 #if os(Linux)
     import XCTest
-    @testable import TreeTests
-    
+    @testable import UtilTests
+
     XCTMain([testCase(AVLTreeTest.allTests)])
 #endif

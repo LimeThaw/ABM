@@ -1,12 +1,14 @@
 import Foundation
 import Util
 
-test_all()
+let n = 100
 
 var graph = Graph<Agent>()
-for i in 0...100 {
-	var new_agent = Agent()
-	new_agent.happiness = Float(rand.next_normal(mu: Double(new_agent.happiness), sig2: 0.5))
+var tmpc = Counter(0)
+for i in 0..<n {
+	var newAgent = Agent(tmpc.next()!)
+	newAgent.happiness = Float(rand.nextNormal(mu: Double(newAgent.happiness), sig2: 0.5))
+	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig2: 1.0))
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
 		new_agent.daily_income = 15
 	}
@@ -14,32 +16,42 @@ for i in 0...100 {
 		new_agent.owns_gun = true
 	}*/
 
-	graph.add_node(with_value: new_agent)
+	graph.addNode(withValue: newAgent)
 }
 
-for i in 0...200 {
-	var fst = Int(rand.next()%101)
-	var snd = Int(rand.next()%101)
-	graph.add_edge(from: fst, to: snd, weight: 0.5)
+for i in 0...3*n {
+	var fst = Int(rand.next()%n)
+	var snd = Int(rand.next()%n)
+	graph.addEdge(from: fst, to: snd, weight: Float(rand.nextNormal(mu: 1.0)))
 }
 
-var crime_counts: [Int] = []
+for i in 0..<n {
+	var node = graph.find(hash: i)
+	node?.value.updateConnectedness(node: node!)
+}
+
+var crimeCounts: [(Int, Int, Int, Int)] = []
 for d in 0..<3650 {
-	var crime_count = 0
-	for i in 0...100 {
-        /* FIXME:
-		var agent = graph.find(hash: i)?.value
-		if agent?.check_crime() != 0 {
+	var crimeCount1 = 0
+	var crimeCount2 = 0
+	var cnt = graph.nodeCount
+	var hap = graph.nodeList.map({(x: Node<Agent>?) -> Float in x?.value.happiness ?? 0}).reduce(0.0, +)/Float(graph.nodeCount + 1)
+	for node in graph.nodeList {
+		var agent = node?.value
+		var decision = agent?.checkCrime() ?? 0
+		if decision == 1 {
 			//print("-> Crime on day \(d) by agent \(i)")
-			agent?.execute_crime(type: 1, on: graph.find(hash: rand.next()%101)!.value)
-			crime_count += 1
+			agent?.executeCrime(type: 1, on: graph.find(hash: rand.next()%n)?.value, within: graph)
+			crimeCount1 += 1
+		} else if decision == 2 {
+			//print("-> Crime on day \(d) by agent \(i)")
+			agent?.executeCrime(type: 2, on: graph.find(hash: rand.next()%n)?.value, within: graph)
+			crimeCount2 += 1
 		}
-         */
 	}
-	crime_counts += [crime_count]
+	crimeCounts += [(crimeCount1, crimeCount2, cnt, Int(hap*50))]
 }
 
 //print(crime_counts)
 
-try NSString(string: String(describing: crime_counts)).write(toFile: "out.txt", atomically: false, encoding: 2)
-
+try NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)

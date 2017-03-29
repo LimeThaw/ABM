@@ -7,55 +7,79 @@
 //
 import Foundation
 
+// Adds an index to an object for sortability and searchability
+struct IndexedObject<T: Hashable>: Comparable {
+	let index: Int
+	let object: T?
+
+	init(from object: T) {
+		self.object = object
+		index = object.hashValue
+	}
+
+	init(value: Int) {
+		index = value
+		object = nil
+	}
+
+	static func ==(_ one: IndexedObject<T>, _ two: IndexedObject<T>) -> Bool {
+		return one.index == two.index
+	}
+
+	static func <(_ one: IndexedObject<T>, _ two: IndexedObject<T>) -> Bool {
+		return one.index < two.index
+	}
+}
+
 public struct AVLTree<T: Comparable> {
     let root: AVLTreeNode<T>
-    
+
     public init(){
         root = .Leaf
     }
-    
+
     init(_ root: AVLTreeNode<T>){
         self.root = root
     }
-    
+
     public func value() -> T? {
         return root.value()
     }
-    
+
     public func contains(_ val: T) -> Bool {
         return root.contains(val)
     }
-    
+
     public func find(_ val: T) -> T? {
         return root.find(val)
     }
-    
+
     public func smallest() -> T? {
         return root.smallest()
     }
-    
+
     public func largest() -> T? {
         return root.largest()
     }
-    
+
     public func removeSmallest() -> (T?, AVLTree<T>) {
         let tmp = root.removeSmallest()
         return (tmp.0, AVLTree(tmp.1))
     }
-    
+
     public func removeLargest() -> (T?, AVLTree<T>) {
         let tmp = root.removeLargest()
         return (tmp.0, AVLTree(tmp.1))
     }
-    
+
     public func height() -> Int {
         return root.height()
     }
-    
+
     public func insert(_ val: T) -> AVLTree<T> {
         return AVLTree<T>(root.insert(val))
     }
-    
+
     public func delete(_ val: T) -> AVLTree<T> {
         return AVLTree<T>(root.delete(val))
     }
@@ -64,15 +88,15 @@ public struct AVLTree<T: Comparable> {
 enum AVLTreeNode<T: Comparable> {
     case Leaf
     indirect case Node(T, AVLTreeNode<T>, AVLTreeNode<T>, Int)
-    
+
     init(){
         self = .Leaf
     }
-    
+
     private init(_ val: T, _ l: AVLTreeNode<T>, _ r: AVLTreeNode<T>){
         self = .Node(val, l, r, max(l.height(), r.height())+1)
     }
-    
+
     func value() -> T? {
         switch self {
         case .Leaf:
@@ -81,11 +105,11 @@ enum AVLTreeNode<T: Comparable> {
             return val
         }
     }
-    
+
     func contains(_ val: T) -> Bool {
         return find(val) != nil
     }
-    
+
     func find(_ val: T) -> T? {
         switch self {
         case let .Node(v, l, r, _):
@@ -100,15 +124,15 @@ enum AVLTreeNode<T: Comparable> {
             return nil
         }
     }
-    
+
     func smallest() -> T? {
         return removeSmallest().0
     }
-    
+
     func largest() -> T? {
         return removeLargest().0
     }
-    
+
     func removeSmallest() -> (T?, AVLTreeNode<T>) {
         switch self {
         case let .Node(v, l, r, _):
@@ -120,7 +144,7 @@ enum AVLTreeNode<T: Comparable> {
             return (nil, .Leaf)
         }
     }
-    
+
     func removeLargest() -> (T?, AVLTreeNode<T>) {
         switch self {
         case let .Node(v, l, r, _):
@@ -132,7 +156,7 @@ enum AVLTreeNode<T: Comparable> {
             return (nil, .Leaf)
         }
     }
-    
+
     func height() -> Int {
         switch self {
         case .Leaf:
@@ -141,11 +165,11 @@ enum AVLTreeNode<T: Comparable> {
             return b
         }
     }
-    
+
     private func balance() -> BalanceType {
         return BalanceType(balance())
     }
-    
+
     private func balance() -> Int {
         switch self {
         case let .Node(_, l, r, _):
@@ -154,7 +178,7 @@ enum AVLTreeNode<T: Comparable> {
             return 0
         }
     }
-    
+
     private func rotateRight() -> AVLTreeNode<T> {
         switch self {
         case .Leaf:
@@ -171,7 +195,7 @@ enum AVLTreeNode<T: Comparable> {
             }
         }
     }
-    
+
     private func rotateLeft() -> AVLTreeNode<T> {
         switch self {
         case let .Node(v, l, r, _):
@@ -188,7 +212,7 @@ enum AVLTreeNode<T: Comparable> {
             return self
         }
     }
-    
+
     private func balance() -> AVLTreeNode<T> {
         switch self {
         case .Leaf:
@@ -204,7 +228,7 @@ enum AVLTreeNode<T: Comparable> {
             }
         }
     }
-    
+
     func insert(_ val: T) -> AVLTreeNode<T> {
         switch self {
         case .Leaf:
@@ -216,7 +240,7 @@ enum AVLTreeNode<T: Comparable> {
             return n.balance()
         }
     }
-    
+
     func delete(_ val: T) -> AVLTreeNode<T> {
         switch self {
         case .Leaf:

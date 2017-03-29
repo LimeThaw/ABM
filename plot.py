@@ -3,17 +3,40 @@ import re
 
 infile = open("out.txt", "r")
 values = infile.read()
-values = values[1:-1].split(", ")
-for val in values:
-	print val
 infile.close()
-values = [int(stringval) for stringval in values]
+
+crimes1 = []
+crimes2 = []
+population = []
+happiness = []
+values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
+for val in values:
+	crimes1.append(int(val[0]))
+	crimes2.append(int(val[1]))
+	population.append(int(val[2]))
+	happiness.append(int(val[3]))
 
 plt.plot(
 	range(0, 3650),
-	values,
-	'r-')
+	crimes1,
+	'r-',
+	label="Category 1 crimes")
+plt.plot(
+	range(0, 3650),
+	crimes2,
+	'b-',
+	label="Category 2 crimes")
+plt.plot(
+	range(0, 3650),
+	population,
+	'g-',
+	label="Total population")
+plt.plot(
+	range(0, 3650),
+	happiness,
+	'y-',
+	label="Average happiness level")
 plt.xlabel("Day")
-plt.ylabel("Crimes")
+plt.legend()
 plt.axis([0, 3650, 0, 100])
 plt.show()

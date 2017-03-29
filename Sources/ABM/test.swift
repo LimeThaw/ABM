@@ -13,6 +13,7 @@ func test_all() {
     print("Tierry time \(diff2)")
     
     // AVL tree testing
+    /*
     let tree = AVLTreee<Int>()
     let start1 = DispatchTime.now().uptimeNanoseconds
     for i in 0...1000000 {
@@ -21,5 +22,6 @@ func test_all() {
     let end1 = DispatchTime.now().uptimeNanoseconds
     let diff1 = end1-start1
     print("Timo   time \(diff1)")
+ */
     //print("Difference: \(diff1 - diff2)")
 }
