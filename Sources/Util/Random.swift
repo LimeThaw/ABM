@@ -15,7 +15,7 @@ public struct Random{
 
 	// Returns a random Int
 	public mutating func next() -> Int {
-		current = (1103515245 * current + 12345) % 2147483647
+		current = abs((1103515245 &* current &+ 12345) % 2147483647)
 		return current
 	}
 

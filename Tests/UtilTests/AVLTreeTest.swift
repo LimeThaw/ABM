@@ -143,7 +143,7 @@ class AVLTreeTest : XCTestCase {
         
         // insert entries in random order
         for _ in 0...(max-min) {
-            tree = insert(value: remaining.remove(at: rand.next() % remaining.count), into: tree)
+            tree = insert(value: remaining.remove(at: rand.next(max: remaining.count)), into: tree)
         }
         invariantsRecursive(tree)
         
