@@ -28,8 +28,8 @@ public class Node<T: Hashable>: Hashable {
 		}
 	}
 
-	public func edgeList() -> [Edge<T>?] {
-		return edges.toList().map({(x: IndexedObject<Edge<T>>) -> Edge<T>? in x.object})
+	public func edgeList() -> [Edge<T>] {
+		return edges.toList().map({$0.object!})
 	}
 
 	// Conforming to Equatable for Hashable.
@@ -66,14 +66,14 @@ public class Graph<T: Hashable> {
 	private var nodes: AVLTree<IndexedObject<Node<T>>> = AVLTree<IndexedObject<Node<T>>>()
 
 	public var nodeCount: Int { return nodes.toList().count }
-	public var nodeList: [Node<T>?] { return nodes.toList().map( { (x: IndexedObject<Node<T>>) -> Node<T>? in x.object } ) }
+    public var nodeList: [Node<T>] { return nodes.toList().map({$0.object}) }
 
 	public init() {}
 
 	// Adds a new node with the given value to the graph
 	public func addNode(withValue newValue: T) {
 		let newNode = IndexedObject<Node<T>>(from: Node(value: newValue))
-		nodes = nodes.insert(newNode)
+		addNode(newNode)
 	}
 
 	// Inserts a node into the graph
@@ -87,7 +87,7 @@ public class Graph<T: Hashable> {
 	public func removeNode(node: Node<T>) {
 		let ourNode = find(node: node.value)
 		if  ourNode == nil {
-			print("!Warning: Tried to remove node which wasn't in the graph")
+			assert(false, "!Warning: Tried to remove node which wasn't in the graph")
 			return
 		}
 
@@ -104,7 +104,7 @@ public class Graph<T: Hashable> {
 
 	// Find node with a payload
 	public func find(node: T) -> Node<T>? {
-		return nodes.find(IndexedObject<Node<T>>(value: node.hashValue))?.object
+		return find(node.hashValue)
 	}
 
 	// Find with the node's hash value

@@ -26,6 +26,10 @@ public struct Random{
     public mutating func next(max v: Int) -> Int{
         return next() % v
     }
+    
+    public mutating func next() -> Float {
+        return Float(next() as Int) / Int.max
+    }
 
 	// Returns a random, normal-distributed Float.
 	public mutating func nextNormal(mu: Double = 0, sig2: Double = 1) -> Double {

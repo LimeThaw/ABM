@@ -5,9 +5,11 @@ let n = 100
 
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
+
+// generate social network
 for i in 0..<n {
 	var newAgent = Agent(tmpc.next()!)
-	newAgent.happiness = Float(rand.nextNormal(mu: Double(newAgent.happiness), sig2: 0.5))
+	newAgent.cma.happiness = Float(rand.nextNormal(mu: Double(newAgent.cma.happiness), sig2: 0.5))
 	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig2: 1.0))
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
 		new_agent.daily_income = 15
@@ -30,24 +32,26 @@ for i in 0..<n {
 	node?.value.updateConnectedness(node: node!)
 }
 
+// run the model
 var crimeCounts: [(Int, Int, Int, Int)] = []
 for d in 0..<3650 {
 	var crimeCount1 = 0
 	var crimeCount2 = 0
 	var cnt = graph.nodeCount
-	var hap = graph.nodeList.map({(x: Node<Agent>?) -> Float in x?.value.happiness ?? 0}).reduce(0.0, +)/Float(graph.nodeCount + 1)
+	var hap = graph.nodeList.map({$0.value.happiness}).reduce(0.0, +)/Float(graph.nodeCount + 1)
 	for node in graph.nodeList {
-		var agent = node?.value
-		var decision = agent?.checkCrime() ?? 0
-		if decision == 1 {
-			//print("-> Crime on day \(d) by agent \(i)")
-			agent?.executeCrime(type: 1, on: graph.find(hash: rand.next()%n)?.value, within: graph)
-			crimeCount1 += 1
-		} else if decision == 2 {
-			//print("-> Crime on day \(d) by agent \(i)")
-			agent?.executeCrime(type: 2, on: graph.find(hash: rand.next()%n)?.value, within: graph)
-			crimeCount2 += 1
-		}
+		var agent = node.value
+		var decision = agent.checkCrime()
+        if let type = decision {
+            let nodes = graph.nodeList
+            let other = nodes[rand.next(max: nodes.count)]
+            agent.executeCrime(type: type, on: other)
+            if type == CrimeType.Murder {
+                crimeCount1 += 1
+            } else {
+                crimeCount2 += 1
+            }
+        }
 	}
 	crimeCounts += [(crimeCount1, crimeCount2, cnt, Int(hap*50))]
 }

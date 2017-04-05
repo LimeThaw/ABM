@@ -25,8 +25,9 @@ public struct Counter: Sequence, IteratorProtocol {
         if cur == Int.max {
             return nil
         } else {
+            let ret = cur
             cur += 1
-            return cur - 1
+            return ret
         }
     }
 

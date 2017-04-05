@@ -7,7 +7,7 @@
 //
 import Foundation
 
-// Adds an index to an object for sortability and searchability
+/// Adds an index to an object for sortability and searchability
 struct IndexedObject<T: Hashable>: Comparable {
 	let index: Int
 	let object: T?
@@ -137,9 +137,9 @@ enum AVLTreeNode<T: Comparable> {
         switch self {
         case let .Node(v, l, r, _):
             let next = l.removeSmallest()
-            let retTree = next.0 == nil ? r : AVLTreeNode<T>(v, next.1, r)
-            let retVal = next.0 == nil ? v : next.0
-            return (retVal, retTree.balance())
+            let retTree = {next.0 == nil ? r : AVLTreeNode<T>(v, next.1, r)}
+            let retVal = {next.0 == nil ? v : next.0}
+            return (retVal(), retTree().balance())
         default:
             return (nil, .Leaf)
         }
