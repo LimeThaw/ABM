@@ -7,6 +7,7 @@
 //
 
 import Util
+import Foundation
 
 /**
  A struct that generates crimes.
@@ -32,12 +33,13 @@ struct CrimeGenerator {
                 if ext <= 0 {
                     return false
                 }
-                cur.cma -= 0.1*ext
+                cur.cma -= 0.2*ext
+                cur.moral -= 0.01*ext
                 return true
             }
         } else {
             return { prev, cur, ext in
-                if ext <= 5 {
+                if ext <= 0 {
                     return false
                 }
                 cur.cma -= 0.001*ext
@@ -47,29 +49,31 @@ struct CrimeGenerator {
     }
     
     private func propagate(from source: Node<Agent>..., until reach: Int) {
+        let propFunc = getPropagationFunction()
         // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
         var next: [(Node<Agent>, Node<Agent>, Edge<Agent>, Int)] = []
+        next.reserveCapacity(source.count)
         // all the visitedNodes
-        var visited: [Agent] = []
+        var visited = Set<Agent>(minimumCapacity: source.count)
         for a in source {
             a.value.visited = true
-            visited = visited + [a.value]
+            visited.insert(a.value)
             for n in a.edgeList() {
-                next += [(a, n.next, n, reach)]
+                next += [(a, n.next, n, reach-1)]
             }
         }
         
         while let cur = next.popLast() {
             if !cur.1.value.visited {
-                if getPropagationFunction()(cur.0.value, cur.1.value, Float(cur.3)*cur.2.weight) {
-                    cur.1.value.visited = true
-                    visited += [cur.1.value]
+                if propFunc(cur.0.value, cur.1.value, Float(cur.3)*Float(cur.3)*cur.2.weight/2) {
                     for nextEdge in cur.1.edgeList() {
                         if !nextEdge.next.value.visited {
                             next = [(cur.1, nextEdge.next, nextEdge, cur.3-1)] + next
                         }
                     }
                 }
+                cur.1.value.visited = true
+                visited.insert(cur.1.value)
             }
         }
         
@@ -87,7 +91,8 @@ struct CrimeGenerator {
         
         /// starts the crime, meaning modifies the attributes of the initiator and returns the node of the victim or nil if the crime fails
         let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> Node<Agent>? in
-            let outcome = self.type.getOutcome(val: increaseProbability(rand.nextProb(), by: initiator.enthusiasm), for: self.weapon)
+            let succVal = increaseProbability(rand.nextProb(), by: positive(fromFS: initiator.enthusiasm))
+            let outcome = self.type.getOutcome(val: succVal, for: self.weapon)
             initiator.cma = self.type.actualUpdate(attributes: initiator.cma, for: outcome, by: ext)
             if outcome == OutcomeType.Fail {
                 return nil
@@ -99,7 +104,8 @@ struct CrimeGenerator {
         if type == CrimeType.Murder{
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
-                    self.propagate(from: node, until: 8)
+                    ini.moral += 0.5
+                    self.propagate(from: node, until: 4)
                     graph.removeNode(node: node)
                     for nextEdge in node.edgeList() {
                         nextEdge.next.value.updateConnectedness(node: nextEdge.next)
@@ -109,9 +115,13 @@ struct CrimeGenerator {
         } else {
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
-                    node.value.cma -= 0.01*Float(ext)
-                    self.propagate(from: node, until: 2*ext)
+                    ini.enthusiasm += 0.1
+                    vic.cma -= 0.16*Float(ext)
+                    vic.moral -= 0.1
+                    self.propagate(from: node, until: Int(sqrt(Double(ext))))
                 }
+                ini.enthusiasm -= 0.1
+                ini.moral += 0.1
             }
         }
     }
@@ -162,7 +172,16 @@ struct CrimeAttributes {
 }
 
 /// The following struct defines the possible crime types. The direct effect on the initiator (change of CMA) is stored in an instance, the effect on the victim and its surroundings are coded in the generate crime function
-struct CrimeType {
+struct CrimeType: CustomStringConvertible {
+    
+    var description: String {
+        switch type {
+        case .Murder:
+            return "Murder"
+        case .Other:
+            return "Other"
+        }
+    }
     
     private enum TypeE {
         case Murder
@@ -181,10 +200,10 @@ struct CrimeType {
         switch t {
         case .Murder:
             var at = CrimeAttributes()
-            at.actualCost = -1
+            at.actualCost = -0.8
             at.actualGain = -0.1
             at.wishedCost = -0.9
-            at.wishedGain = 5
+            at.wishedGain = 0.35
             at.setDifficulty(0.9, 0.4)
             at.isExtendable = false
             attributes = at
@@ -247,7 +266,7 @@ struct CrimeType {
      - parameter val: The success value. 0 is guaranteed failure, 1 is guaranteed success
     */
     func getOutcome(val: Float, for weapon: Weapon) -> OutcomeType {
-        assert(val >= 0 && val <= 1)
+        assert(val >= 0 && val <= 1, "Illegal value: \(val)")
         let successValue = increaseProbability(val, by: weapon.rawValue)
         return successValue < attributes.failRate ? .Fail : successValue < attributes.difficulty ? .Partially : .Success
     }

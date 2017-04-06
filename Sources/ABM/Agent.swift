@@ -5,8 +5,9 @@ class Agent : Hashable {
 	let ID: Int
 	let hashValue: Int
 
-    var cma: CMA = (0.5)
-    var enthusiasm: Float = 0
+    var cma: CMA = (1.5)
+    var enthusiasm: Float = 2.0
+    var moral: Float = 3.0
     
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
@@ -20,7 +21,6 @@ class Agent : Hashable {
 	init(_ id: Int) {
 		ID = id
 		hashValue = ID
-        cma = 1
 	}
 
 	convenience init() {
@@ -32,7 +32,7 @@ class Agent : Hashable {
 	}
     
     private func determineExtend() -> Int {
-        return Int(positive(fromFS: enthusiasm) * 3)
+        return Int(positive(fromFS: enthusiasm)*1.5)
     }
     
     private func determineWeapon() -> Weapon {
@@ -44,12 +44,7 @@ class Agent : Hashable {
     }
 
 	func checkCrime() -> CrimeType? {
-		//if happiness < 0.5 {
-		if connectedness * positive(fromFS: cma) < 1 {
-			return generateCrimeType()
-		} else {
-			return nil
-		}
+		return generateCrimeType()
 	}
     
     func generateCrimeType() -> CrimeType? {
@@ -61,7 +56,7 @@ class Agent : Hashable {
             let weapon = determineWeapon()
             let expectedOutcome = t.getOutcome(val: increaseProbability(0.5, by: positive(fromFS: enthusiasm)), for: weapon)
             let candidateCMA = t.wishedUpdate(attributes: cma, for: expectedOutcome, by: possibleExtend)
-            if candidateCMA > newCMA {
+            if val(candidateCMA) - moral > val(newCMA) {
                 newCMA = candidateCMA
                 type = t
             }

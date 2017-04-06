@@ -17,26 +17,26 @@ for val in values:
 	happiness.append(int(val[3]))
 
 plt.plot(
-	range(0, 3650),
+	range(0, 365),
 	crimes1,
 	'r-',
 	label="Category 1 crimes")
 plt.plot(
-	range(0, 3650),
+	range(0, 365),
 	crimes2,
 	'b-',
 	label="Category 2 crimes")
 plt.plot(
-	range(0, 3650),
+	range(0, 365),
 	population,
 	'g-',
 	label="Total population")
 plt.plot(
-	range(0, 3650),
+	range(0, 365),
 	happiness,
 	'y-',
 	label="Average happiness level")
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, 3650, 0, 100])
+plt.axis([0, 365, 0, 100])
 plt.show()

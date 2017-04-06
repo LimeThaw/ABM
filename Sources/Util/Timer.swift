@@ -28,3 +28,11 @@ public func tec() -> Int {
     start = 0
     return Int(passed)
 }
+
+public func tocS() -> Float {
+    return Float(toc()) / 1000000000
+}
+
+public func tecS() -> Float {
+    return Float(tec()) / 1000000000
+}

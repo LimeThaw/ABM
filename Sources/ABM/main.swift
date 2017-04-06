@@ -9,14 +9,15 @@ var tmpc = Counter(0)
 // generate social network
 for i in 0..<n {
 	var newAgent = Agent(tmpc.next()!)
-	newAgent.cma = Float(rand.nextNormal(mu: Double(newAgent.cma), sig2: 0.5))
-	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig2: 1.0))
+	newAgent.cma = Float(rand.nextNormal(mu: Double(newAgent.cma), sig: 4.0))
+	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig: 2.0))
+    newAgent.moral = Float(rand.nextNormal(mu: Double(newAgent.moral), sig: 2.0))
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
 		new_agent.daily_income = 15
-	}
-	if Random.get_next() % 3 == 0 { // Person owns a firearm
-		new_agent.owns_gun = true
 	}*/
+    if rand.next(prob: 0.33) { // Person owns a firearm
+		newAgent.ownsGun = true
+	}
 
 	graph.addNode(withValue: newAgent)
 }
@@ -34,7 +35,7 @@ for i in 0..<n {
 
 // run the model
 var crimeCounts: [(Int, Int, Int, Int)] = []
-for d in 0..<3650 {
+for d in 0..<365 {
 	var crimeCount1 = 0
 	var crimeCount2 = 0
 	var cnt = graph.nodeCount
@@ -43,6 +44,7 @@ for d in 0..<3650 {
 		var agent = node.value
 		var decision = agent.checkCrime()
         if let type = decision {
+            //print(type)
             let nodes = graph.nodeList
             let other = nodes[rand.next(max: nodes.count)]
             agent.executeCrime(type: type, on: other.value)
@@ -52,8 +54,15 @@ for d in 0..<3650 {
                 crimeCount2 += 1
             }
         }
+        
+        // bring a bit movement into the people
+        agent.cma += Float(rand.nextNormal(mu: 0, sig: 0.02))
+        agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
+        agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
 	}
-	crimeCounts += [(crimeCount1, crimeCount2, cnt, Int(hap*50))]
+    let entry = (crimeCount1, crimeCount2, cnt, Int(hap*50))
+	crimeCounts += [entry]
+    print(entry)
 }
 
 //print(crime_counts)

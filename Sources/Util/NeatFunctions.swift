@@ -34,7 +34,7 @@ public func ^^ (radix: Double, power: Double) -> Double {
 
 /// Converts from (-inf, inf) to [0, inf)
 public func positive(fromFS val: Float) -> Float {
-    return exp(val)
+    return val < 0 ? 1/(-val) : val+1
 }
 
 /// Converts from [0,1] to [0, inf)
@@ -44,7 +44,7 @@ public func positive(fromProb val: Float) -> Float {
 
 /// converts from [0, inf) to (-inf, inf)
 public func fullScale(fromPos val: Float) -> Float {
-    return log(val)
+    return val < 1 ? -1/val : val-1
 }
 
 /// converts from [0, 1] to (-inf, inf)
@@ -70,4 +70,14 @@ public func probability(fromFS val: Float) -> Float {
 public func increaseProbability(_ p: Float, by factor: Float) -> Float {
     assert(0 <= p && p <= 1)
     return probability(fromPos: positive(fromProb: p) * factor)
+}
+
+/**
+ Converts a value from range [0,1] to a range [lo, up]
+ - parameter val: The value to be converted
+ - parameter lo: The lower bound of the range
+ - parameter up: The upper bound of the range
+*/
+public func probToRange(from val: Float, lo: Float, up: Float) -> Float {
+    return val * (up-lo) + lo
 }
