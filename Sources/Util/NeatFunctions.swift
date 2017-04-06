@@ -27,7 +27,7 @@ public func ^^ (radix: Double, power: Double) -> Double {
 
 /*
  The following functions define conversions between different scales. The following scales are defined with their neutral value and the case(s) for which to use them.
- (-inf, inf) : neutral value: 0. Good for addition / subtraction. Attributes are normally expressend in this scale with a uniform / normal distribution.
+ (-inf, inf) : neutral value: 0. Good for addition / subtraction. Attributes are normally expressend in this scale with a uniform / normal (or other) distribution.
  [0, inf) : neutral value: 1. Good for multiplication. Usually used to express attributes as factors.
  [0, 1]: neutral value: 0.5. Good for expressing probability. Usually used to express a attribute in a specific range.
  */
@@ -69,5 +69,5 @@ public func probability(fromFS val: Float) -> Float {
 /// increases the probability by a positive factor
 public func increaseProbability(_ p: Float, by factor: Float) -> Float {
     assert(0 <= p && p <= 1)
-    return 1 -  exp(factor*(-log(1-p)))
+    return probability(fromPos: positive(fromProb: p) * factor)
 }

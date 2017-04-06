@@ -40,7 +40,7 @@ struct CrimeGenerator {
                 if ext <= 5 {
                     return false
                 }
-                cur.cma -= 0.01*ext
+                cur.cma -= 0.001*ext
                 return true
             }
         }
@@ -109,7 +109,7 @@ struct CrimeGenerator {
         } else {
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
-                    node.value.cma -= 0.1*Float(ext)
+                    node.value.cma -= 0.01*Float(ext)
                     self.propagate(from: node, until: 2*ext)
                 }
             }
@@ -164,7 +164,7 @@ struct CrimeAttributes {
 /// The following struct defines the possible crime types. The direct effect on the initiator (change of CMA) is stored in an instance, the effect on the victim and its surroundings are coded in the generate crime function
 struct CrimeType {
     
-    fileprivate enum TypeE {
+    private enum TypeE {
         case Murder
         case Other
     }
@@ -184,7 +184,7 @@ struct CrimeType {
             at.actualCost = -1
             at.actualGain = -0.1
             at.wishedCost = -0.9
-            at.wishedGain = 0.5
+            at.wishedGain = 5
             at.setDifficulty(0.9, 0.4)
             at.isExtendable = false
             attributes = at

@@ -84,14 +84,14 @@ class Agent : Hashable {
 
 /// crime motivating attributes: first: happiness
 typealias CMA = (Float)
-
+/*
 func +(_ lhs: CMA, _ rhs: CMA) -> CMA {
     return (lhs+rhs)
 }
 
 func -(_ lhs: CMA, _ rhs: CMA) -> CMA {
     return (lhs-rhs)
-}
+}*/
 
 func val(_ at: CMA) -> Float{
     return at
@@ -100,7 +100,7 @@ func val(_ at: CMA) -> Float{
 func abs(_ arg: CMA) -> Float {
     return sqrt(arg*arg)
 }
-
+/*
 func ==(_ lhs: CMA, _ rhs: CMA) -> Bool {
     return val(lhs) == val(rhs)
 }
@@ -120,3 +120,4 @@ func <=(_ lhs: CMA, _ rhs: CMA) -> Bool {
 func >=(_ lhs: CMA, _ rhs: CMA) -> Bool {
     return val(lhs) >= val(rhs)
 }
+*/
