@@ -40,7 +40,7 @@ public class Node<T: Hashable>: Hashable {
 
 // A simple connection to another node
 public struct Edge<T: Hashable>: Hashable {
-	let next: Node<T> // The other node of the edge
+	public let next: Node<T> // The other node of the edge
 	public var weight: Float // The weight of the edge
 
 	public var hashValue: Int { return next.value.hashValue }
@@ -66,14 +66,13 @@ public class Graph<T: Hashable> {
 	private var nodes: AVLTree<IndexedObject<Node<T>>> = AVLTree<IndexedObject<Node<T>>>()
 
 	public var nodeCount: Int { return nodes.toList().count }
-    public var nodeList: [Node<T>] { return nodes.toList().map({$0.object}) }
+    public var nodeList: [Node<T>] { return nodes.toList().map({$0.object!}) }
 
 	public init() {}
 
 	// Adds a new node with the given value to the graph
 	public func addNode(withValue newValue: T) {
-		let newNode = IndexedObject<Node<T>>(from: Node(value: newValue))
-		addNode(newNode)
+        addNode(Node(value: newValue))
 	}
 
 	// Inserts a node into the graph
@@ -104,7 +103,7 @@ public class Graph<T: Hashable> {
 
 	// Find node with a payload
 	public func find(node: T) -> Node<T>? {
-		return find(node.hashValue)
+        return find(hash: node.hashValue)
 	}
 
 	// Find with the node's hash value

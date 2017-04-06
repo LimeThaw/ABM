@@ -6,6 +6,8 @@
 //
 //
 
+import Util
+
 /**
  A struct that generates crimes.
  This struct defines what a crime exactly is.
@@ -25,8 +27,7 @@ struct CrimeGenerator {
      - returns: the propagation function
     */
     private func getPropagationFunction() -> (Agent, Agent, Float) -> Bool {
-        switch type {
-        case CrimeType.Murder:
+        if type == CrimeType.Murder {
             return { prev, cur, ext in
                 if ext <= 0 {
                     return false
@@ -34,7 +35,7 @@ struct CrimeGenerator {
                 cur.cma -= 0.1*ext
                 return true
             }
-        default:
+        } else {
             return { prev, cur, ext in
                 if ext <= 5 {
                     return false
@@ -52,20 +53,20 @@ struct CrimeGenerator {
         var visited: [Agent] = []
         for a in source {
             a.value.visited = true
-            visited += a.value
-            for n in a.edgeList() ?? [] {
-                next += (cur, n.next, n, reach)
+            visited = visited + [a.value]
+            for n in a.edgeList() {
+                next += [(a, n.next, n, reach)]
             }
         }
         
         while let cur = next.popLast() {
             if !cur.1.value.visited {
-                if getPropagationFunction()(cur.0, cur.1, cur.3*cur.2.weight) {
+                if getPropagationFunction()(cur.0.value, cur.1.value, Float(cur.3)*cur.2.weight) {
                     cur.1.value.visited = true
-                    visited += cur.1.value
+                    visited += [cur.1.value]
                     for nextEdge in cur.1.edgeList() {
                         if !nextEdge.next.value.visited {
-                            next = (cur.1, nextEdge.next, nextEdge, cur.3-1) + next
+                            next = [(cur.1, nextEdge.next, nextEdge, cur.3-1)] + next
                         }
                     }
                 }
@@ -86,8 +87,8 @@ struct CrimeGenerator {
         
         /// starts the crime, meaning modifies the attributes of the initiator and returns the node of the victim or nil if the crime fails
         let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> Node<Agent>? in
-            let outcome = type.getOutcome(val: increaseProbability(rand.next(), initiator.enthusiasm), for: weapon)
-            initiator.cma = type.actualUpdate(attributes: initiator.cma, for: outcome, by: ext)
+            let outcome = self.type.getOutcome(val: increaseProbability(rand.nextProb(), by: initiator.enthusiasm), for: self.weapon)
+            initiator.cma = self.type.actualUpdate(attributes: initiator.cma, for: outcome, by: ext)
             if outcome == OutcomeType.Fail {
                 return nil
             } else {
@@ -95,22 +96,21 @@ struct CrimeGenerator {
             }
         }
         
-        switch type {
-        case CrimeType.Murder:
+        if type == CrimeType.Murder{
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
-                    propagate(from: node, until: 8)
+                    self.propagate(from: node, until: 8)
                     graph.removeNode(node: node)
                     for nextEdge in node.edgeList() {
                         nextEdge.next.value.updateConnectedness(node: nextEdge.next)
                     }
                 }
             }
-        default:
+        } else {
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
-                    node.value.cma.happiness -= 0.1*ext
-                    propagate(from: node, until: 2*ext)
+                    node.value.cma -= 0.1*Float(ext)
+                    self.propagate(from: node, until: 2*ext)
                 }
             }
         }
@@ -140,7 +140,7 @@ struct CrimeAttributes {
     /// the percentage of failures
     private(set) var failRate: Float
     
-    mutating func setDifficulty(_ d: Flot, _ f: Float) {
+    mutating func setDifficulty(_ d: Float, _ f: Float) {
         assert(f < d && f >= 0 && f < 1 && d > 0 && d <= 1)
         difficulty = d
         failRate = f
@@ -164,20 +164,20 @@ struct CrimeAttributes {
 /// The following struct defines the possible crime types. The direct effect on the initiator (change of CMA) is stored in an instance, the effect on the victim and its surroundings are coded in the generate crime function
 struct CrimeType {
     
-    fileprivate enum Type {
+    fileprivate enum TypeE {
         case Murder
         case Other
     }
     
     let attributes: CrimeAttributes
-    private let type: Type
+    private let type: TypeE
     
     static let Murder = CrimeType(.Murder)
     static let Other = CrimeType(.Other)
     
     static let all = [Murder, Other]
     
-    private init(_ t: Type) {
+    private init(_ t: TypeE) {
         switch t {
         case .Murder:
             var at = CrimeAttributes()
@@ -190,15 +190,12 @@ struct CrimeType {
             attributes = at
         case .Other:
             attributes = CrimeAttributes()
-        default:
-            assert(false)
-            break
         }
         type = t
     }
     
     static func ==(lhs: CrimeType, rhs: CrimeType) -> Bool {
-        lhs.type == rhs.type
+        return lhs.type == rhs.type
     }
     
     /**
@@ -208,17 +205,18 @@ struct CrimeType {
      - parameter by: the extend of the crime
     */
     fileprivate func actualUpdate(attributes: CMA, for outcome: OutcomeType, by ext: Int) -> CMA{
-        if !attributes.isExtendable {
-            ext = 1
+        var actualExtend = Float(ext)
+        if !self.attributes.isExtendable {
+            actualExtend = 1
         }
         switch outcome {
         case .Fail:
-            return attributes + self.attributes.actualCost*ext
+            return attributes + self.attributes.actualCost*actualExtend
         case .Partially:
-            return attributes + self.attributes.actualCost*ext
-            return attributes + self.attributes.actualGain*ext
+            let ret = attributes + self.attributes.actualCost*actualExtend
+            return ret + self.attributes.actualGain*actualExtend
         default:
-            return attributes + self.attributes.actualGain*ext
+            return attributes + self.attributes.actualGain*actualExtend
         }
     }
     
@@ -229,17 +227,18 @@ struct CrimeType {
      - parameter by: the extend of the crime
      */
     func wishedUpdate(attributes: CMA, for outcome: OutcomeType, by ext: Int) -> CMA{
-        if !attributes.isExtendable {
-            ext = 1
+        var actualExtend = Float(ext)
+        if !self.attributes.isExtendable {
+            actualExtend = 1
         }
         switch outcome {
         case .Fail:
-            return attributes + self.attributes.wishedCost*ext
+            return attributes + self.attributes.wishedCost*actualExtend
         case .Partially:
-            return attributes + self.attributes.wishedCost*ext
-            return attributes + self.attributes.wishedGain*ext
+            let ret = attributes + self.attributes.wishedCost*actualExtend
+            return ret + self.attributes.wishedGain*actualExtend
         default:
-            return attributes + self.attributes.wishedGain*ext
+            return attributes + self.attributes.wishedGain*actualExtend
         }
     }
     
@@ -249,7 +248,7 @@ struct CrimeType {
     */
     func getOutcome(val: Float, for weapon: Weapon) -> OutcomeType {
         assert(val >= 0 && val <= 1)
-        var successValue = increaseProbability(val, by: weapon)
-        return val < type.attributes.failRate ? .Fail : val < type.attributes.difficulty ? .Partially : .Success
+        let successValue = increaseProbability(val, by: weapon.rawValue)
+        return successValue < attributes.failRate ? .Fail : successValue < attributes.difficulty ? .Partially : .Success
     }
 }

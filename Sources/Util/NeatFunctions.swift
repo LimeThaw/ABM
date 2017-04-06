@@ -69,8 +69,5 @@ public func probability(fromFS val: Float) -> Float {
 /// increases the probability by a positive factor
 public func increaseProbability(_ p: Float, by factor: Float) -> Float {
     assert(0 <= p && p <= 1)
-    if factor < 1 {
-        factor = 1/(1-factor)
-    }
     return 1 -  exp(factor*(-log(1-p)))
 }

@@ -9,7 +9,7 @@ var tmpc = Counter(0)
 // generate social network
 for i in 0..<n {
 	var newAgent = Agent(tmpc.next()!)
-	newAgent.cma.happiness = Float(rand.nextNormal(mu: Double(newAgent.cma.happiness), sig2: 0.5))
+	newAgent.cma = Float(rand.nextNormal(mu: Double(newAgent.cma), sig2: 0.5))
 	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig2: 1.0))
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
 		new_agent.daily_income = 15
@@ -38,14 +38,14 @@ for d in 0..<3650 {
 	var crimeCount1 = 0
 	var crimeCount2 = 0
 	var cnt = graph.nodeCount
-	var hap = graph.nodeList.map({$0.value.happiness}).reduce(0.0, +)/Float(graph.nodeCount + 1)
+	var hap = graph.nodeList.map({$0.value.cma}).reduce(0.0, +)/Float(graph.nodeCount + 1)
 	for node in graph.nodeList {
 		var agent = node.value
 		var decision = agent.checkCrime()
         if let type = decision {
             let nodes = graph.nodeList
             let other = nodes[rand.next(max: nodes.count)]
-            agent.executeCrime(type: type, on: other)
+            agent.executeCrime(type: type, on: other.value)
             if type == CrimeType.Murder {
                 crimeCount1 += 1
             } else {
