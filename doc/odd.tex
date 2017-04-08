@@ -16,11 +16,11 @@
 	\maketitle
 
 	\section{Purpose}
-		The purpose of the model is to model human behavior in regard to ciminal activity involving
+		The purpose of the model is to model human behavior in regard to criminal activity involving
 		firearms and to help identify ways in which we can reduce the number of incidences of such
 		activity.
 		We hypothesize that increasing the penalties for violent crimes involving firearms and the
-		restriction of firearm aquisition and possession would lower the rate of violent crimes
+		restriction of firearm acquisition and possession would lower the rate of violent crimes
 		involving guns.
 
 	\section{Entities, state variables, and scales} \label{entities}
@@ -41,7 +41,7 @@
 				on their age.
 			\item Happiness:\\
 				The main optimization parameter of the agent - He will try to maximize it (via
-				crimes). May be modelled  with other, more subtle emotions in a later stage.
+				crimes). May be modeled  with other, more subtle emotions in a later stage.
 			\item Wealth:\\
 				An agent with little wealth is more inclined to commit a crime that helps him
 				increase this attribute.
@@ -57,7 +57,7 @@
 		attribute of the agent.
 		\par
 		The agents are simulated within a social network with undirected, weighted edges.
-		The edges represent aquaintances and the weights how well the agents know each other,
+		The edges represent acquaintances and the weights how well the agents know each other,
 		or how close they are.
 		All agents together are supposed to approximate a small town or similar social group or
 		structure. Each simulation epoch corresponds to a single day, and the whole simulation
@@ -79,12 +79,12 @@
 		\begin{lstlisting}[caption=The daily global update routine, label=l_global_update]
 	fun updateWorld() {
 
-		for agent in network {
-			decision := agent.chooseCrime()
-			if decision /= NO_CRIME {
-				agent.executeCrime(decision)
-			}
+	  for agent in network {
+		decision := agent.chooseCrime()
+		if decision /= NO_CRIME {
+		  agent.executeCrime(decision)
 		}
+	  }
 
 		network.updateNodes()
 
@@ -97,24 +97,53 @@
 
 	\section{Design principles}
 		\subsection{Basic Principles}
-			We have considered several theories and models from sociology, and tried to incorporate
-			their core aspects into a decision making scheme for our agents. These are:
+			As a basis for our model we selected three theories with rather different
+			approaches to explaining and modeling behavior. The combination of different
+			views gives a more complete picture of behavioral influences than one theory by
+			itself. The theories and their influence on the model are explained in short below.
 			\begin{itemize}
 				\item Rational choice theory:\\
-					\verb|https://books.google.ch/books?hl=en&lr=&id=QaUgne7fgYUC&oi=fnd&pg=PA126&dq=Rational+choice+theory&ots=2zRVUwh29g&sig=KwCK6O8B1nuldtPBOVwF5sOVcWs#v=onepage&q=Rational%20choice%20theory&f=false|
-					Also: Social exchange theory:\\
-					\verb|http://www.annualreviews.org/doi/pdf/10.1146/annurev.so.02.080176.002003|
+					Rational choice theory attempts to explain human behavior by
+					arguing that the choices of a person are always such that they improve the
+					state or assets of the individual.\cite{rationalchoice} The idea comes from
+					the concept of a \textit{homo economicus} in economics. Although this concept
+					by itself is no longer considered complete, we argue that it is useful for our
+					model given the right prediction and evaluation functions for possible choices.
+					Also we try to compensate its weaknesses with the application of other
+					theories.
+					\par TODO: Elaborate...
 
 				\item Social learning theory:\\
-					\verb|https://books.google.ch/books?hl=en&lr=&id=6vnOPg_tpBUC&oi=fnd&pg=PA106&dq=Social+learning+theory&ots=hY9zMSEr64&sig=iOYC2COKt8159Ezojs2RcQrIQj8#v=onepage&q=Social%20learning%20theory&f=false|
-					Moral values propagating within the graph (and maybe criminal records
-					influence?)
+					This theory's approach to behavior modeling is different from rational choice
+					theory in that it expects that the individual is primary driven by external
+					forces, i.e. its social environment, instead of internal ones, i.e. its
+					tendency to aim for the maximum personal gain. \cite{sociallearning} gives
+					a good overview and explanation of the concept. The articles mentions four
+					important aspects in the social learning theory:\par
+					\textbf{Differential reinforcement} introduces the concept of context and its
+					influence on agent behavior. We can support that in our model by having
+					agents consider the moral values of their neighbors in their decisions, and
+					varying edge weights accordingly upon the execution of a crime.\par
+					\textbf{Vicarious learning} adds the notion of an agent observing its neighbors and
+					learning from their actions. We model this aspect through the propagation
+					of moral values within the social network.\par
+					\textbf{Cognitive processes} are not used in our model. The environmental
+					variables are used as they are in the decision and learning processes, as they
+					already represent abstract concepts.\par
+					\textbf{Reciprocal determinism} introduces the infamous chicken-egg-problem.
+					It considers that an action may result in conditioning that promotes the
+					original action, thus effectively creating a reinforcement feedback loop.
+					Our model does not consider this aspect of the theory.
 
 				\item Social control theory:\\
-					Modeled with moral and partially with punishment and expectations.
+					In \cite{socialcontrol}, Hirschi describes the connection between deviant
+					or abnormal behavior and lack of attachment to others within one's social
+					environment. We incorporate this notion into our model with the weights of
+					the edges, and the computed attribute of connectedness, which is defined
+					as the sum of squares of all weights on edges to or from an agent. We use
+					the sum of squares to account for the importance of very close relationships
+					like family ties.
 			\end{itemize}
-			\par
-			TODO: Maybe find more theories, describe them further and how they are used in our model.
 			\par
 			TODO: How do moral values spread?
 
@@ -122,7 +151,7 @@
 			The most important output of the simulation is the rate of violent crimes involving
 			firearms. Thus it is naturally meant to be emergent. The gun possession rate and
 			wealth is part
-			of the simulation input, and chosed in accordance with statistics. Since gun
+			of the simulation input, and chosen in accordance with statistics. Since gun
 			possession is never changed and wealth only changed randomly, none of them are
 			emergent.
 			The age parameter changes in natural, linear fashion independent of the state of the
@@ -207,7 +236,7 @@
 			list of tuples, where each list entry carries the data for a single day, and the
 			values in the tuples represent the different categories. For better visualization and
 			analyzation they are then rendered into figures and processed into tables using a
-			seperate program.
+			separate program.
 			\par
 			Following are the main categories we divide our crimes in:
 			\begin{itemize}
