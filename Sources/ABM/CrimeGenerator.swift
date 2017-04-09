@@ -8,6 +8,7 @@
 
 import Util
 import Foundation
+import Buckets
 
 /**
  A struct that generates crimes.
@@ -51,29 +52,29 @@ struct CrimeGenerator {
     private func propagate(from source: Node<Agent>..., until reach: Int) {
         let propFunc = getPropagationFunction()
         // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
-        var next: [(Node<Agent>, Node<Agent>, Edge<Agent>, Int)] = []
-        next.reserveCapacity(source.count)
+        var next = Queue<(Node<Agent>, Node<Agent>, Edge<Agent>, Int)>()
         // all the visitedNodes
-        var visited = Set<Agent>(minimumCapacity: source.count)
+        var visited = Stack<Agent>()
         for a in source {
             a.value.visited = true
-            visited.insert(a.value)
+            visited.push(a.value)
             for n in a.edgeList() {
-                next += [(a, n.next, n, reach-1)]
+                next.enqueue((a, n.next, n, reach-1))
             }
         }
         
-        while let cur = next.popLast() {
+        while !next.isEmpty {
+            let cur = next.dequeue()
             if !cur.1.value.visited {
                 if propFunc(cur.0.value, cur.1.value, Float(cur.3)*Float(cur.3)*cur.2.weight/2) {
                     for nextEdge in cur.1.edgeList() {
                         if !nextEdge.next.value.visited {
-                            next = [(cur.1, nextEdge.next, nextEdge, cur.3-1)] + next
+                            next.enqueue((cur.1, nextEdge.next, nextEdge, cur.3-1))
                         }
                     }
                 }
                 cur.1.value.visited = true
-                visited.insert(cur.1.value)
+                visited.push(cur.1.value)
             }
         }
         

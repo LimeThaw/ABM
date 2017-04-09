@@ -34,8 +34,11 @@ for i in 0..<n {
 }
 
 // run the model
+let days = 365
 var crimeCounts: [(Int, Int, Int, Int)] = []
-for d in 0..<365 {
+var totalTime = 0
+for d in 0..<days {
+    tic()
 	var crimeCount1 = 0
 	var crimeCount2 = 0
 	var cnt = graph.nodeCount
@@ -62,8 +65,11 @@ for d in 0..<365 {
 	}
     let entry = (crimeCount1, crimeCount2, cnt, Int(hap*10))
 	crimeCounts += [entry]
-    print(entry)
+    //print(entry)
+    totalTime += toc()
 }
+
+print("Average time for one day: \(Float(totalTime)/1000000000/Float(days))s")
 
 //print(crime_counts)
 
