@@ -5,5 +5,8 @@ let package = Package(
     targets: [
         Target(name: "Util", dependencies: []),
         Target(name: "ABM", dependencies: ["Util"])
+    ],
+    dependencies: [
+        .Package(url: "./SwiftDataStructures", majorVersion: 1)
     ]
 )

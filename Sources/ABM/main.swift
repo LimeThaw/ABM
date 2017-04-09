@@ -60,7 +60,7 @@ for d in 0..<365 {
         agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
         agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
 	}
-    let entry = (crimeCount1, crimeCount2, cnt, Int(hap*50))
+    let entry = (crimeCount1, crimeCount2, cnt, Int(hap*10))
 	crimeCounts += [entry]
     print(entry)
 }
