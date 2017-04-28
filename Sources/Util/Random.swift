@@ -4,6 +4,8 @@ import Dispatch
 // Simple, non-thread-safe, non-cryptographic pseudo-random number generator
 // using linear congruence
 public struct Random{
+    
+    /// The current raw value of this random number generator (the value of the last call to next() )
 	private(set) var current: Int
 
     public init(_ seed: Int){

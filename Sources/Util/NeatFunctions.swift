@@ -81,3 +81,24 @@ public func increaseProbability(_ p: Float, by factor: Float) -> Float {
 public func probToRange(from val: Float, lo: Float, up: Float) -> Float {
     return val * (up-lo) + lo
 }
+
+
+// Function for memoization
+
+
+/// Turns a pure function without parameters into a memoizing function where the memoized value can be modified
+public func memoizeIO<T>(_ fun: @escaping () -> T) -> ((inout T) -> ()) -> T {
+    var cache: T? = nil
+    return { (f: (inout T) -> ()) -> T in
+        if cache == nil {
+            cache = fun()
+        }
+        f(&cache!)
+        return cache!
+    }
+}
+
+/// Turns a pure function without parameters into a memoizing function
+public func memoize<T>(_ fun: @escaping () -> T) -> () -> T {
+    return {memoizeIO(fun)({_ in})}
+}

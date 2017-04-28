@@ -9,5 +9,5 @@
     import XCTest
     @testable import UtilTests
 
-    XCTMain([testCase(AVLTreeTest.allTests)])
+    XCTMain([testCase(AVLTreeTest.allTests), testCase(LazyListTest.allTests)])
 #endif
