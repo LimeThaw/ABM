@@ -33,8 +33,8 @@ class AVLTreeTest : XCTestCase {
             XCTAssert(rh+1 == h || rh + 2 == h, "invalid right height: \(rh) with own height: \(h)")
             let lv = l.value()
             let rv = r.value()
-            XCTAssert(lv == nil || lv! < v, "invalid left value: \(lv) with own value: \(v)")
-            XCTAssert(rv == nil || rv! > v, "invalid right value: \(rv) with own value: \(v)")
+            XCTAssert(lv == nil || lv! < v, "invalid left value: \(lv!) with own value: \(v)")
+            XCTAssert(rv == nil || rv! > v, "invalid right value: \(rv!) with own value: \(v)")
         default:
             XCTAssert(true)
         }

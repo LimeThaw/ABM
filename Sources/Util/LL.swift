@@ -10,10 +10,10 @@ import Foundation
 
 /// A singly linked list that computes its tail only when needed
 public struct LazyList<T> {
-    let root: LLE<T>
+    fileprivate let root: LLE<T>
     
     /// Initializes this list with a given root, accumulator and lazy counter
-    init(_ root: LLE<T>, _ accu: Int, _ cnt: @escaping () -> Int) {
+    fileprivate init(_ root: LLE<T>, _ accu: Int, _ cnt: @escaping () -> Int) {
         self.root = root
         self.hd = root.val()
         self.lazyCounter = cnt
@@ -41,8 +41,8 @@ public struct LazyList<T> {
     /// the memoizing function that counts the length of this list
     private let memoizedCount: () -> Int
     /**
-     Returns the length of this lazy list. Requesting this property forces the list to be evaluated as far as required to identify the length.
-     Therefore request this property only when really needed and use other methods, like isEmpty() instead when possible.
+     Returns the length of this lazy list. Requesting this property forces the list to be evaluated as far as required to identify the length (which might be a lot when lazy append and prepend were used).
+     Therefore request this property only when really needed (or when no append or prepend was used) and use other methods, like isEmpty() instead when possible.
     */
     public var count: Int {
         get {
@@ -98,6 +98,15 @@ extension LazyList: Sequence {
     }
 }
 
+extension LazyList: ExpressibleByArrayLiteral {
+    public init(arrayLiteral elements: T...) {
+        self.init()
+        for element in elements.reversed() {
+            self = element <- self
+        }
+    }
+}
+
 /**
  Append operator for this list
  */
@@ -129,13 +138,15 @@ public func <- <T>(lhs: T, rhs: LazyList<T>) -> LazyList<T> {
  */
 infix operator <~: AdditionPrecedence
 public func <~ <T>(lhs: T, rhs: @autoclosure @escaping () -> LazyList<T>) -> LazyList<T> {
-    let memoized = memoize(rhs)
-    return LazyList<T>(.Node(lhs, {memoized().root}), 1, {memoized().count})
+    // make the function that evaluates the right hand side to a memoizing function
+    let memoRHS = memoize(rhs)
+    // return the new lazy list
+    return LazyList<T>(.Node(lhs, {memoRHS().root}), 1, {memoRHS().count})
 }
 
 
 /// The enum that forms the core of the linked list
-enum LLE<T> {
+private enum LLE<T> {
     case End
     indirect case Node(T, () -> LLE<T>)
     
@@ -159,11 +170,11 @@ enum LLE<T> {
     }
 }
 
-func +<T>(lhs: LLE<T>, rhs: @autoclosure @escaping () -> LLE<T>) -> LLE<T> {
+private func +<T>(lhs: LLE<T>, rhs: @autoclosure @escaping () -> LLE<T>) -> LLE<T> {
     switch lhs {
     case .End:
         return rhs()
     case let .Node(v, tl):
-        return .Node(v, {tl()+rhs})
+        return .Node(v, {tl()+rhs()})
     }
 }

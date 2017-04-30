@@ -7,14 +7,25 @@
 //
 
 public struct Queue<T> {
-    fileprivate let l: LazyList<T>
-    fileprivate let r: LazyList<T>
+    fileprivate var data = LazyList<T>()
     
-    fileprivate static func rot(_ l: LazyList<T>, _ r: LazyList<T>, _ a: LazyList<T>) -> LazyList<T> {
-        if l.isEmpty() {
-            return r.hd! <- a
-        } else {
-            return l.hd! <~ rot(l.tl, r.tl, r.hd! <- a)
-        }
+    public init(){}
+    
+    public var count: Int {
+        get { return data.count }
+    }
+    
+    public var isEmpty: Bool {
+        get { return data.isEmpty() }
+    }
+    
+    public mutating func insert(_ elem: T){
+        data = data + [elem]
+    }
+    
+    public mutating func remove() -> T? {
+        let ret = data.hd
+        data = data.tl
+        return ret
     }
 }

@@ -100,5 +100,11 @@ public func memoizeIO<T>(_ fun: @escaping () -> T) -> ((inout T) -> ()) -> T {
 
 /// Turns a pure function without parameters into a memoizing function
 public func memoize<T>(_ fun: @escaping () -> T) -> () -> T {
-    return {memoizeIO(fun)({_ in})}
+    var cache: T? = nil
+    return {
+        if cache == nil {
+            cache = fun()
+        }
+        return cache!
+    }
 }
