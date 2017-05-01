@@ -69,10 +69,10 @@ class Agent : Hashable {
         cg.generateCrime()(self, other, determineExtend())
 	}
 
-	func updateConnectedness(node: Node<Agent>) {
+	func updateConnectedness(node: GraphNode<Agent>) {
 		connectedness = 0
-		for edge in node.edgeList() {
-			connectedness += pow(edge.weight, 2)
+		for edge in node.edges {
+			connectedness += pow(edge.value.weight, 2)
 		}
 	}
 }

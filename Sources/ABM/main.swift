@@ -41,15 +41,15 @@ for d in 0..<days {
     tic()
 	var crimeCount1 = 0
 	var crimeCount2 = 0
-	var cnt = graph.nodeCount
-	var hap = graph.nodeList.map({$0.value.cma}).reduce(0.0, +)/Float(graph.nodeCount + 1)
-	for node in graph.nodeList {
-		var agent = node.value
+	var cnt = graph.nodes.count
+	var hap = graph.nodes.values.map({$0.value.cma}).reduce(0.0, +)/Float(graph.nodes.count + 1)
+	for node in graph.nodes {
+		var agent = node.value.value
 		var decision = agent.checkCrime()
         if let type = decision {
             //print(type)
-            let nodes = graph.nodeList
-            let other = nodes[rand.next(max: nodes.count)]
+            let nextIndex = rand.next(max: graph.nodes.count)
+            let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
             agent.executeCrime(type: type, on: other.value)
             if type == CrimeType.Murder {
                 crimeCount1 += 1

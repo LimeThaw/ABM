@@ -48,17 +48,17 @@ struct CrimeGenerator {
         }
     }
     
-    private func propagate(from source: Node<Agent>..., until reach: Int) {
+    private func propagate(from source: GraphNode<Agent>..., until reach: Int) {
         let propFunc = getPropagationFunction()
         // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
-        var next = Queue<(Node<Agent>, Node<Agent>, Edge<Agent>, Int)>()
+        var next = Queue<(GraphNode<Agent>, GraphNode<Agent>, Edge<Agent>, Int)>()
         // all the visitedNodes
-        var visited = LazyList<Agent>()
+        var visited: [Agent] = []
         for a in source {
             a.value.visited = true
-            visited = a.value <- visited
-            for n in a.edgeList() {
-                next.insert((a, n.next, n, reach-1))
+            visited.append(a.value)
+            for n in a.edges {
+                next.insert((a, n.value.next, n.value, reach-1))
             }
         }
         
@@ -66,14 +66,14 @@ struct CrimeGenerator {
             let cur = next.remove()!
             if !cur.1.value.visited {
                 if propFunc(cur.0.value, cur.1.value, Float(cur.3)*Float(cur.3)*cur.2.weight/2) {
-                    for nextEdge in cur.1.edgeList() {
-                        if !nextEdge.next.value.visited {
-                            next.insert((cur.1, nextEdge.next, nextEdge, cur.3-1))
+                    for nextEdge in cur.1.edges {
+                        if !nextEdge.value.next.value.visited {
+                            next.insert((cur.1, nextEdge.value.next, nextEdge.value, cur.3-1))
                         }
                     }
                 }
                 cur.1.value.visited = true
-                visited = cur.1.value <- visited
+                visited.append(cur.1.value)
             }
         }
         
@@ -90,7 +90,7 @@ struct CrimeGenerator {
     func generateCrime() -> (Agent, Agent, Int) -> Void {
         
         /// starts the crime, meaning modifies the attributes of the initiator and returns the node of the victim or nil if the crime fails
-        let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> Node<Agent>? in
+        let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> GraphNode<Agent>? in
             let succVal = increaseProbability(rand.nextProb(), by: positive(fromFS: initiator.enthusiasm))
             let outcome = self.type.getOutcome(val: succVal, for: self.weapon)
             initiator.cma = self.type.actualUpdate(attributes: initiator.cma, for: outcome, by: ext)
@@ -107,8 +107,8 @@ struct CrimeGenerator {
                     ini.moral += 0.5
                     self.propagate(from: node, until: 4)
                     graph.removeNode(node: node)
-                    for nextEdge in node.edgeList() {
-                        nextEdge.next.value.updateConnectedness(node: nextEdge.next)
+                    for nextEdge in node.edges {
+                        nextEdge.value.next.value.updateConnectedness(node: nextEdge.value.next)
                     }
                 }
             }

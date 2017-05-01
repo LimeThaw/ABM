@@ -115,6 +115,13 @@ public func +<T>(lhs: LazyList<T>, rhs: LazyList<T>) -> LazyList<T> {
 }
 
 /**
+ Append one element
+ */
+public func +<T>(lhs: LazyList<T>, rhs: T) -> LazyList<T> {
+    return LazyList<T>(lhs.root + .Node(rhs, {.End}), lhs.accumulator+1, lhs.lazyCounter)
+}
+
+/**
  Lazy append operator: The right hand side is wrapped to a closure and executed when needed
  */
 infix operator ++: AdditionPrecedence
