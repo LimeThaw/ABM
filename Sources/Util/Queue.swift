@@ -6,29 +6,29 @@
 //
 //
 
-public struct PFQueue<T> {
+/*public struct PFQueue<T> {
     fileprivate var data = LazyList<T>()
-    
+
     public init(){}
-    
+
     public var count: Int {
         get { return data.count }
     }
-    
+
     public var isEmpty: Bool {
         get { return data.isEmpty() }
     }
-    
+
     public mutating func insert(_ elem: T){
         data = data + elem
     }
-    
+
     public mutating func remove() -> T? {
         let ret = data.hd
         data = data.tl
         return ret
     }
-}
+}*/
 
 public struct Queue<T> {
     private var first: QNode<T>?
@@ -37,9 +37,9 @@ public struct Queue<T> {
     public var isEmpty: Bool {
         get { return count == 0 }
     }
-    
+
     public init(){}
-    
+
     public mutating func insert(_ val: T) {
         if isEmpty {
             first = QNode<T>(val: val, next: nil, prev: nil)
@@ -51,7 +51,7 @@ public struct Queue<T> {
         }
         count += 1
     }
-    
+	
     public mutating func remove() -> T? {
         if isEmpty {
             return nil

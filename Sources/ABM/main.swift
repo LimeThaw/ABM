@@ -9,7 +9,6 @@ var tmpc = Counter(0)
 // generate social network
 for i in 0..<n {
 	var newAgent = Agent(tmpc.next()!)
-	newAgent.cma = Float(rand.nextNormal(mu: Double(newAgent.cma), sig: 4.0))
 	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig: 2.0))
     newAgent.moral = Float(rand.nextNormal(mu: Double(newAgent.moral), sig: 2.0))
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
@@ -42,7 +41,7 @@ for d in 0..<days {
 	var crimeCount1 = 0
 	var crimeCount2 = 0
 	var cnt = graph.nodes.count
-	var hap = graph.nodes.values.map({$0.value.cma}).reduce(0.0, +)/Float(graph.nodes.count + 1)
+	var hap = graph.nodes.values.map({$0.value.cma.pleasure}).reduce(0.0, +)/Float(graph.nodes.count + 1)
 	for node in graph.nodes {
 		var agent = node.value.value
 		var decision = agent.checkCrime()
@@ -57,13 +56,15 @@ for d in 0..<days {
                 crimeCount2 += 1
             }
         }
-        
+
         // bring a bit movement into the people
-        agent.cma += Float(rand.nextNormal(mu: 0, sig: 0.02))
+        agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.02))
+        agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.02))
+        agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.02))
         agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
         agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
 	}
-    let entry = (crimeCount1, crimeCount2, cnt, Int(hap*10))
+    let entry = (crimeCount1, crimeCount2, cnt, Int(hap*100))
 	crimeCounts += [entry]
     //print(entry)
     totalTime += toc()

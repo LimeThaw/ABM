@@ -5,22 +5,25 @@ class Agent : Hashable {
 	let ID: Int
 	let hashValue: Int
 
-    var cma: CMA = (1.5)
+	var cma: CMA
+
     var enthusiasm: Float = 2.0
     var moral: Float = 3.0
-    
+
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
 	var daily_cost: Float = 115.936986301*/
 	var connectedness: Float = 0
 	var ownsGun: Bool = false
-    
+
     /// A value that indicates whether this agent was already visited in a graph traversal
     var visited = false
 
 	init(_ id: Int) {
 		ID = id
 		hashValue = ID
+
+		cma = (Emotion())
 	}
 
 	convenience init() {
@@ -30,11 +33,11 @@ class Agent : Hashable {
 	static func ==(_ first: Agent, _ second: Agent) -> Bool {
 		return first.ID == second.ID
 	}
-    
+
     private func determineExtend() -> Int {
         return Int(positive(fromFS: enthusiasm)*1.5)
     }
-    
+
     private func determineWeapon() -> Weapon {
         if ownsGun {
             return .Gun
@@ -46,7 +49,7 @@ class Agent : Hashable {
 	func checkCrime() -> CrimeType? {
 		return generateCrimeType()
 	}
-    
+
     func generateCrimeType() -> CrimeType? {
         var newCMA = cma
         var type: CrimeType? = nil
@@ -78,7 +81,7 @@ class Agent : Hashable {
 }
 
 /// crime motivating attributes: first: happiness
-typealias CMA = (Float)
+typealias CMA = (Emotion)
 /*
 func +(_ lhs: CMA, _ rhs: CMA) -> CMA {
     return (lhs+rhs)
@@ -89,11 +92,11 @@ func -(_ lhs: CMA, _ rhs: CMA) -> CMA {
 }*/
 
 func val(_ at: CMA) -> Float{
-    return at
+    return Float(at.pleasure)
 }
 
 func abs(_ arg: CMA) -> Float {
-    return sqrt(arg*arg)
+    return Float(sqrt(arg.pleasure*arg.pleasure))
 }
 /*
 func ==(_ lhs: CMA, _ rhs: CMA) -> Bool {

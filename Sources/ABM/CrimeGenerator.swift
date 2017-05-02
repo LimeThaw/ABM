@@ -14,15 +14,15 @@ import Foundation
  This struct defines what a crime exactly is.
 */
 struct CrimeGenerator {
-    
+
     private let weapon: Weapon
     private let type: CrimeType
-    
+
     init(with: Weapon, type: CrimeType){
         weapon = with
         self.type = type
     }
-    
+
     /**
      Returns the function that takes a current agent, a previous agent and a extend and returns whether it should be propagated further. For every iteration the extend decreases. This function depends only on the crime type.
      - returns: the propagation function
@@ -33,7 +33,7 @@ struct CrimeGenerator {
                 if ext <= 0 {
                     return false
                 }
-                cur.cma -= 0.2*ext
+                cur.cma.pleasure -= 0.2*ext
                 cur.moral -= 0.01*ext
                 return true
             }
@@ -42,12 +42,12 @@ struct CrimeGenerator {
                 if ext <= 0 {
                     return false
                 }
-                cur.cma -= 0.001*ext
+                cur.cma.pleasure -= 0.001*ext
                 return true
             }
         }
     }
-    
+
     private func propagate(from source: GraphNode<Agent>..., until reach: Int) {
         let propFunc = getPropagationFunction()
         // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
@@ -61,7 +61,7 @@ struct CrimeGenerator {
                 next.insert((a, n.value.next, n.value, reach-1))
             }
         }
-        
+
         while !next.isEmpty {
             let cur = next.remove()!
             if !cur.1.value.visited {
@@ -76,19 +76,19 @@ struct CrimeGenerator {
                 visited.append(cur.1.value)
             }
         }
-        
+
         for a in visited {
             a.visited = false
         }
     }
-    
+
     /**
      Generates a crime from the preset attributes.
      A crime is a function that takes an initiator and a victim with an extend. It has a direct influence on the victim and the initiator, i.e. it changes the
      A propagation function takes a source and a target with an iterator which indicates, how far away from the victim the propagation is. The extend on the target should decay exponentially with the iteration and the propagation should be terminated if the extend on the target arrives a given lower bound.
     */
     func generateCrime() -> (Agent, Agent, Int) -> Void {
-        
+
         /// starts the crime, meaning modifies the attributes of the initiator and returns the node of the victim or nil if the crime fails
         let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> GraphNode<Agent>? in
             let succVal = increaseProbability(rand.nextProb(), by: positive(fromFS: initiator.enthusiasm))
@@ -100,7 +100,7 @@ struct CrimeGenerator {
                 return graph.find(node: victim)! // requires that the agent is in the graph
             }
         }
-        
+
         if type == CrimeType.Murder{
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
@@ -116,7 +116,7 @@ struct CrimeGenerator {
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
                     ini.enthusiasm += 0.1
-                    vic.cma -= 0.16*Float(ext)
+                    vic.cma.pleasure -= 0.16*Float(ext)
                     vic.moral -= 0.1
                     self.propagate(from: node, until: Int(sqrt(Double(ext))))
                 }
@@ -144,36 +144,40 @@ struct CrimeAttributes {
     fileprivate var actualGain: CMA
     var wishedCost: CMA
     var wishedGain: CMA
-    
+
     /// 1 minus the percentage of success
     private(set) var difficulty: Float
     /// the percentage of failures
     private(set) var failRate: Float
-    
+
     mutating func setDifficulty(_ d: Float, _ f: Float) {
         assert(f < d && f >= 0 && f < 1 && d > 0 && d <= 1)
         difficulty = d
         failRate = f
     }
-    
+
     /// indicates whether the crime is extendable (e.g. a murder is not extendable)
     var isExtendable: Bool
-    
+
     /// initiates a standard crime
     init() {
         difficulty = 0.6
         failRate = 0.3
         isExtendable = true
-        actualCost = -0.2
-        actualGain = 0.2
-        wishedCost = -0.2
-        wishedGain = 0.2
+        actualCost = Emotion(-0.6, 0.5, -0.2)
+        actualGain = Emotion(-0.2, 0.1, -0.1)
+        wishedCost = Emotion(-0.5, -0.5, 0)
+        wishedGain = Emotion(0.5, -0.5, 0.2)
     }
 }
 
-/// The following struct defines the possible crime types. The direct effect on the initiator (change of CMA) is stored in an instance, the effect on the victim and its surroundings are coded in the generate crime function
+/**
+The following struct defines the possible crime types. The direct effect on the initiator
+(change of CMA) is stored in an instance, the effect on the victim and its surroundings are coded
+in the generate crime function
+*/
 struct CrimeType: CustomStringConvertible {
-    
+
     var description: String {
         switch type {
         case .Murder:
@@ -182,28 +186,28 @@ struct CrimeType: CustomStringConvertible {
             return "Other"
         }
     }
-    
+
     private enum TypeE {
         case Murder
         case Other
     }
-    
+
     let attributes: CrimeAttributes
     private let type: TypeE
-    
+
     static let Murder = CrimeType(.Murder)
     static let Other = CrimeType(.Other)
-    
+
     static let all = [Murder, Other]
-    
+
     private init(_ t: TypeE) {
         switch t {
         case .Murder:
             var at = CrimeAttributes()
-            at.actualCost = -0.8
-            at.actualGain = -0.1
-            at.wishedCost = -0.9
-            at.wishedGain = 0.35
+            at.actualCost = Emotion(-1.5, 0, -0.4)
+            at.actualGain = Emotion(-1, 0.2, 0.2)
+            at.wishedCost = Emotion(-1, -0.5, -1)
+            at.wishedGain = Emotion(0.5, -0.5, 0.5)
             at.setDifficulty(0.9, 0.4)
             at.isExtendable = false
             attributes = at
@@ -212,11 +216,11 @@ struct CrimeType: CustomStringConvertible {
         }
         type = t
     }
-    
+
     static func ==(lhs: CrimeType, rhs: CrimeType) -> Bool {
         return lhs.type == rhs.type
     }
-    
+
     /**
      Returns the new CMA when the crime was executed
      - parameter attributes: the old CMA
@@ -238,7 +242,7 @@ struct CrimeType: CustomStringConvertible {
             return attributes + self.attributes.actualGain*actualExtend
         }
     }
-    
+
     /**
      Returns the new CMA that the initiator thinks he will get with the given outcome and extend
      - parameter attributes: the old CMA
@@ -260,7 +264,7 @@ struct CrimeType: CustomStringConvertible {
             return attributes + self.attributes.wishedGain*actualExtend
         }
     }
-    
+
     /**
      Returns the outcome for a given success value
      - parameter val: The success value. 0 is guaranteed failure, 1 is guaranteed success
