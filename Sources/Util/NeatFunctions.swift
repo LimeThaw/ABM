@@ -21,6 +21,10 @@ public func ^^ (radix: Double, power: Int) -> Double {
     return pow(radix, Double(power))
 }
 
+public func ^^ (radix: Float, power: Int) -> Float {
+    return pow(radix, Float(power))
+}
+
 public func ^^ (radix: Double, power: Double) -> Double {
     return pow(radix, power)
 }

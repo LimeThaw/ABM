@@ -145,14 +145,11 @@ struct CrimeAttributes {
     var wishedCost: CMA
     var wishedGain: CMA
 
-    /// 1 minus the percentage of success
-    private(set) var difficulty: Float
     /// the percentage of failures
     private(set) var failRate: Float
 
-    mutating func setDifficulty(_ d: Float, _ f: Float) {
-        assert(f < d && f >= 0 && f < 1 && d > 0 && d <= 1)
-        difficulty = d
+    mutating func setFailrate(_ f: Float) {
+        assert(f >= 0 && f < 1)
         failRate = f
     }
 
@@ -161,11 +158,10 @@ struct CrimeAttributes {
 
     /// initiates a standard crime
     init() {
-        difficulty = 0.6
         failRate = 0.3
         isExtendable = true
         actualCost = Emotion(-0.6, 0.5, -0.2)
-        actualGain = Emotion(-0.2, 0.1, -0.1)
+        actualGain = Emotion(0.2, 0.1, -0.1)
         wishedCost = Emotion(-0.5, -0.5, 0)
         wishedGain = Emotion(0.5, -0.5, 0.2)
     }
@@ -207,8 +203,8 @@ struct CrimeType: CustomStringConvertible {
             at.actualCost = Emotion(-1.5, 0, -0.4)
             at.actualGain = Emotion(-1, 0.2, 0.2)
             at.wishedCost = Emotion(-1, -0.5, -1)
-            at.wishedGain = Emotion(0.5, -0.5, 0.5)
-            at.setDifficulty(0.9, 0.4)
+            at.wishedGain = Emotion(0.2, -0.5, 0.5)
+            at.setFailrate(0.9)
             at.isExtendable = false
             attributes = at
         case .Other:
@@ -272,6 +268,6 @@ struct CrimeType: CustomStringConvertible {
     func getOutcome(val: Float, for weapon: Weapon) -> OutcomeType {
         assert(val >= 0 && val <= 1, "Illegal value: \(val)")
         let successValue = increaseProbability(val, by: weapon.rawValue)
-        return successValue < attributes.failRate ? .Fail : successValue < attributes.difficulty ? .Partially : .Success
+        return successValue < attributes.failRate ? .Fail : .Success
     }
 }

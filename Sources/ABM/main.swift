@@ -1,7 +1,7 @@
 import Foundation
 import Util
 
-let n = 100
+let n = 111//998
 
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
@@ -14,7 +14,7 @@ for i in 0..<n {
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
 		new_agent.daily_income = 15
 	}*/
-    if rand.next(prob: 0.33) { // Person owns a firearm
+    if rand.next(prob: 0.3225) { // Person owns a firearm
 		newAgent.ownsGun = true
 	}
 
@@ -64,7 +64,7 @@ for d in 0..<days {
         agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
         agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
 	}
-    let entry = (crimeCount1, crimeCount2, cnt, Int(hap*100))
+    let entry = (crimeCount1, crimeCount2, cnt, Int(hap + 50))
 	crimeCounts += [entry]
     //print(entry)
     totalTime += toc()

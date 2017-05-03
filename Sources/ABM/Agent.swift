@@ -59,7 +59,7 @@ class Agent : Hashable {
             let weapon = determineWeapon()
             let expectedOutcome = t.getOutcome(val: increaseProbability(0.5, by: positive(fromFS: enthusiasm)), for: weapon)
             let candidateCMA = t.wishedUpdate(attributes: cma, for: expectedOutcome, by: possibleExtend)
-            if val(candidateCMA) - 2*moral > val(newCMA) {
+            if val(candidateCMA) - 5*moral > val(newCMA) {
                 newCMA = candidateCMA
                 type = t
             }
@@ -92,11 +92,12 @@ func -(_ lhs: CMA, _ rhs: CMA) -> CMA {
 }*/
 
 func val(_ at: CMA) -> Float{
-    return Float(at.pleasure)
+    return at.pleasure - (0.5-at.arousal^^2) + 0.5*at.dominance
 }
 
 func abs(_ arg: CMA) -> Float {
-    return Float(sqrt(arg.pleasure*arg.pleasure))
+	let tmp = val(arg)
+    return Float(sqrt(tmp*tmp))
 }
 /*
 func ==(_ lhs: CMA, _ rhs: CMA) -> Bool {
