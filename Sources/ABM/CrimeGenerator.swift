@@ -97,7 +97,7 @@ struct CrimeGenerator {
             if outcome == OutcomeType.Fail {
                 return nil
             } else {
-                return graph.find(node: victim)! // requires that the agent is in the graph
+                return graph.find(node: victim) // requires that the agent is in the graph
             }
         }
 
