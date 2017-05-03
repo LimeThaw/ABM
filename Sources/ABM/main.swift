@@ -36,7 +36,7 @@ var changes = [Change]()
 
 // run the model
 let days = 365
-var crimeCounts: [(Int, Int, Int, Int)] = []
+var crimeCounts: [(Int, Int, Int, Int, Int)] = []
 var totalTime = 0
 for d in 0..<days {
     tic()
@@ -73,7 +73,7 @@ for d in 0..<days {
 	}
 	changes = [Change]()
 
-    let entry = (crimeCount1, crimeCount2, cnt, Int(hap + 50))
+    let entry = (crimeCount1, crimeCount2, cnt, Int(hap + 50), (crimeCount1 + crimeCount2) * 100 / cnt)
 	crimeCounts += [entry]
     //print(entry)
     totalTime += toc()
