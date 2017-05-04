@@ -32,7 +32,7 @@ for i in 0..<n {
 	node?.value.updateConnectedness(node: node!)
 }
 
-var changes = [Change]()
+var changes = [()->Void]()
 
 // run the model
 let days = 365
@@ -51,7 +51,7 @@ for d in 0..<days {
             //print(type)
             let nextIndex = rand.next(max: graph.nodes.count)
             let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
-			changes.append(Change(toTarget: other, of: ChangeType.function({ o in return agent.executeCrime(type: type, on: o.value) })))
+			changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
             //agent.executeCrime(type: type, on: other.value)
             if type == CrimeType.Murder {
                 crimeCount1 += 1
@@ -69,9 +69,9 @@ for d in 0..<days {
 	}
 
 	for change in changes {
-		change.apply(within: graph)
+		change()
 	}
-	changes = [Change]()
+	changes = [()->Void]()
 
     let entry = (crimeCount1, crimeCount2, cnt, Int(hap + 50), (crimeCount1 + crimeCount2) * 100 / cnt)
 	crimeCounts += [entry]
