@@ -9,6 +9,7 @@ class Agent : Hashable {
 
     var enthusiasm: Float = 2.0
     var moral: Float = 3.0
+	var age: Int = 0
 
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
@@ -120,3 +121,34 @@ func >=(_ lhs: CMA, _ rhs: CMA) -> Bool {
     return val(lhs) >= val(rhs)
 }
 */
+
+// Takes a Float between 0 and 100 as percentile, determines an age group and generates a random
+// age in days within that group
+func getAge(with variable: Float) -> Int {
+	assert(0 <= variable && variable <= 100, "Please give a uniformly random float value in [0;100]")
+
+	// Values from http://www.statsamerica.org/town/ for Wilmington, NC
+	// Age groups: (Cumulative percentages (this group or younger), min age, max age)
+	let ages = [
+		(4.6, 0, 5),
+		(18.0, 5, 18),
+		(35.4, 18, 25),
+		(61.8, 25, 45),
+		(85.4, 45, 65),
+		(100.0, 65, 100)
+	]
+
+	// The age group index
+	var index = 0
+	for age in ages {
+		if age.0 > Double(variable) {
+			break
+		} else {
+			index += 1
+		}
+	}
+
+	let age = ages[index]
+	// Return random age in days within age group
+	return rand.next(max: (age.2 - age.1) * 365) + age.1 * 365
+}

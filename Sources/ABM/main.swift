@@ -17,6 +17,7 @@ for i in 0..<n {
     if rand.next(prob: 0.3225) { // Person owns a firearm
 		newAgent.ownsGun = true
 	}
+	newAgent.age = getAge(with: rand.nextProb() * 100.0)
 
 	graph.addNode(withValue: newAgent)
 }
@@ -67,13 +68,17 @@ for d in 0..<days {
 	        agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.02))
 	        agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
 	        agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
+			agent.age += 1
 		})
 
 		var newMoral = Float(0.0)
 		for nextAgent in node.value.edges.map({ e in return e.value.next.value }) {
+			// Influence on moral beliefs from agent's neighbors in social network
 			newMoral += nextAgent.moral
 		}
-		newMoral = 0.01 * newMoral / Float(node.value.edges.count) + 0.99 * agent.moral
+		// Age factor: The older the agent the less likely he is to change his beliefs
+		let oldFac = probability(fromPos: Float(agent.age))
+		newMoral = (1.0 - oldFac) * newMoral / Float(node.value.edges.count) + oldFac * agent.moral
 		changes.append({ agent.moral = newMoral })
 	}
 
