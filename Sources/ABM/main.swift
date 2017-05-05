@@ -6,6 +6,67 @@ let n = 111//998
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
 
+// Murders, other crimes, population, happiness, crime rate
+typealias Record = (Int, Int, Int, Int, Int)
+
+infix operator +=
+func +=(left: inout Record, right: Record) {
+	left.0 += right.0
+	left.1 += right.1
+	left.2 += right.2
+	left.3 += right.3
+	left.4 += right.4
+}
+
+func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
+		-> ([() -> Void], Record) {
+
+	var changes = [() -> Void]()
+	var record = Record(0, 0, 0, 0, 0)
+
+	for node in nodeList {
+
+		let agent = node.value
+		let decision = agent.checkCrime()
+		if let type = decision {
+			//print(type)
+			let nextIndex = rand.next(max: graph.nodes.count)
+			let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
+			changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
+			//agent.executeCrime(type: type, on: other.value)
+			if type == CrimeType.Murder {
+				record.0 += 1
+			} else {
+				record.1 += 1
+			}
+		}
+
+		var newMoral = Float(0.0)
+		for nextAgent in node.edges.map({ e in return e.value.next.value }) {
+			// Influence on moral beliefs from agent's neighbors in social network
+			newMoral += nextAgent.moral
+		}
+		// Age factor: The older the agent the less likely he is to change his beliefs
+		let oldFac = probability(fromPos: Float(agent.age) / 50.0)
+		newMoral = (1.0 - oldFac) * newMoral / Float(node.edges.count) + oldFac * agent.moral
+
+		changes.append({
+			// bring a bit movement into the people
+			agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.01))
+			agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.01))
+			agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.01))
+			agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
+			agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
+			agent.age += 1
+			agent.moral = newMoral
+			agent.updateConnectedness(node: node)
+		})
+
+	}
+
+	return (changes, record)
+}
+
 // generate social network
 for i in 0..<n {
 	var newAgent = Agent(tmpc.next()!)
@@ -41,45 +102,19 @@ var crimeCounts: [(Int, Int, Int, Int, Int)] = []
 var totalTime = 0
 for d in 0..<days {
     tic()
-	var crimeCount1 = 0
-	var crimeCount2 = 0
+	var record = Record(0, 0, 0, 0, 0)
 	var cnt = graph.nodes.count
 	var hap = graph.nodes.values.map({$0.value.cma.pleasure}).reduce(0.0, +)/Float(graph.nodes.count + 1)
-	for node in graph.nodes {
-		var agent = node.value.value
-		var decision = agent.checkCrime()
-        if let type = decision {
-            //print(type)
-            let nextIndex = rand.next(max: graph.nodes.count)
-            let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
-			changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
-            //agent.executeCrime(type: type, on: other.value)
-            if type == CrimeType.Murder {
-                crimeCount1 += 1
-            } else {
-                crimeCount2 += 1
-            }
-        }
 
-		changes.append({
-	        // bring a bit movement into the people
-	        agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.02))
-	        agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.02))
-	        agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.02))
-	        agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
-	        agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
-			agent.age += 1
-		})
+	let list = graph.nodes.map({ $0.value })
+	let stride = Int(ceil(Float(cnt) / 4.0))
 
-		var newMoral = Float(0.0)
-		for nextAgent in node.value.edges.map({ e in return e.value.next.value }) {
-			// Influence on moral beliefs from agent's neighbors in social network
-			newMoral += nextAgent.moral
-		}
-		// Age factor: The older the agent the less likely he is to change his beliefs
-		let oldFac = probability(fromPos: Float(agent.age))
-		newMoral = (1.0 - oldFac) * newMoral / Float(node.value.edges.count) + oldFac * agent.moral
-		changes.append({ agent.moral = newMoral })
+	let sublists = list.chunks(3)
+
+	for sublist in sublists {
+		let ret = updateNodes(sublist, within: graph)
+		changes += ret.0
+		record += ret.1
 	}
 
 	for change in changes {
@@ -87,8 +122,10 @@ for d in 0..<days {
 	}
 	changes = [()->Void]()
 
-    let entry = (crimeCount1, crimeCount2, cnt, Int(hap + 50), (crimeCount1 + crimeCount2) * 100 / cnt)
-	crimeCounts += [entry]
+	record.2 = cnt
+	record.3 = Int(hap + 50)
+	record.4 = (record.0 + record.1) * 100 / cnt
+	crimeCounts += [record]
     //print(entry)
     totalTime += toc()
 }
