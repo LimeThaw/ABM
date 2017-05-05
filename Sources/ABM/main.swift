@@ -60,12 +60,21 @@ for d in 0..<days {
             }
         }
 
-        // bring a bit movement into the people
-        agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.02))
-        agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.02))
-        agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.02))
-        agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
-        agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
+		changes.append({
+	        // bring a bit movement into the people
+	        agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.02))
+	        agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.02))
+	        agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.02))
+	        agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
+	        agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
+		})
+
+		var newMoral = Float(0.0)
+		for nextAgent in node.value.edges.map({ e in return e.value.next.value }) {
+			newMoral += nextAgent.moral
+		}
+		newMoral = 0.01 * newMoral / Float(node.value.edges.count) + 0.99 * agent.moral
+		changes.append({ agent.moral = newMoral })
 	}
 
 	for change in changes {

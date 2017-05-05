@@ -45,5 +45,5 @@ plt.plot(
 	label="Crime rate (per 100 people)")
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, 365, 0, 100])
+plt.axis([0, 365, 0, 120])
 plt.show()
