@@ -1,5 +1,8 @@
 import Foundation
 import Util
+import Dispatch
+
+let THREAD_COUNT = 4
 
 let n = 111//998
 
@@ -100,6 +103,9 @@ var changes = [()->Void]()
 let days = 365
 var crimeCounts: [(Int, Int, Int, Int, Int)] = []
 var totalTime = 0
+let threadGroup = DispatchGroup()
+let threadQueue = DispatchQueue.global()
+
 for d in 0..<days {
     tic()
 	var record = Record(0, 0, 0, 0, 0)
@@ -107,14 +113,26 @@ for d in 0..<days {
 	var hap = graph.nodes.values.map({$0.value.cma.pleasure}).reduce(0.0, +)/Float(graph.nodes.count + 1)
 
 	let list = graph.nodes.map({ $0.value })
-	let stride = Int(ceil(Float(cnt) / 4.0))
+	let stride = Int(ceil(Float(cnt) / Float(THREAD_COUNT)))
 
-	let sublists = list.chunks(3)
+	let sublists = list.chunks(stride)
+	var subresults = [([()->Void], Record)]()
 
+	threadGroup.wait()
 	for sublist in sublists {
-		let ret = updateNodes(sublist, within: graph)
-		changes += ret.0
-		record += ret.1
+		subresults.append(([], Record(0, 0, 0, 0, 0)))
+		let i = subresults.count - 1
+		threadGroup.enter()
+		threadQueue.async {
+			subresults[i] = updateNodes(sublist, within: graph)
+			threadGroup.leave()
+		}
+	}
+	threadGroup.wait() // Wai for all threads to finish
+
+	for subresult in subresults {
+		changes += subresult.0
+		record += subresult.1
 	}
 
 	for change in changes {
