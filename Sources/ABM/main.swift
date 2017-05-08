@@ -2,9 +2,12 @@ import Foundation
 import Util
 import Dispatch
 
-let THREAD_COUNT = 4
+let THREAD_COUNT = 1
+// Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
+// Recalculated per person and day
+let BIRTH_RATE = 0.000033973
 
-let n = 111//998
+let n = 1119//98
 
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
@@ -30,60 +33,80 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	for node in nodeList {
 
 		let agent = node.value
-		let decision = agent.checkCrime()
-		if let type = decision {
-			//print(type)
-			let nextIndex = rand.next(max: graph.nodes.count)
-			let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
-			changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
-			//agent.executeCrime(type: type, on: other.value)
-			if type == CrimeType.Murder {
-				record.0 += 1
-			} else {
-				record.1 += 1
+		// Kill agent if too old
+		if rand.nextProb() < deathProb(age: agent.age) {
+			print("death")
+			changes.append({
+				for edge in node.edges.values {
+					let next = edge.next
+					graph.removeEdge(from: node.hashValue, to: next.hashValue)
+					next.value.updateConnectedness(node: next)
+				}
+				graph.removeNode(node: node)
+			})
+		} else {
+			let decision = agent.checkCrime()
+			if let type = decision {
+				//print(type)
+				let nextIndex = rand.next(max: graph.nodes.count)
+				let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
+				changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
+				//agent.executeCrime(type: type, on: other.value)
+				if type == CrimeType.Murder {
+					record.0 += 1
+				} else {
+					record.1 += 1
+				}
 			}
+
+			var newMoral: Float = 0.0
+			var totalWeight: Float = 0.0
+			for nextAgent in node.edges {
+				// Influence on moral beliefs from agent's neighbors in social network
+				newMoral += (nextAgent.value.next.value.moral + nextAgent.value.weight^^2)
+				totalWeight += (nextAgent.value.weight^^2)
+			}
+			// Age factor: The older the agent the less likely he is to change his beliefs
+			let oldFac = ((agent.age == 0) ? 0 : (1.0 - (1.0 / Float(agent.age + 1)) + 0.1))
+			newMoral = (1.0 - oldFac) * newMoral / Float(node.edges.count) + oldFac * agent.moral
+
+			changes.append({
+				// bring a bit movement into the people
+				agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.01))
+				agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.01))
+				agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.01))
+				agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
+				agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
+				agent.age += 1
+				agent.moral = newMoral
+				agent.updateConnectedness(node: node)
+			})
 		}
-
-		var newMoral = Float(0.0)
-		for nextAgent in node.edges.map({ e in return e.value.next.value }) {
-			// Influence on moral beliefs from agent's neighbors in social network
-			newMoral += nextAgent.moral
-		}
-		// Age factor: The older the agent the less likely he is to change his beliefs
-		let oldFac = probability(fromPos: Float(agent.age) / 50.0)
-		newMoral = (1.0 - oldFac) * newMoral / Float(node.edges.count) + oldFac * agent.moral
-
-		changes.append({
-			// bring a bit movement into the people
-			agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.01))
-			agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.01))
-			agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.01))
-			agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
-			agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
-			agent.age += 1
-			agent.moral = newMoral
-			agent.updateConnectedness(node: node)
-		})
-
 	}
 
 	return (changes, record)
 }
 
+func addBaby(to graph: Graph<Agent>) {
+	print("birth")
+	let newAgent = Agent(id: tmpc.next()!, age: 0)
+	newAgent.randomize()
+	let newNode = graph.addNode(withValue: newAgent)
+	for _ in 1...3 {
+		var next = Int(rand.next()%graph.nodes.count)
+		next = [Int](graph.nodes.keys)[next]
+		graph.addEdge(from: newNode.hashValue, to: next,
+			weight: Float(rand.nextNormal(mu: 1.5, sig: 0.5)))
+		graph.nodes[next]?.value.updateConnectedness(node: graph.nodes[next]!)
+	}
+	newAgent.updateConnectedness(node: graph.nodes[newAgent.hashValue]!)
+}
+
 // generate social network
 for i in 0..<n {
-	var newAgent = Agent(tmpc.next()!)
-	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig: 2.0))
-    newAgent.moral = Float(rand.nextNormal(mu: Double(newAgent.moral), sig: 2.0))
-	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
-		new_agent.daily_income = 15
-	}*/
-    if rand.next(prob: 0.3225) { // Person owns a firearm
-		newAgent.ownsGun = true
-	}
-	newAgent.age = getAge(with: rand.nextProb() * 100.0)
-
-	graph.addNode(withValue: newAgent)
+	var newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+	newAgent.randomize()
+	_ = graph.addNode(withValue: newAgent)
 }
 
 for i in 0...3*n {
@@ -108,8 +131,12 @@ let threadQueue = DispatchQueue.global()
 
 for d in 0..<days {
     tic()
+
 	var record = Record(0, 0, 0, 0, 0)
 	var cnt = graph.nodes.count
+	if cnt == 0 {
+		break
+	}
 	var hap = graph.nodes.values.map({$0.value.cma.pleasure}).reduce(0.0, +)/Float(graph.nodes.count + 1)
 
 	let list = graph.nodes.map({ $0.value })
@@ -123,10 +150,10 @@ for d in 0..<days {
 		subresults.append(([], Record(0, 0, 0, 0, 0)))
 		let i = subresults.count - 1
 		threadGroup.enter()
-		threadQueue.async {
+		threadQueue.async {{ (rand: Random) in
 			subresults[i] = updateNodes(sublist, within: graph)
 			threadGroup.leave()
-		}
+		}(rand)}
 	}
 	threadGroup.wait() // Wai for all threads to finish
 
@@ -140,11 +167,22 @@ for d in 0..<days {
 	}
 	changes = [()->Void]()
 
+	// Birth new children!
+	if Double(graph.nodes.count) * BIRTH_RATE >= 1 {
+		for i: Int in 1...Int(Double(graph.nodes.count) * BIRTH_RATE) {
+			addBaby(to: graph)
+		}
+	} else {
+		if rand.next(prob: Float(graph.nodes.count) * Float(BIRTH_RATE)) {
+			addBaby(to: graph)
+		}
+	}
+
 	record.2 = cnt
 	record.3 = Int(hap + 50)
 	record.4 = (record.0 + record.1) * 100 / cnt
 	crimeCounts += [record]
-    //print(entry)
+    //print(record)
     totalTime += toc()
 }
 

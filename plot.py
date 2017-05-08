@@ -18,32 +18,34 @@ for val in values:
 	happiness.append(int(val[3]))
 	crimeRate.append(int(val[4]))
 
+length = len(crimes1)
+
 plt.plot(
-	range(0, 365),
+	range(0, length),
 	crimes1,
 	'r-',
 	label="Category 1 crimes")
 plt.plot(
-	range(0, 365),
+	range(0, length),
 	crimes2,
 	'b-',
 	label="Category 2 crimes")
 plt.plot(
-	range(0, 365),
+	range(0, length),
 	population,
 	'g-',
 	label="Total population")
 plt.plot(
-	range(0, 365),
+	range(0, length),
 	happiness,
 	'y-',
 	label="Average happiness level")
 plt.plot(
-	range(0, 365),
+	range(0, length),
 	crimeRate,
 	'm:', linewidth=1,
 	label="Crime rate (per 100 people)")
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, 365, 0, 120])
+plt.axis([0, length, 0, 120])
 plt.show()

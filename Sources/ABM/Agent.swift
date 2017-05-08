@@ -7,9 +7,9 @@ class Agent : Hashable {
 
 	var cma: CMA
 
-    var enthusiasm: Float = 2.0
-    var moral: Float = 3.0
-	var age: Int = 0
+    var enthusiasm: Float
+    var moral: Float
+	var age: Int
 
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
@@ -20,15 +20,35 @@ class Agent : Hashable {
     /// A value that indicates whether this agent was already visited in a graph traversal
     var visited = false
 
-	init(_ id: Int) {
-		ID = id
-		hashValue = ID
-
+	init(id: Int, enthusiasm: Float = 2.0, moral: Float = 3.0, age: Int = 0, ownsGun: Bool = false) {
+		self.ID = id
+		self.hashValue = ID
+		self.enthusiasm = enthusiasm
+		self.moral = moral
+		self.age = age
+		self.ownsGun = ownsGun
 		cma = (Emotion())
 	}
 
+	convenience init(_ id: Int) {
+		self.init(id: id)
+	}
+
 	convenience init() {
-		self.init(counter.next() ?? -1)
+		self.init(id: counter.next() ?? -1)
+	}
+
+	// Randomizes agent attributes to make them more heterogenous
+	// Does not touch the age, you have to do that yourself.
+	public func randomize() {
+		enthusiasm = Float(rand.nextNormal(mu: Double(enthusiasm), sig: 2.0))
+		moral = Float(rand.nextNormal(mu: Double(moral), sig: 2.0))
+
+		if rand.next(prob: 0.3225) { // Person owns a firearm
+			ownsGun = true
+		} else {
+			ownsGun = false
+		}
 	}
 
 	static func ==(_ first: Agent, _ second: Agent) -> Bool {
@@ -83,6 +103,9 @@ class Agent : Hashable {
 
 /// crime motivating attributes: first: happiness
 typealias CMA = (Emotion)
+func +=(left: inout CMA, right: CMA) {
+	left = left + right
+}
 /*
 func +(_ lhs: CMA, _ rhs: CMA) -> CMA {
     return (lhs+rhs)
@@ -151,4 +174,19 @@ func getAge(with variable: Float) -> Int {
 	let age = ages[index]
 	// Return random age in days within age group
 	return rand.next(max: (age.2 - age.1) * 365) + age.1 * 365
+}
+
+func deathProb(age: Int) -> Float {
+	// Gives the probability that a person of given age dies today
+	// Actually prob. that a RV ~N(79, 10) takes value age
+	// Data from http://data.worldbank.org/indicator/SP.DYN.LE00.IN?end=2015&locations=US&start=1960&view=chart
+
+	// 1/sqrt(2 PI sig^2)
+	let coeff = 0.039894228040143267793994605993438186847585863116493465766
+	// 2*sig^2
+	let twoS2 = 200.0
+
+	var exponent = age-79
+	exponent *= exponent
+	return Float(coeff * exp(-Double(exponent)/twoS2))
 }

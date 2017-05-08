@@ -61,8 +61,10 @@ public class Graph<T: Hashable> {
 	public init() {}
 
 	// Adds a new node with the given value to the graph
-	public func addNode(withValue newValue: T) {
-        addNode(GraphNode(value: newValue))
+	public func addNode(withValue newValue: T) -> GraphNode<T> {
+		let ret = GraphNode<T>(value: newValue)
+        addNode(ret)
+		return ret
 	}
 
 	// Inserts a node into the graph
@@ -105,6 +107,20 @@ public class Graph<T: Hashable> {
 			fst!.add_edge(to: snd!, weight: weight)
 			if kind == EdgeKind.UNDIRECTED {
 				snd!.add_edge(to: fst!, weight: weight)
+			}
+		}
+	}
+
+	public func removeEdge(from first: Int, to second: Int, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
+		let fst = nodes[first]
+		let snd = nodes[second]
+		if fst == nil || snd == nil {
+			print("!Warning: Tried to insert edge between non-existing nodes")
+			return
+		} else {
+			fst!.removeEdge(to: snd!)
+			if kind == EdgeKind.UNDIRECTED {
+				snd!.removeEdge(to: fst!)
 			}
 		}
 	}
