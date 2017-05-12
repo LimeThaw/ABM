@@ -45,7 +45,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 			})
 		} else {
 			let decision = agent.checkCrime()
-			if let type = decision {
+			if let type = decision { // Decided to commit a crime - would return nil otherwise
 				//print(type)
 				let nextIndex = rand.next(max: graph.nodes.count)
 				let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value.value

@@ -78,14 +78,13 @@ public class Graph<T: Hashable> {
 	// Directed edges to it are not deleted, unless there is an undirected edge in the opposite
 	// direction.
 	public func removeNode(node: GraphNode<T>) {
-        if nodes.removeValue(forKey: node.hashValue) == nil {
-            assert(false, "Should not remove node that is not contained in graph")
-        }
+        assert(nodes[node.hashValue] != nil, "Should not remove node that is not contained in graph")
 		for next in node.edges.values {
 			if next.type == .UNDIRECTED {
 				removeEdge(from: next.next.hashValue, to:node.hashValue)
 			}
 		}
+		nodes[node.hashValue] = nil
 	}
 
 	public func removeNode(withValue value: T) {
@@ -121,6 +120,7 @@ public class Graph<T: Hashable> {
 	public func removeEdge(from first: Int, to second: Int, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
 		let fst = nodes[first]
 		let snd = nodes[second]
+		if fst == nil && snd == nil { print("a") }
 		if fst == nil || snd == nil {
 			print("!Warning: Tried to remove edge between non-existing nodes")
 			return
