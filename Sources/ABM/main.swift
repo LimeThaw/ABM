@@ -7,13 +7,13 @@ let THREAD_COUNT = 1
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
 
-let n = 1119//98
+let n = 111//998
 
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
 
-// Murders, other crimes, population, happiness, crime rate
-typealias Record = (Int, Int, Int, Int, Int)
+// Population, happiness, Murder rate, Crime rate, Gun murder rate, Gun crime rate
+typealias Record = (Int, Float, Float, Float, Float, Float)
 
 infix operator +=
 func +=(left: inout Record, right: Record) {
@@ -22,13 +22,14 @@ func +=(left: inout Record, right: Record) {
 	left.2 += right.2
 	left.3 += right.3
 	left.4 += right.4
+	left.5 += right.5
 }
 
 func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		-> ([() -> Void], Record) {
 
 	var changes = [() -> Void]()
-	var record = Record(0, 0, 0, 0, 0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	for node in nodeList {
 
@@ -37,26 +38,33 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		if rand.nextProb() < deathProb(age: agent.age) {
 			print("death")
 			changes.append({
-				for edge in node.edges.values {
-					let next = edge.next
-					graph.removeEdge(from: node.hashValue, to: next.hashValue)
-					next.value.updateConnectedness(node: next)
-				}
 				graph.removeNode(node: node)
+				for edge in node.edges.values {
+					edge.next.value.updateConnectedness(node: edge.next)
+				}
 			})
 		} else {
 			let decision = agent.checkCrime()
 			if let type = decision {
 				//print(type)
 				let nextIndex = rand.next(max: graph.nodes.count)
-				let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
-				changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
+				let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value.value
+				changes.append(({ return agent.executeCrime(type: type, on: other) }))
 				//agent.executeCrime(type: type, on: other.value)
+
+				// Assume an agent who owns a gun will use it in a crime
 				if type == CrimeType.Murder {
-					record.0 += 1
+					if agent.ownsGun {
+						record.4 += 1.0
+					}
+					record.2 += 1.0
 				} else {
-					record.1 += 1
+					if agent.ownsGun {
+						record.5 += 1.0
+					}
+					record.3 += 1.0
 				}
+
 			}
 
 			var newMoral: Float = 0.0
@@ -124,7 +132,7 @@ var changes = [()->Void]()
 
 // run the model
 let days = 365
-var crimeCounts: [(Int, Int, Int, Int, Int)] = []
+var crimeCounts: [Record] = []
 var totalTime = 0
 let threadGroup = DispatchGroup()
 let threadQueue = DispatchQueue.global()
@@ -132,7 +140,7 @@ let threadQueue = DispatchQueue.global()
 for d in 0..<days {
     tic()
 
-	var record = Record(0, 0, 0, 0, 0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
 	var cnt = graph.nodes.count
 	if cnt == 0 {
 		break
@@ -147,7 +155,7 @@ for d in 0..<days {
 
 	threadGroup.wait()
 	for sublist in sublists {
-		subresults.append(([], Record(0, 0, 0, 0, 0)))
+		subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)))
 		let i = subresults.count - 1
 		threadGroup.enter()
 		threadQueue.async {{ (rand: Random) in
@@ -178,9 +186,12 @@ for d in 0..<days {
 		}
 	}
 
-	record.2 = cnt
-	record.3 = Int(hap + 50)
-	record.4 = (record.0 + record.1) * 100 / cnt
+	record.0 = cnt
+	record.1 = hap + 50.0
+	record.2 = record.2 * 100.0 / Float(cnt)
+	record.3 = record.3 * 100.0 / Float(cnt)
+	record.4 = record.4 * 100.0 / Float(cnt)
+	record.5 = record.5 * 100.0 / Float(cnt)
 	crimeCounts += [record]
     //print(record)
     totalTime += toc()

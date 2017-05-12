@@ -5,36 +5,30 @@ infile = open("out.txt", "r")
 values = infile.read()
 infile.close()
 
-crimes1 = []
-crimes2 = []
-population = []
+popCount = []
 happiness = []
-crimeRate = []
+murders = []
+others = []
+gunMurders = []
+gunOthers = []
 values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
 for val in values:
-	crimes1.append(int(val[0]))
-	crimes2.append(int(val[1]))
-	population.append(int(val[2]))
-	happiness.append(int(val[3]))
-	crimeRate.append(int(val[4]))
+	popCount.append(val[0])
+	happiness.append(val[1])
+	murders.append(val[2])
+	others.append(val[3])
+	gunMurders.append(val[4])
+	gunOthers.append(val[5])
 
-length = len(crimes1)
+length = len(popCount)
 
+# See https://matplotlib.org/api/pyplot_api.html?highlight=plot#matplotlib.pyplot.plot for
+# plot styles
 plt.plot(
 	range(0, length),
-	crimes1,
-	'r-',
-	label="Category 1 crimes")
-plt.plot(
-	range(0, length),
-	crimes2,
-	'b-',
-	label="Category 2 crimes")
-plt.plot(
-	range(0, length),
-	population,
+	popCount,
 	'g-',
-	label="Total population")
+	label="Population count")
 plt.plot(
 	range(0, length),
 	happiness,
@@ -42,9 +36,24 @@ plt.plot(
 	label="Average happiness level")
 plt.plot(
 	range(0, length),
-	crimeRate,
-	'm:', linewidth=1,
-	label="Crime rate (per 100 people)")
+	murders,
+	'r-',
+	label="Murders per 100")
+plt.plot(
+	range(0, length),
+	gunMurders,
+	'r:',
+	label="Murders involving firearms per 100")
+plt.plot(
+	range(0, length),
+	others,
+	'b-',
+	label="Other crimes per 100")
+plt.plot(
+	range(0, length),
+	gunOthers,
+	'b:',
+	label="Other crimes involving firearms per 100")
 plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 120])

@@ -31,27 +31,29 @@ public class GraphNode<T: Hashable>: Hashable {
 	}
 }
 
+// What kind of edge would the Sir prefer?
+public enum EdgeKind {
+	case DIRECTED
+	case UNDIRECTED
+}
+
 // A simple connection to another node
 public struct Edge<T: Hashable>: Hashable {
 	public let next: GraphNode<T> // The other node of the edge
 	public var weight: Float // The weight of the edge
+	public let type: EdgeKind
 
 	public var hashValue: Int { return next.value.hashValue }
 
-	init(to other: GraphNode<T>, weight: Float) {
+	init(to other: GraphNode<T>, weight: Float, kind: EdgeKind = .UNDIRECTED) {
 		next = other
 		self.weight = weight
+		self.type = kind
 	}
 
 	public static func ==(_ one: Edge<T>, _ two: Edge<T>) -> Bool {
 		return one.hashValue == two.hashValue && one.weight == two.weight
 	}
-}
-
-// What kind of edge would the Sir prefer?
-public enum EdgeKind {
-	case DIRECTED
-	case UNDIRECTED
 }
 
 // Generic graph class. Contains a list of nodes and a list of edges connecting the nodes.
@@ -79,6 +81,11 @@ public class Graph<T: Hashable> {
         if nodes.removeValue(forKey: node.hashValue) == nil {
             assert(false, "Should not remove node that is not contained in graph")
         }
+		for next in node.edges.values {
+			if next.type == .UNDIRECTED {
+				removeEdge(from: next.next.hashValue, to:node.hashValue)
+			}
+		}
 	}
 
 	public func removeNode(withValue value: T) {
@@ -115,7 +122,7 @@ public class Graph<T: Hashable> {
 		let fst = nodes[first]
 		let snd = nodes[second]
 		if fst == nil || snd == nil {
-			print("!Warning: Tried to insert edge between non-existing nodes")
+			print("!Warning: Tried to remove edge between non-existing nodes")
 			return
 		} else {
 			fst!.removeEdge(to: snd!)
