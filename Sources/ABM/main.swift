@@ -12,8 +12,8 @@ let n = 111//998
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
 
-// Population, happiness, Murder rate, Crime rate, Gun murder rate, Gun crime rate
-typealias Record = (Int, Float, Float, Float, Float, Float)
+// Population, happiness, Murder rate, Crime rate, Gun murder rate, Gun crime rate, avg connectedness
+typealias Record = (Int, Float, Float, Float, Float, Float, Float)
 
 infix operator +=
 func +=(left: inout Record, right: Record) {
@@ -23,13 +23,14 @@ func +=(left: inout Record, right: Record) {
 	left.3 += right.3
 	left.4 += right.4
 	left.5 += right.5
+	left.6 += right.6
 }
 
 func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		-> ([() -> Void], Record) {
 
 	var changes = [() -> Void]()
-	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	for node in nodeList {
 
@@ -49,7 +50,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 				//print(type)
 				let nextIndex = rand.next(max: graph.nodes.count)
 				let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value.value
-				changes.append(({ return agent.executeCrime(type: type, on: other) }))
+				changes.append({ return agent.executeCrime(type: type, on: other) })
 				//agent.executeCrime(type: type, on: other.value)
 
 				// Assume an agent who owns a gun will use it in a crime
@@ -65,6 +66,46 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 					record.3 += 1.0
 				}
 
+			}
+			record.6 += agent.connectedness
+
+			// Now get your friends and have a party
+			var peers = [GraphNode<Agent>]() // Your m8s
+			while rand.next(prob: 0.9) {
+				// Who do you wanna invite?
+				if rand.next() && node.edges.count > 0 {
+					// Your friends?
+					let ind = rand.next(max: node.edges.count)
+					peers.append(node.edges[node.edges.index(node.edges.startIndex, offsetBy: ind)].value.next)
+				} else {
+					// Or some hot chicks?
+					let ind = rand.next(max: graph.nodes.count)
+					peers.append(graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: ind)].value)
+				}
+			}
+			// Now let's get RIGGITY RIGGITY REKT SON!
+			changes.append {
+				if graph.nodes[node.hashValue] != nil { // You dead yet?
+					for peer in peers {
+						if graph.nodes[peer.hashValue] != nil { // Is your buddy still alive?
+							let oldWeight = node.getEdgeWeight(to: peer)
+							let newWeight = oldWeight == 0 ? 1.1 : rand.nextProb() * oldWeight / 10 // Up to 10% increase
+							graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
+							peer.value.updateConnectedness(node: peer)
+						}
+					}
+					for edge in node.edges.values {
+						let weight = edge.weight - 0.05 // 0.1 decay per day
+						if weight < 0 {
+							graph.removeEdge(from: node.hashValue, to: edge.hashValue)
+						} else {
+							graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -0.1)
+							edge.next.value.updateConnectedness(node: edge.next)
+						}
+					}
+					agent.updateConnectedness(node: node)
+					// Unknown parameters: first weight, weight decay, weight increase, meeting probability
+				}
 			}
 
 			var newMoral: Float = 0.0
@@ -140,7 +181,7 @@ let threadQueue = DispatchQueue.global()
 for d in 0..<days {
     tic()
 
-	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 	var cnt = graph.nodes.count
 	if cnt == 0 {
 		break
@@ -155,7 +196,7 @@ for d in 0..<days {
 
 	threadGroup.wait()
 	for sublist in sublists {
-		subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)))
+		subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
 		let i = subresults.count - 1
 		threadGroup.enter()
 		threadQueue.async {{ (rand: Random) in
@@ -192,6 +233,7 @@ for d in 0..<days {
 	record.3 = record.3 * 100.0 / Float(cnt)
 	record.4 = record.4 * 100.0 / Float(cnt)
 	record.5 = record.5 * 100.0 / Float(cnt)
+	record.6 = record.6 / Float(cnt)
 	crimeCounts += [record]
     //print(record)
     totalTime += toc()

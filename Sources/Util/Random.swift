@@ -4,7 +4,7 @@ import Dispatch
 // Simple, non-thread-safe, non-cryptographic pseudo-random number generator
 // using linear congruence
 public struct Random{
-    
+
     /// The current raw value of this random number generator (the value of the last call to next() )
 	private(set) var current: Int
 
@@ -20,7 +20,7 @@ public struct Random{
 		current = abs(1103515245 &* current &+ 12345)
 		return current
 	}
-    
+
     /// Returns a random Int
     public mutating func nextFS() -> Int {
         let sign: Bool = next()
@@ -32,7 +32,7 @@ public struct Random{
     public mutating func next() -> Bool {
         return next() % 2 == 0
     }
-    
+
     /// Returns a random Bool with the given probability that it is true
     /// - parameter prob: the probability whether next is true
     public mutating func next(prob: Float) -> Bool {
@@ -43,9 +43,10 @@ public struct Random{
     /// Returns a random Int between 0 and max
     /// - parameter max: the maximum value of the returned Int
     public mutating func next(max v: Int) -> Int{
+		assert(v>0)
         return next() % v
     }
-    
+
     /// Returns a random Float in [0,1]
     public mutating func nextProb() -> Float {
         return Float(next()) / Float(Int.max)
