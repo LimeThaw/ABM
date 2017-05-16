@@ -77,7 +77,7 @@ class Agent : Hashable {
             let weapon = determineWeapon()
             let expectedOutcome = t.getOutcome(val: increaseProbability(0.5, by: positive(fromFS: 0.0)), for: weapon) //TODO: Replaced enthusiasm with 0.0, find better replacement
             let candidateCMA = t.wishedUpdate(attributes: cma, for: expectedOutcome, by: possibleExtend)
-            if val(candidateCMA) - 5*moral > val(newCMA) {
+            if val(candidateCMA) - 5*moral > val(newCMA) { // TODO: Revise influence of moral
                 newCMA = candidateCMA
                 type = t
             }

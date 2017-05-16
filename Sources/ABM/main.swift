@@ -3,6 +3,7 @@ import Util
 import Dispatch
 
 let MAX_AROUSAL: Float = 2.0
+let AVG_CONNECTIONS = 3
 
 let THREAD_COUNT = 1
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
@@ -134,9 +135,6 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 
 			changes.append({
 				// bring a bit movement into the people
-				agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.01))
-				agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.01))
-				agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.01))
 				agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
 				agent.age += 1
 				agent.moral = newMoral
@@ -153,7 +151,7 @@ func addBaby(to graph: Graph<Agent>) {
 	let newAgent = Agent(id: tmpc.next()!, age: 0)
 	newAgent.randomize()
 	let newNode = graph.addNode(withValue: newAgent)
-	for _ in 1...3 {
+	for _ in 1...AVG_CONNECTIONS {
 		var next = Int(rand.next()%graph.nodes.count)
 		next = [Int](graph.nodes.keys)[next]
 		graph.addEdge(from: newNode.hashValue, to: next,
@@ -170,7 +168,7 @@ for i in 0..<n {
 	_ = graph.addNode(withValue: newAgent)
 }
 
-for i in 0...3*n {
+for i in 0...AVG_CONNECTIONS*n/2 {
 	var fst = Int(rand.next()%n)
 	var snd = Int(rand.next()%n)
 	graph.addEdge(from: fst, to: snd, weight: Float(rand.nextNormal(mu: 1.0)))
