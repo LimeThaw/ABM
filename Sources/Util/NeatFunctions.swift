@@ -120,3 +120,18 @@ extension Array {
         }
     }
 }
+
+public func read(_ path: String) -> String {
+	let fileHandle = fopen(path, "r")
+    fseek(fileHandle, 0, SEEK_END)
+    let fileLen = ftell(fileHandle)
+    rewind(fileHandle)
+    let mut = UnsafeMutablePointer<UInt8>.allocate(capacity: fileLen + 1)
+    fread(mut, 1, fileLen, fileHandle)
+    let buff = UnsafeMutableBufferPointer(start: mut, count: fileLen + 1)
+    buff.baseAddress?[fileLen] = 0
+	let baseAddress = buff.baseAddress!
+    let ret =  String(cString: baseAddress)
+	fclose(fileHandle)
+	return ret
+}

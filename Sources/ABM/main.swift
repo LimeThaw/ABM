@@ -26,6 +26,10 @@ func +=(left: inout Record, right: Record) {
 	left.6 += right.6
 }
 
+// Open graph input file
+let input = read("snap/gplus_small.txt")
+let inList = input.characters.split{ $0 == " " || $0 == "\n" }.map{String($0)}
+
 func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		-> ([() -> Void], Record) {
 
@@ -151,8 +155,37 @@ func addBaby(to graph: Graph<Agent>) {
 	newAgent.updateConnectedness(node: graph.nodes[newAgent.hashValue]!)
 }
 
+// Insert nodes from input
+var loadedNodes = [String:Int]()
+for i in 0..<(inList.count/2) {
+	let one = inList[2*i]
+	let two = inList[2*i+1]
+
+	var oneId = loadedNodes[one]
+	if oneId == nil {
+		var newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+		newAgent.randomize()
+		oneId = graph.addNode(withValue: newAgent).hashValue
+		loadedNodes[one] = oneId
+	}
+
+	var twoId = loadedNodes[two]
+	if twoId == nil {
+		var newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+		newAgent.randomize()
+		twoId = graph.addNode(withValue: newAgent).hashValue
+		loadedNodes[two] = twoId
+	}
+
+	graph.addEdge(from: oneId!, to: twoId!, weight: Float(rand.nextNormal(mu: 1.0)))
+	if graph.nodes.count >= n {
+		break
+	}
+}
+print("\(graph.nodes.count) Agents are entering the matrix...")
+
 // generate social network
-for i in 0..<n {
+/*for i in 0..<n {
 	var newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
 	newAgent.randomize()
 	_ = graph.addNode(withValue: newAgent)
@@ -162,7 +195,7 @@ for i in 0...3*n {
 	var fst = Int(rand.next()%n)
 	var snd = Int(rand.next()%n)
 	graph.addEdge(from: fst, to: snd, weight: Float(rand.nextNormal(mu: 1.0)))
-}
+}*/
 
 for i in 0..<n {
 	var node = graph.find(hash: i)
