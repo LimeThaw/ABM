@@ -2,6 +2,8 @@ import Foundation
 import Util
 import Dispatch
 
+let MAX_AROUSAL: Float = 2.0
+
 let THREAD_COUNT = 1
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
 // Recalculated per person and day
@@ -71,10 +73,11 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
-			while rand.next(prob: 0.9) {
+			let arousal = clamp(agent.cma.arousal, from: 0, to: MAX_AROUSAL)
+			while rand.next(prob: (arousal/MAX_AROUSAL)*Float(0.9)) {
 				// Who do you wanna invite?
-				if rand.next() && node.edges.count > 0 {
-					// Your friends?
+				if rand.next(prob: 0.66) && node.edges.count > 0 {
+					// Your friends? Let's assume friends are 2/3 likely (twice as likely as others)
 					let ind = rand.next(max: node.edges.count)
 					peers.append(node.edges[node.edges.index(node.edges.startIndex, offsetBy: ind)].value.next)
 				} else {
@@ -85,26 +88,36 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 			}
 			// Now let's get RIGGITY RIGGITY REKT SON!
 			changes.append {
+				let delta: Float = 1.0/365.0 // General change rate 1 per year
 				if graph.nodes[node.hashValue] != nil { // You dead yet?
 					for peer in peers {
 						if graph.nodes[peer.hashValue] != nil { // Is your buddy still alive?
 							let oldWeight = node.getEdgeWeight(to: peer)
-							let newWeight = oldWeight == 0 ? 1.1 : rand.nextProb() * oldWeight / 10 // Up to 10% increase
+							let newWeight = oldWeight == 0 ? delta : rand.nextProb() * oldWeight * delta
 							graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
+							peer.value.cma.pleasure += delta
+							peer.value.cma.arousal += delta
+							peer.value.cma.dominance -= delta
 							peer.value.updateConnectedness(node: peer)
 						}
 					}
+					if peers.count == 0 {
+						agent.cma.pleasure -= delta
+						agent.cma.arousal -= delta
+					} else {
+						agent.cma.dominance += delta
+					}
 					for edge in node.edges.values {
-						let weight = edge.weight - 0.05 // 0.1 decay per day
+						let weight = edge.weight - delta
 						if weight < 0 {
 							graph.removeEdge(from: node.hashValue, to: edge.hashValue)
 						} else {
-							graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -0.1)
+							graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -delta)
 							edge.next.value.updateConnectedness(node: edge.next)
 						}
 					}
 					agent.updateConnectedness(node: node)
-					// Unknown parameters: first weight, weight decay, weight increase, meeting probability
+					// Unknown parameters: genral weight change, max arousal
 				}
 			}
 

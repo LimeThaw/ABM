@@ -7,7 +7,7 @@ class Agent : Hashable {
 
 	var cma: CMA
 
-    var enthusiasm: Float
+    var enthusiasm: Float // TODO: Remove enthusiasm
     var moral: Float
 	var age: Int
 

@@ -120,3 +120,8 @@ extension Array {
         }
     }
 }
+
+public func clamp<T: Comparable>(_ value: T, from low: T, to high: T) -> T {
+	assert(low <= high)
+	return value < low ? low : value > high ? high : value
+}
