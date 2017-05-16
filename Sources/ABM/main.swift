@@ -137,7 +137,6 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 				agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.01))
 				agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.01))
 				agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.01))
-				agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
 				agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
 				agent.age += 1
 				agent.moral = newMoral
