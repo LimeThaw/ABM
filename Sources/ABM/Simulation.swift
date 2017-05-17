@@ -29,8 +29,8 @@ func +=(left: inout Record, right: Record) {
 }
 
 func deviation(of rec: Record, last: Record) -> Float {
-	var ret = ((rec.3 / Float(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
-	ret += (((rec.5 / Float(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
+	var ret = ((rec.3 / Float(rec.0)) * 100000.0 - 1.020821918)^^4 // Violent crime rate
+	ret += (((rec.5 / Float(rec.0)) * 100000.0 - 0.28051726)^^5) // Firearm crime rate
 	ret += ((Float(rec.0-last.0) / Float(rec.0) * 100000.0)^^2) // Population change
 	return ret
 }
@@ -50,7 +50,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		let agent = node.value
 		// Kill agent if too old
 		if rand.nextProb() < deathProb(age: agent.age) {
-			print("death")
+			//print("death")
 			changes.append({
 				graph.removeNode(node: node)
 				for edge in node.edges.values {
@@ -146,7 +146,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 }
 
 func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
-	print("birth")
+	//print("birth")
 	let newAgent = Agent(id: tmpc.next()!, age: 0)
 	newAgent.randomize(pars)
 	let newNode = graph.addNode(withValue: newAgent)
@@ -160,7 +160,11 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 	newAgent.updateConnectedness(node: graph.nodes[newAgent.hashValue]!)
 }
 
-func runSimulation(_ pars: Parameters, days: Int = 365) {
+// Runs the simulation with the given parameters for the given number of days and returns the
+// deviation from empirical data
+func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
+	rand = Random(13579)
+
 	// Insert nodes from input
 	graph = Graph<Agent>()
 	var loadedNodes = [String:Int]()
@@ -189,7 +193,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) {
 			break
 		}
 	}
-	print("\(graph.nodes.count) Agents are entering the matrix...")
+	//print("\(graph.nodes.count) Agents are entering the matrix...")
 
 	// generate social network
 	/*for i in 0..<n {
