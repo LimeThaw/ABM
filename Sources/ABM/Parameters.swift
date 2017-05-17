@@ -4,8 +4,8 @@
     import Darwin.C
 #endif
 
-let POP_SIZE = 50
-let MATES_PER_ROUND = 9
+let POP_SIZE = 12
+let MATES_PER_ROUND = 2
 let ROUNDS = 5
 var uncertainty: Float = 0.2
 

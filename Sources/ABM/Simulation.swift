@@ -163,7 +163,9 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
 func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
+	// Reset environment variables
 	rand = Random(13579)
+	tmpc = Counter(0)
 
 	// Insert nodes from input
 	graph = Graph<Agent>()
