@@ -91,7 +91,7 @@ struct CrimeGenerator {
 
         /// starts the crime, meaning modifies the attributes of the initiator and returns the node of the victim or nil if the crime fails
         let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> GraphNode<Agent>? in
-            let succVal = increaseProbability(rand.nextProb(), by: positive(fromFS: initiator.enthusiasm))
+            let succVal = increaseProbability(rand.nextProb(), by: positive(fromFS: 0.0)) //TODO: Replaced initiator.enthusiasm with 0.0, find better replacement
             let outcome = self.type.getOutcome(val: succVal, for: self.weapon)
             initiator.cma = self.type.actualUpdate(attributes: initiator.cma, for: outcome, by: ext)
             if outcome == OutcomeType.Fail {
@@ -115,12 +115,10 @@ struct CrimeGenerator {
         } else {
             return { ini, vic, ext in
                 if let node = crimeStart(ini, vic, ext) {
-                    ini.enthusiasm += 0.1
                     vic.cma.pleasure -= 0.16*Float(ext)
                     vic.moral -= 0.1
                     self.propagate(from: node, until: Int(sqrt(Double(ext))))
                 }
-                ini.enthusiasm -= 0.1
                 ini.moral += 0.1
             }
         }

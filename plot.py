@@ -27,6 +27,8 @@ length = len(popCount)
 
 cmpData = json.loads(open("data.json").read())
 
+plt.subplot(121)
+
 # See https://matplotlib.org/api/pyplot_api.html?highlight=plot#matplotlib.pyplot.plot for
 # plot styles
 plt.plot(
@@ -68,11 +70,11 @@ plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 120])
 
-plt.figure()
-
 populationChange = [0] + map(lambda p, pp: (float(p)-float(pp))/float(p)*100000, popCount[1:], popCount[:-1])
 violentCrimes = map(lambda c, p: float(c)/float(p)*100000, murders, popCount)
 firearmCrimes = map(lambda c, p: float(c)/float(p)*100000, gunMurders, popCount)
+
+plt.subplot(122)
 
 plt.plot(
 	[0, length-1],
