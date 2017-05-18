@@ -1,6 +1,9 @@
 import Foundation
 import Dispatch
 
+// all the attributes in our ABM lie in this interval. This constant must be in this file, because Globals is in the ABM module
+public let attributeBound: (Double, Double) = (-10, 10)
+
 // Simple, non-thread-safe, non-cryptographic pseudo-random number generator
 // using linear congruence
 public struct Random{
@@ -35,7 +38,7 @@ public struct Random{
     
     /// Returns a random Bool with the given probability that it is true
     /// - parameter prob: the probability whether next is true
-    public mutating func next(prob: Float) -> Bool {
+    public mutating func next(prob: Double) -> Bool {
         assert(0 <= prob && prob <= 1)
         return nextProb() < prob
     }
@@ -47,21 +50,25 @@ public struct Random{
     }
     
     /// Returns a random Float in [0,1]
-    public mutating func nextProb() -> Float {
-        return Float(next()) / Float(Int.max)
+    public mutating func nextProb() -> Double {
+        return Double(next()) / Double(Int.max)
     }
 
 	/// Returns a random, normal-distributed Float.
 	public mutating func nextNormal(mu: Double = 0, sig: Double = 1) -> Double {
-        var u1 = 0.0
-        var u2 = 0.0
-        var s = 0.0
-        while s >= 1 || s == 0{
-            u1 = Double(probToRange(from: nextProb(), lo: -1, up: 1))
-            u2 = Double(probToRange(from: nextProb(), lo: -1, up: 1))
-            s = u1*u1+u2*u2
-        }
-        let u3 = u1 * sqrt(-2*log(s)/s) // Box-Muller transform
-		return u3 * sqrt(sig) + mu // Transformation to requested distribution
+        var ret: Double = 0
+        repeat {
+            var u1 = 0.0
+            var u2 = 0.0
+            var s = 0.0
+            while s >= 1 || s == 0{
+                u1 = Double(probToRange(from: nextProb(), lo: -1, up: 1))
+                u2 = Double(probToRange(from: nextProb(), lo: -1, up: 1))
+                s = u1*u1+u2*u2
+            }
+            let u3 = u1 * sqrt(-2*log(s)/s) // Box-Muller transform
+            ret = u3 * sqrt(sig) + mu // Transformation to requested distribution
+        } while ret < Double(attributeBound.0) || ret > Double(attributeBound.1) // repeat until in attribute bound
+        return ret
 	}
 }

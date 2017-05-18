@@ -28,43 +28,19 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	var record = Record(0, 0, 0, 0, 0)
 
 	for node in nodeList {
-
-		let agent = node.value
-		let decision = agent.checkCrime()
-		if let type = decision {
-			//print(type)
-			let nextIndex = rand.next(max: graph.nodes.count)
-			let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value
-			changes.append(({ return agent.executeCrime(type: type, on: other.value) }))
-			//agent.executeCrime(type: type, on: other.value)
-			if type == CrimeType.Murder {
-				record.0 += 1
-			} else {
-				record.1 += 1
-			}
-		}
-
-		var newMoral = Float(0.0)
-		for nextAgent in node.edges.map({ e in return e.value.next.value }) {
-			// Influence on moral beliefs from agent's neighbors in social network
-			newMoral += nextAgent.moral
-		}
-		// Age factor: The older the agent the less likely he is to change his beliefs
-		let oldFac = probability(fromPos: Float(agent.age) / 50.0)
-		newMoral = (1.0 - oldFac) * newMoral / Float(node.edges.count) + oldFac * agent.moral
-
-		changes.append({
-			// bring a bit movement into the people
-			agent.cma.pleasure += Float(rand.nextNormal(mu: 0, sig: 0.01))
-			agent.cma.arousal += Float(rand.nextNormal(mu: 0, sig: 0.01))
-			agent.cma.dominance += Float(rand.nextNormal(mu: 0, sig: 0.01))
-			agent.enthusiasm += Float(rand.nextNormal(mu: 0, sig: 0.1))
-			agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
-			agent.age += 1
-			agent.moral = newMoral
-			agent.updateConnectedness(node: node)
-		})
-
+        
+        let agent = node.value
+        
+        if agent.emotion.dominance < -5 && canBuyGun(agent){
+            agent.ownsGun = true
+        }
+        
+        var vicNode = GraphNode<Agent>(value: agent)
+        repeat {
+            let next = rand.next(max: graph.nodes.count)
+            vicNode = graph.getNode(index: next)!
+        } while vicNode.value != agent
+        changes.append {executeCrime(by: agent, on: vicNode)}
 	}
 
 	return (changes, record)
@@ -73,8 +49,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 // generate social network
 for i in 0..<n {
 	var newAgent = Agent(tmpc.next()!)
-	newAgent.enthusiasm = Float(rand.nextNormal(mu: Double(newAgent.enthusiasm), sig: 2.0))
-    newAgent.moral = Float(rand.nextNormal(mu: Double(newAgent.moral), sig: 2.0))
+    newAgent.moral = rand.nextNormal(mu: Double(newAgent.moral), sig: 2.0)
 	/*if Random.get_next() % 100 <= 5 { // Person is unemployed
 		new_agent.daily_income = 15
 	}*/
@@ -89,12 +64,11 @@ for i in 0..<n {
 for i in 0...3*n {
 	var fst = Int(rand.next()%n)
 	var snd = Int(rand.next()%n)
-	graph.addEdge(from: fst, to: snd, weight: Float(rand.nextNormal(mu: 1.0)))
+	graph.addEdge(from: fst, to: snd, weight: rand.nextNormal(mu: 1.0))
 }
 
 for i in 0..<n {
 	var node = graph.find(hash: i)
-	node?.value.updateConnectedness(node: node!)
 }
 
 var changes = [()->Void]()
@@ -110,7 +84,7 @@ for d in 0..<days {
     tic()
 	var record = Record(0, 0, 0, 0, 0)
 	var cnt = graph.nodes.count
-	var hap = graph.nodes.values.map({$0.value.cma.pleasure}).reduce(0.0, +)/Float(graph.nodes.count + 1)
+	var hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
 
 	let list = graph.nodes.map({ $0.value })
 	let stride = Int(ceil(Float(cnt) / Float(THREAD_COUNT)))

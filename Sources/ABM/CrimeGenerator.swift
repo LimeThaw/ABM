@@ -10,264 +10,177 @@ import Util
 import Foundation
 
 /**
- A struct that generates crimes.
- This struct defines what a crime exactly is.
-*/
-struct CrimeGenerator {
-
-    private let weapon: Weapon
-    private let type: CrimeType
-
-    init(with: Weapon, type: CrimeType){
-        weapon = with
-        self.type = type
+ - returns: A tuple with the calculated extend, gun usage, victim death or nil if no crime was executed
+ */
+@discardableResult
+func executeCrime(by ini: Agent, on vicNode: GraphNode<Agent>) -> (Double, Bool, Bool)? {
+    
+    let arousal = ini.emotion.arousal
+    let pleasure = ini.emotion.pleasure
+    let dominance = ini.emotion.dominance
+    let maxAttr = attributeBound.1
+    let moral = ini.moral
+    let gunPos = ini.ownsGun
+    let gunAcq = canBuyGun(ini)
+    
+    // parameters
+    
+    let baseGain: Double = 0.1
+    let baseCost: Double = 0.15
+    let costGun: Double = 0.1
+    let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
+    let maxExt: Double = 100
+    let maxDecExt: Double = 0.7 // the maximum (percentual) decrease of the success probability with the extend
+    let incGun: Double = 0.3 // the (percentual) increase of the success probability when using a gun
+    let gunCrimeExt: Double = 5 // the extend of a crime that gives the initiator a gun
+    let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
+    let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
+    let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
+    let gunAcqExt: Double = 5 // the extend of a crime to get a gun
+    
+    // pre calculations
+    
+    let smallPhiNoGun = -maxDecExt/maxExt
+    let smallPhiGun = incGun/maxExt + smallPhiNoGun
+    let indivBaseProb = increaseProb(baseProb, by: arousal*maxIncA/maxAttr + dominance*maxIncD/maxAttr)
+    let largePhiHlp = indivBaseProb*(-baseGain - baseCost) + baseCost + moral
+    let largePhiNoGun = largePhiHlp + indivBaseProb*pleasure*smallPhiNoGun
+    let largePhiGun = largePhiHlp + indivBaseProb*(pleasure*smallPhiGun - smallPhiGun*costGun)
+    let extHlp = 2*indivBaseProb*(baseGain + baseCost)
+    let stealsGun = !gunPos && !gunAcq
+    
+    // extend
+    
+    let _extNoGun = largePhiNoGun/(extHlp*smallPhiNoGun)
+    let extNoGun = _extNoGun > maxExt ? maxExt : _extNoGun
+    let _extGun = largePhiGun/(extHlp*smallPhiGun)
+    let extGun = _extGun > maxExt ? maxExt : _extGun
+    
+    // functions for pleasure change
+    
+    func gain(e: Double) -> Double {
+        return baseGain * e
     }
-
-    /**
-     Returns the function that takes a current agent, a previous agent and a extend and returns whether it should be propagated further. For every iteration the extend decreases. This function depends only on the crime type.
-     - returns: the propagation function
-    */
-    private func getPropagationFunction() -> (Agent, Agent, Float) -> Bool {
-        if type == CrimeType.Murder {
-            return { prev, cur, ext in
-                if ext <= 0 {
-                    return false
-                }
-                cur.cma.pleasure -= 0.2*ext
-                cur.moral -= 0.01*ext
-                return true
-            }
-        } else {
-            return { prev, cur, ext in
-                if ext <= 0 {
-                    return false
-                }
-                cur.cma.pleasure -= 0.001*ext
-                return true
-            }
-        }
+    
+    func cost(e: Double, g: Bool) -> Double {
+        return baseCost * e + (g ? costGun : 0)
     }
-
-    private func propagate(from source: GraphNode<Agent>..., until reach: Int) {
-        let propFunc = getPropagationFunction()
-        // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
-        var next = Queue<(GraphNode<Agent>, GraphNode<Agent>, Edge<Agent>, Int)>()
-        // all the visitedNodes
-        var visited: [Agent] = []
-        for a in source {
-            a.value.visited = true
-            visited.append(a.value)
-            for n in a.edges {
-                next.insert((a, n.value.next, n.value, reach-1))
-            }
-        }
-
-        while !next.isEmpty {
-            let cur = next.remove()!
-            if !cur.1.value.visited {
-                if propFunc(cur.0.value, cur.1.value, Float(cur.3)*Float(cur.3)*cur.2.weight/2) {
-                    for nextEdge in cur.1.edges {
-                        if !nextEdge.value.next.value.visited {
-                            next.insert((cur.1, nextEdge.value.next, nextEdge.value, cur.3-1))
-                        }
+    
+    let gunAcqCost = cost(e: gunAcqExt, g: false)
+    
+    func prob(e: Double, g1: Bool, g2: Bool) -> Double { // g1: initiator has gun, g2: victim has gun
+        let phi = g1 ? smallPhiGun : smallPhiNoGun
+        return increaseProb(indivBaseProb, by: phi - (g2 ? decVicGun : 0))
+    }
+    
+    func visualizedChange(e: Double, g: Bool) -> Double {
+        let p = prob(e: e, g1: g, g2: false) // the initiator assumes that the victim has no gun
+        let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0)
+        return p*(gain(e: e) - pleasure) - (1-p)*cost(e: e, g: g) + additional
+    }
+    
+    // decision making
+    
+    if extNoGun <= 0 && extGun <= 0 { // if a extend is smaller than 0, the extend is not used
+        return nil
+    }
+    let vcNoGun = visualizedChange(e: extNoGun, g: false)
+    let vcGun = visualizedChange(e: extGun, g: true)
+    let gun = extGun <= 0 ? false : extNoGun <= 0 ? true : vcGun > vcNoGun ? true : false
+    let ext = gun ? extGun : extNoGun
+    if (gun ? vcGun : vcNoGun) <= 0 {
+        return nil
+    }
+    
+    
+    
+    // crime execution
+    
+    // parameters
+    
+    let sigGain: Double = 0.5 // standard deviation of the gain
+    let sigCost: Double = 0.5 // standard deviation of the cost
+    let incDSucc: Double = 1 // increase of the dominance after a successful crime
+    let decDFail: Double = 0.7 // decrease of the dominance after a failed crime
+    let incA: Double = 1.5 // increase of the arousal after a crime
+    let baseDecPVic: Double = 0.1 // base decrease of pleasure for victim
+    let baseDecDVic: Double = 0.07 // base decrease of dominance for victim
+    let decExtFail: Double = 3 // the factor by which the extend (for the victim) is decreased after a fail
+    let maxReach = 3
+    
+    // precomputations
+    
+    let vic: Agent = vicNode.value
+    let success = rand.nextProb() > prob(e: ext, g1: gun, g2: vic.ownsGun)
+    let gunAcqUpdate = (gun && stealsGun && rand.nextProb() > prob(e: gunAcqExt, g1: false, g2: false)) ? gunAcqCost : 0
+    let reach = Int(Double(maxReach)*ext/maxExt)
+    
+    // update for initiator
+    
+    if success {
+        ini.emotion += (gunAcqUpdate + rand.nextNormal(mu: gain(e: ext), sig: sigGain), incA, incDSucc)
+    } else {
+        ini.emotion += (gunAcqUpdate - rand.nextNormal(mu: cost(e: ext, g: gun), sig: sigCost), incA, -decDFail)
+    }
+    if gun && !ini.ownsGun {
+        ini.ownsGun = true
+    }
+    
+    // update for victim
+    
+    let feltExt = success ? ext : ext / decExtFail
+    let vicDeath = rand.nextProb() > feltExt/maxExt // whether the victim dies or not
+    let pDec = ext*baseDecPVic
+    let dDec = ext*baseDecDVic
+    if !vicDeath {
+        vic.emotion += (-pDec, 0, -dDec)
+    }
+    
+    // propagation
+    
+    // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
+    var next = Queue<(GraphNode<Agent>, GraphNode<Agent>, Edge<Agent>, Int)>()
+    // all the visitedNodes
+    var visited: [Agent] = []
+    vic.visited = true
+    visited.append(vic)
+    for n in vicNode.edges {
+        next.insert((vicNode, n.value.next, n.value, reach))
+    }
+    
+    while !next.isEmpty {
+        let cur = next.remove()!
+        if !cur.1.value.visited {
+            
+            // update for neighbor
+            // the propagated emotion should only be increased by a max factor of 3 when the weight is high
+            let tmp: Double = cur.2.weight*cur.2.weight
+            let incFact: Double = 3*tmp/(tmp + 20*cur.2.weight + 1) + 1
+            // but should be decreased quadratically
+            let decFact: Double = Double((reach + 2 - cur.3)^^2)
+            cur.1.value.emotion += (incFact*pDec/decFact, 0, incFact*dDec/decFact)
+            
+            if cur.3 > 0 {
+                for nextEdge in cur.1.edges {
+                    if !nextEdge.value.next.value.visited {
+                        next.insert((cur.1, nextEdge.value.next, nextEdge.value, cur.3-1))
                     }
                 }
-                cur.1.value.visited = true
-                visited.append(cur.1.value)
             }
-        }
-
-        for a in visited {
-            a.visited = false
+            cur.1.value.visited = true
+            visited.append(cur.1.value)
         }
     }
-
-    /**
-     Generates a crime from the preset attributes.
-     A crime is a function that takes an initiator and a victim with an extend. It has a direct influence on the victim and the initiator, i.e. it changes the
-     A propagation function takes a source and a target with an iterator which indicates, how far away from the victim the propagation is. The extend on the target should decay exponentially with the iteration and the propagation should be terminated if the extend on the target arrives a given lower bound.
-    */
-    func generateCrime() -> (Agent, Agent, Int) -> Void {
-
-        /// starts the crime, meaning modifies the attributes of the initiator and returns the node of the victim or nil if the crime fails
-        let crimeStart = {(initiator: Agent, victim: Agent, ext: Int) -> GraphNode<Agent>? in
-            let succVal = increaseProbability(rand.nextProb(), by: positive(fromFS: initiator.enthusiasm))
-            let outcome = self.type.getOutcome(val: succVal, for: self.weapon)
-            initiator.cma = self.type.actualUpdate(attributes: initiator.cma, for: outcome, by: ext)
-            if outcome == OutcomeType.Fail {
-                return nil
-            } else {
-                return graph.find(node: victim) // requires that the agent is in the graph
-            }
-        }
-
-        if type == CrimeType.Murder{
-            return { ini, vic, ext in
-                if let node = crimeStart(ini, vic, ext) {
-                    ini.moral += 0.5
-                    self.propagate(from: node, until: 4)
-                    graph.removeNode(node: node)
-                    for nextEdge in node.edges {
-                        nextEdge.value.next.value.updateConnectedness(node: nextEdge.value.next)
-                    }
-                }
-            }
-        } else {
-            return { ini, vic, ext in
-                if let node = crimeStart(ini, vic, ext) {
-                    ini.enthusiasm += 0.1
-                    vic.cma.pleasure -= 0.16*Float(ext)
-                    vic.moral -= 0.1
-                    self.propagate(from: node, until: Int(sqrt(Double(ext))))
-                }
-                ini.enthusiasm -= 0.1
-                ini.moral += 0.1
-            }
-        }
+    
+    for a in visited {
+        a.visited = false
     }
-}
-
-enum OutcomeType {
-    case Success
-    case Partially
-    case Fail
-}
-
-enum Weapon: Float {
-    case Gun = 3.0
-    case Other = 1.0
-}
-
-/// the following struct defines the attributes of a crime that are important for the initiator
-struct CrimeAttributes {
-    fileprivate var actualCost: CMA
-    fileprivate var actualGain: CMA
-    var wishedCost: CMA
-    var wishedGain: CMA
-
-    /// the percentage of failures
-    private(set) var failRate: Float
-
-    mutating func setFailrate(_ f: Float) {
-        assert(f >= 0 && f < 1)
-        failRate = f
+    
+    // victim death
+    
+    if vicDeath {
+        graph.removeNode(node: vicNode)
     }
-
-    /// indicates whether the crime is extendable (e.g. a murder is not extendable)
-    var isExtendable: Bool
-
-    /// initiates a standard crime
-    init() {
-        failRate = 0.3
-        isExtendable = true
-        actualCost = Emotion(-0.6, 0.5, -0.2)
-        actualGain = Emotion(0.2, 0.1, -0.1)
-        wishedCost = Emotion(-0.5, -0.5, 0)
-        wishedGain = Emotion(0.5, -0.5, 0.2)
-    }
-}
-
-/**
-The following struct defines the possible crime types. The direct effect on the initiator
-(change of CMA) is stored in an instance, the effect on the victim and its surroundings are coded
-in the generate crime function
-*/
-struct CrimeType: CustomStringConvertible {
-
-    var description: String {
-        switch type {
-        case .Murder:
-            return "Murder"
-        case .Other:
-            return "Other"
-        }
-    }
-
-    private enum TypeE {
-        case Murder
-        case Other
-    }
-
-    let attributes: CrimeAttributes
-    private let type: TypeE
-
-    static let Murder = CrimeType(.Murder)
-    static let Other = CrimeType(.Other)
-
-    static let all = [Murder, Other]
-
-    private init(_ t: TypeE) {
-        switch t {
-        case .Murder:
-            var at = CrimeAttributes()
-            at.actualCost = Emotion(-1.5, 0, -0.4)
-            at.actualGain = Emotion(-1, 0.2, 0.2)
-            at.wishedCost = Emotion(-1, -0.5, -1)
-            at.wishedGain = Emotion(0.2, -0.5, 0.5)
-            at.setFailrate(0.9)
-            at.isExtendable = false
-            attributes = at
-        case .Other:
-            attributes = CrimeAttributes()
-        }
-        type = t
-    }
-
-    static func ==(lhs: CrimeType, rhs: CrimeType) -> Bool {
-        return lhs.type == rhs.type
-    }
-
-    /**
-     Returns the new CMA when the crime was executed
-     - parameter attributes: the old CMA
-     - parameter for: the outcome type
-     - parameter by: the extend of the crime
-    */
-    fileprivate func actualUpdate(attributes: CMA, for outcome: OutcomeType, by ext: Int) -> CMA{
-        var actualExtend = Float(ext)
-        if !self.attributes.isExtendable {
-            actualExtend = 1
-        }
-        switch outcome {
-        case .Fail:
-            return attributes + self.attributes.actualCost*actualExtend
-        case .Partially:
-            let ret = attributes + self.attributes.actualCost*actualExtend
-            return ret + self.attributes.actualGain*actualExtend
-        default:
-            return attributes + self.attributes.actualGain*actualExtend
-        }
-    }
-
-    /**
-     Returns the new CMA that the initiator thinks he will get with the given outcome and extend
-     - parameter attributes: the old CMA
-     - parameter for: the outcome type
-     - parameter by: the extend of the crime
-     */
-    func wishedUpdate(attributes: CMA, for outcome: OutcomeType, by ext: Int) -> CMA{
-        var actualExtend = Float(ext)
-        if !self.attributes.isExtendable {
-            actualExtend = 1
-        }
-        switch outcome {
-        case .Fail:
-            return attributes + self.attributes.wishedCost*actualExtend
-        case .Partially:
-            let ret = attributes + self.attributes.wishedCost*actualExtend
-            return ret + self.attributes.wishedGain*actualExtend
-        default:
-            return attributes + self.attributes.wishedGain*actualExtend
-        }
-    }
-
-    /**
-     Returns the outcome for a given success value
-     - parameter val: The success value. 0 is guaranteed failure, 1 is guaranteed success
-    */
-    func getOutcome(val: Float, for weapon: Weapon) -> OutcomeType {
-        assert(val >= 0 && val <= 1, "Illegal value: \(val)")
-        let successValue = increaseProbability(val, by: weapon.rawValue)
-        return successValue < attributes.failRate ? .Fail : .Success
-    }
+    
+    return (ext, gun, vicDeath)
 }

@@ -8,14 +8,14 @@ public class GraphNode<T: Hashable>: Hashable {
 	public var hashValue: Int
 
 	// Constructor
-	init(value: T) {
+	public init(value: T) {
 		self.value = value
 		edges = [:]
 		hashValue = value.hashValue
 	}
 
 	// Add an edge to this node
-	func add_edge(to other: GraphNode<T>, weight: Float = 0) {
+	func add_edge(to other: GraphNode<T>, weight: Double = 0) {
 		let edge = Edge(to: other, weight: weight)
 		edges[edge.hashValue] = edge
 	}
@@ -34,11 +34,11 @@ public class GraphNode<T: Hashable>: Hashable {
 // A simple connection to another node
 public struct Edge<T: Hashable>: Hashable {
 	public let next: GraphNode<T> // The other node of the edge
-	public var weight: Float // The weight of the edge
+	public var weight: Double // The weight of the edge
 
 	public var hashValue: Int { return next.value.hashValue }
 
-	init(to other: GraphNode<T>, weight: Float) {
+	public init(to other: GraphNode<T>, weight: Double) {
 		next = other
 		self.weight = weight
 	}
@@ -95,7 +95,7 @@ public class Graph<T: Hashable> {
 
 	// Adds an edge with the specified weights between nodes with the specified keys.
 	// Unless requested otherwise it will be an undirected/bidirectional edge
-	public func addEdge(from first: Int, to second: Int, weight: Float, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
+	public func addEdge(from first: Int, to second: Int, weight: Double, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
 		let fst = nodes[first]
 		let snd = nodes[second]
 		if fst == nil || snd == nil {
@@ -108,4 +108,13 @@ public class Graph<T: Hashable> {
 			}
 		}
 	}
+    
+    public func getNode(index i: Int) -> GraphNode<T>? {
+        assert(i >= 0 && i < nodes.count)
+        var it = nodes.makeIterator()
+        for _ in 0..<i {
+            _ = it.next()
+        }
+        return it.next()?.value
+    }
 }
