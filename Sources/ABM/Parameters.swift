@@ -3,10 +3,12 @@
 #else
     import Darwin.C
 #endif
+import Foundation
+import Util
 
-let POP_SIZE = 12
-let MATES_PER_ROUND = 2
-let ROUNDS = 5
+let POP_SIZE = 50
+let MATES_PER_ROUND = 9
+let ROUNDS = 5000
 var uncertainty: Double = 0.2
 
 // The parameters describing rand.nextProb() normal distribution
@@ -37,6 +39,8 @@ func mate(mom: Parameters, dad: Parameters) -> Parameters {
 }
 
 func findParameters() {
+	rand = Random(clock())
+
 	var population = [Parameters]()
 	for _ in 1...POP_SIZE {
 		population.append(((rand.nextProb(), rand.nextProb()), (rand.nextProb(), rand.nextProb()), (rand.nextProb(), rand.nextProb()), (rand.nextProb(), rand.nextProb())))
@@ -68,6 +72,6 @@ func findParameters() {
 		}
 		population += newPopulation
 
-		uncertainty /= 2.0
+		//uncertainty /= 2.0
 	}
 }

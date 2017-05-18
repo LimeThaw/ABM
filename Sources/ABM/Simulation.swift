@@ -7,15 +7,11 @@ let THREAD_COUNT = 1
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
 
-let n = 111//998
-
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
 
-//                  Population, happiness, Murder rate, Crime rate, Gun murder rate,
-typealias Record = (Int,        Float,     Float,       Float,      Float,
-//  Gun crime rate, avg connectedness
-	Float,          Float)
+//                  Population, happiness, Crime rate, Gun crime rate, avg connectedness
+typealias Record = (Int,        Float,     Float,      Float,          Float)
 
 infix operator +=
 func +=(left: inout Record, right: Record) {
@@ -24,26 +20,24 @@ func +=(left: inout Record, right: Record) {
 	left.2 += right.2
 	left.3 += right.3
 	left.4 += right.4
-	left.5 += right.5
-	left.6 += right.6
 }
 
 func deviation(of rec: Record, last: Record) -> Float {
-	var ret = ((rec.3 / Float(rec.0)) * 100000.0 - 1.020821918)^^4 // Violent crime rate
-	ret += (((rec.5 / Float(rec.0)) * 100000.0 - 0.28051726)^^5) // Firearm crime rate
+	var ret = ((rec.2 / Float(rec.0)) * 100000.0 - 1.020821918)^^4 // Violent crime rate
+	ret += (((rec.3 / Float(rec.0)) * 100000.0 - 0.28051726)^^5) // Firearm crime rate
 	ret += ((Float(rec.0-last.0) / Float(rec.0) * 100000.0)^^2) // Population change
 	return ret
 }
 
 // Open graph input file
-let input = read("snap/gplus_small.txt")
+let input = read("snap/gplus_med.txt")
 let inList = input.characters.split{ $0 == " " || $0 == "\n" }.map{String($0)}
 
 func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		-> ([() -> Void], Record) {
 
 	var changes = [() -> Void]()
-	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0)
 
 	for node in nodeList {
 
@@ -64,6 +58,10 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 
 	        let generator = CrimeGenerator(initiator: agent)
 	        if let decision = generator.makeDecision() {
+				record.2 += 1.0
+				if decision.1 {
+					record.3 += 1.0
+				}
 	            var vicNode = GraphNode<Agent>(value: agent)
 	            repeat {
 	                let next = rand.next(max: graph.nodes.count)
@@ -71,7 +69,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	            } while vicNode.value != agent
 	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
 	        }
-			record.6 += Float(agent.connectedness)
+			record.4 += Float(agent.connectedness)
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
@@ -153,7 +151,7 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
-func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
+func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100) -> Float {
 	// Reset environment variables
 	rand = Random(13579)
 	tmpc = Counter(0)
@@ -186,7 +184,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 			break
 		}
 	}
-	//print("\(graph.nodes.count) Agents are entering the matrix...")
+	print("\(graph.nodes.count) Agents are entering the matrix...")
 
 	// generate social network
 	/*for i in 0..<n {
@@ -217,7 +215,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 	for _ in 0..<days {
 	    tic()
 
-		var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+		var record = Record(0, 0.0, 0.0, 0.0, 0.0)
 		let cnt = graph.nodes.count
 		if cnt == 0 {
 			break
@@ -232,7 +230,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 
 		threadGroup.wait()
 		for sublist in sublists {
-			subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)))
+			subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0)))
 			let i = subresults.count - 1
 			threadGroup.enter()
 			threadQueue.async {{ (rand: Random) in
@@ -267,9 +265,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 		record.1 = Float(hap + 50.0)
 		record.2 = record.2 * 100.0 / Float(cnt)
 		record.3 = record.3 * 100.0 / Float(cnt)
-		record.4 = record.4 * 100.0 / Float(cnt)
-		record.5 = record.5 * 100.0 / Float(cnt)
-		record.6 = record.6 / Float(cnt)
+		record.4 = record.4 / Float(cnt)
 		crimeCounts += [record]
 	    //print(record)
 	    totalTime += toc()
