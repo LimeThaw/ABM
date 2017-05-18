@@ -7,28 +7,25 @@
 let POP_SIZE = 12
 let MATES_PER_ROUND = 2
 let ROUNDS = 5
-var uncertainty: Float = 0.2
+var uncertainty: Double = 0.2
 
 // The parameters describing rand.nextProb() normal distribution
 //                        mu,    sigma
-typealias Distribution = (Float, Float)
+typealias Distribution = (Double, Double)
 
 // A set of independent parameters for our simulation
 //                      moral,        pleasure,     arousal,      dominance
 typealias Parameters = (Distribution, Distribution, Distribution, Distribution)
 
 func mate(mom: Distribution, dad: Distribution) -> Distribution {
-	let a = Float(0.0)
-	var child = (a, a)
-	let b = rand.nextProb()
-	let c = rand.nextProb()
-	child.0 = (rand.next(prob: 0.5) ? mom.0 : dad.0) + (rand.next(prob: 0.125) ? b*uncertainty : 0)
-	child.1 = (rand.next(prob: 0.5) ? mom.1 : dad.1) + (rand.next(prob: 0.125) ? c*uncertainty : 0)
+	var child = (0.0, 0.0)
+	child.0 = (rand.next(prob: 0.5) ? mom.0 : dad.0) + (rand.next(prob: 0.125) ? rand.nextProb()*uncertainty : 0.0)
+	child.1 = (rand.next(prob: 0.5) ? mom.1 : dad.1) + (rand.next(prob: 0.125) ? rand.nextProb()*uncertainty : 0.0)
 	return child
 }
 
 func mate(mom: Parameters, dad: Parameters) -> Parameters {
-	let a: Float = 0.0
+	let a: Double = 0.0
 	var child = ((a, a), (a, a), (a, a), (a, a))
 
 	child.0 = mate(mom: mom.0, dad: dad.0)

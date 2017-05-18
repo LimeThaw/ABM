@@ -58,29 +58,20 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 				}
 			})
 		} else {
-			let decision = agent.checkCrime()
-			if let type = decision { // Decided to commit a crime - would return nil otherwise
-				//print(type)
-				let nextIndex = rand.next(max: graph.nodes.count)
-				let other = graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: nextIndex)].value.value
-				changes.append({ return agent.executeCrime(type: type, on: other) })
-				//agent.executeCrime(type: type, on: other.value)
+			if agent.emotion.dominance < -5 && canBuyGun(agent){
+	            agent.ownsGun = true
+	        }
 
-				// Assume an agent who owns a gun will use it in a crime
-				if type == CrimeType.Murder {
-					if agent.ownsGun {
-						record.4 += 1.0
-					}
-					record.2 += 1.0
-				} else {
-					if agent.ownsGun {
-						record.5 += 1.0
-					}
-					record.3 += 1.0
-				}
-
-			}
-			record.6 += agent.connectedness
+	        let generator = CrimeGenerator(initiator: agent)
+	        if let decision = generator.makeDecision() {
+	            var vicNode = GraphNode<Agent>(value: agent)
+	            repeat {
+	                let next = rand.next(max: graph.nodes.count)
+	                vicNode = graph.getNode(index: next)!
+	            } while vicNode.value != agent
+	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
+	        }
+			record.6 += Float(agent.connectedness)
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
@@ -121,20 +112,20 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 				}
 			}
 
-			var newMoral: Float = 0.0
-			var totalWeight: Float = 0.0
+			var newMoral: Double = 0.0
+			var totalWeight: Double = 0.0
 			for nextAgent in node.edges {
 				// Influence on moral beliefs from agent's neighbors in social network
 				newMoral += (nextAgent.value.next.value.moral + nextAgent.value.weight^^2)
 				totalWeight += (nextAgent.value.weight^^2)
 			}
 			// Age factor: The older the agent the less likely he is to change his beliefs
-			let oldFac = ((agent.age == 0) ? 0 : (1.0 - (1.0 / Float(agent.age + 1)) + 0.1))
-			newMoral = (1.0 - oldFac) * newMoral / Float(node.edges.count) + oldFac * agent.moral
+			let oldFac = ((agent.age == 0) ? 0 : (1.0 - (1.0 / Double(agent.age + 1)) + 0.1))
+			newMoral = (1.0 - oldFac) * newMoral / Double(node.edges.count) + oldFac * agent.moral
 
 			changes.append({
 				// bring a bit movement into the people
-				agent.moral += Float(rand.nextNormal(mu: 0, sig: 0.2))
+				agent.moral += rand.nextNormal(mu: 0, sig: 0.2)
 				agent.age += 1
 				agent.moral = newMoral
 				agent.updateConnectedness(node: node)
@@ -147,14 +138,14 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 
 func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 	//print("birth")
-	let newAgent = Agent(id: tmpc.next()!, age: 0)
+	let newAgent = Agent(tmpc.next()!)
 	newAgent.randomize(pars)
 	let newNode = graph.addNode(withValue: newAgent)
 	for _ in 1...3 {
 		var next = Int(rand.next()%graph.nodes.count)
 		next = [Int](graph.nodes.keys)[next]
 		graph.addEdge(from: newNode.hashValue, to: next,
-			weight: Float(rand.nextNormal(mu: 1.5, sig: 0.5)))
+			weight: rand.nextNormal(mu: 1.5, sig: 0.5))
 		graph.nodes[next]?.value.updateConnectedness(node: graph.nodes[next]!)
 	}
 	newAgent.updateConnectedness(node: graph.nodes[newAgent.hashValue]!)
@@ -176,7 +167,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 
 		var oneId = loadedNodes[one]
 		if oneId == nil {
-			let newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+			let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
 			newAgent.randomize(pars)
 			oneId = graph.addNode(withValue: newAgent).hashValue
 			loadedNodes[one] = oneId
@@ -184,13 +175,13 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 
 		var twoId = loadedNodes[two]
 		if twoId == nil {
-			let newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+			let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
 			newAgent.randomize(pars)
 			twoId = graph.addNode(withValue: newAgent).hashValue
 			loadedNodes[two] = twoId
 		}
 
-		graph.addEdge(from: oneId!, to: twoId!, weight: Float(rand.nextNormal(mu: 1.0)))
+		graph.addEdge(from: oneId!, to: twoId!, weight: rand.nextNormal(mu: 1.0))
 		if graph.nodes.count >= n {
 			break
 		}
@@ -231,7 +222,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 		if cnt == 0 {
 			break
 		}
-		let hap = graph.nodes.values.map({$0.value.cma.pleasure}).reduce(0.0, +)/Float(graph.nodes.count + 1)
+		let hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
 
 		let list = graph.nodes.map({ $0.value })
 		let stride = Int(ceil(Float(cnt) / Float(THREAD_COUNT)))
@@ -267,13 +258,13 @@ func runSimulation(_ pars: Parameters, days: Int = 365) -> Float {
 				addBaby(to: graph, with: pars)
 			}
 		} else {
-			if rand.next(prob: Float(graph.nodes.count) * Float(BIRTH_RATE)) {
+			if rand.next(prob: Double(graph.nodes.count) * BIRTH_RATE) {
 				addBaby(to: graph, with: pars)
 			}
 		}
 
 		record.0 = cnt
-		record.1 = hap + 50.0
+		record.1 = Float(hap + 50.0)
 		record.2 = record.2 * 100.0 / Float(cnt)
 		record.3 = record.3 * 100.0 / Float(cnt)
 		record.4 = record.4 * 100.0 / Float(cnt)

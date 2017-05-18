@@ -9,3 +9,13 @@ import Util
 
 var counter = Counter()
 var rand = Random(13579)
+
+// constants
+
+
+// ABM related
+
+let initialPopulationCount = 100_000
+
+
+// statistics
