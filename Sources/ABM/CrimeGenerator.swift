@@ -34,7 +34,8 @@ struct CrimeGenerator {
     static private let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
     static private let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
     static private let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
-    static private let gunAcqExt: Double = 5 // the extend of a crime to get a gun
+    static private let gunAcqExt: Double = CG.maxExt/8.0 // the extend of a crime to get a gun
+    static private let maxPDecMor: Double = 3 // the maximum decrease of the pleasure update through the moral
 
     // attributes to help calculations
     private let smallPhiNoGun: Double
@@ -50,7 +51,7 @@ struct CrimeGenerator {
         pleasure = initiator.emotion.pleasure
         dominance = initiator.emotion.dominance
         maxAttr = attributeBound.1
-        moral = initiator.moral
+        moral = initiator.moral * CG.maxPDecMor / (maxAttr * CG.maxExt)
         gunPos = initiator.ownsGun
         let _gunAcq = canBuyGun(initiator)
         gunAcq = _gunAcq
@@ -83,24 +84,25 @@ struct CrimeGenerator {
         let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0)
         return p*(CG.gain(e: e) - pleasure) - (1-p)*CG.cost(e: e, g: g) + additional
     }
+    
+    func getExtend(gun: Bool) -> Double {
+        let largePhiHlp = indivBaseProb*(-CG.baseGain - CG.baseCost) + CG.baseCost + moral
+        let largePhiNoGun = largePhiHlp + indivBaseProb*pleasure*smallPhiNoGun
+        let largePhiGun = largePhiHlp + indivBaseProb*(pleasure*smallPhiGun - smallPhiGun*CG.costGun)
+        let extHlp = 2*indivBaseProb*(CG.baseGain + CG.baseCost)
+        return gun ? largePhiGun/(extHlp*smallPhiGun) : largePhiNoGun/(extHlp*smallPhiNoGun)
+    }
 
     /**
      - returns: A tuple with the calculated extend and gun usage, or nil if no crime will be commited
     */
     func makeDecision() -> (Double, Bool)? {
 
-        // precomputation
-
-        let largePhiHlp = indivBaseProb*(-CG.baseGain - CG.baseCost) + CG.baseCost + moral
-        let largePhiNoGun = largePhiHlp + indivBaseProb*pleasure*smallPhiNoGun
-        let largePhiGun = largePhiHlp + indivBaseProb*(pleasure*smallPhiGun - smallPhiGun*CG.costGun)
-        let extHlp = 2*indivBaseProb*(CG.baseGain + CG.baseCost)
-
         // possible decisions
 
-        let _extNoGun = largePhiNoGun/(extHlp*smallPhiNoGun)
+        let _extNoGun = getExtend(gun: false)
         let extNoGun = _extNoGun > CG.maxExt ? CG.maxExt : _extNoGun
-        let _extGun = largePhiGun/(extHlp*smallPhiGun)
+        let _extGun = getExtend(gun: true)
         let extGun = _extGun > CG.maxExt ? CG.maxExt : _extGun
 
         // decision making
@@ -110,7 +112,7 @@ struct CrimeGenerator {
         }
         let vcNoGun = visualizedChange(e: extNoGun, g: false)
         let vcGun = visualizedChange(e: extGun, g: true)
-        let gun = extGun <= 0 ? false : extNoGun <= 0 ? true : vcGun > vcNoGun ? true : false
+        let gun = extGun <= 0 ? false : (extNoGun <= 0 ? true : (vcGun > vcNoGun ? true : false))
         let ext = gun ? extGun : extNoGun
         if (gun ? vcGun : vcNoGun) <= 0 {
             return nil
@@ -131,8 +133,8 @@ struct CrimeGenerator {
         let incDSucc: Double = 1 // increase of the dominance after a successful crime
         let decDFail: Double = 0.7 // decrease of the dominance after a failed crime
         let incA: Double = 1.5 // increase of the arousal after a crime
-        let baseDecPVic: Double = 0.1 // base decrease of pleasure for victim
-        let baseDecDVic: Double = 0.07 // base decrease of dominance for victim
+        let baseDecPVic: Double = 0.15 // base decrease of pleasure for victim
+        let baseDecDVic: Double = 0.1 // base decrease of dominance for victim
         let decExtFail: Double = 3 // the factor by which the extend (for the victim) is decreased after a fail
         let maxReach = 3
 

@@ -64,6 +64,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 
 	        let generator = CrimeGenerator(initiator: agent)
 	        if let decision = generator.makeDecision() {
+                print(decision.0)
 	            var vicNode = GraphNode<Agent>(value: agent)
 	            repeat {
 	                let next = rand.next(max: graph.nodes.count)
