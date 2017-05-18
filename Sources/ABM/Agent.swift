@@ -10,6 +10,8 @@ class Agent : Hashable {
     var moral: Double = 3.0
 	var age: Int = 0
 
+	var criminalHistory = false // TODO: Does this need to be distributed at start?
+
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
 	var daily_cost: Float = 115.936986301*/

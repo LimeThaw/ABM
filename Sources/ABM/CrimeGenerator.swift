@@ -149,6 +149,7 @@ struct CrimeGenerator {
             ini.emotion += (gunAcqUpdate + rand.nextNormal(mu: CG.gain(e: ext), sig: sigGain), incA, incDSucc)
         } else {
             ini.emotion += (gunAcqUpdate - rand.nextNormal(mu: CG.cost(e: ext, g: gun), sig: sigCost), incA, -decDFail)
+			ini.criminalHistory = true
         }
         if gun && !ini.ownsGun {
             ini.ownsGun = true
