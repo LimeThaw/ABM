@@ -28,19 +28,21 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	var record = Record(0, 0, 0, 0, 0)
 
 	for node in nodeList {
-        
         let agent = node.value
         
         if agent.emotion.dominance < -5 && canBuyGun(agent){
             agent.ownsGun = true
         }
         
-        var vicNode = GraphNode<Agent>(value: agent)
-        repeat {
-            let next = rand.next(max: graph.nodes.count)
-            vicNode = graph.getNode(index: next)!
-        } while vicNode.value != agent
-        changes.append {executeCrime(by: agent, on: vicNode)}
+        let generator = CrimeGenerator(initiator: agent)
+        if let decision = generator.makeDecision() {
+            var vicNode = GraphNode<Agent>(value: agent)
+            repeat {
+                let next = rand.next(max: graph.nodes.count)
+                vicNode = graph.getNode(index: next)!
+            } while vicNode.value != agent
+            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
+        }
 	}
 
 	return (changes, record)

@@ -9,178 +9,207 @@
 import Util
 import Foundation
 
-/**
- - returns: A tuple with the calculated extend, gun usage, victim death or nil if no crime was executed
- */
-@discardableResult
-func executeCrime(by ini: Agent, on vicNode: GraphNode<Agent>) -> (Double, Bool, Bool)? {
+
+struct CrimeGenerator {
     
-    let arousal = ini.emotion.arousal
-    let pleasure = ini.emotion.pleasure
-    let dominance = ini.emotion.dominance
-    let maxAttr = attributeBound.1
-    let moral = ini.moral
-    let gunPos = ini.ownsGun
-    let gunAcq = canBuyGun(ini)
+    private typealias CG = CrimeGenerator
     
-    // parameters
+    private let ini: Agent
+    private let arousal: Double
+    private let pleasure: Double
+    private let dominance: Double
+    private let maxAttr: Double
+    private let moral: Double
+    private let gunPos: Bool
+    private let gunAcq: Bool
     
-    let baseGain: Double = 0.1
-    let baseCost: Double = 0.15
-    let costGun: Double = 0.1
-    let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
-    let maxExt: Double = 100
-    let maxDecExt: Double = 0.7 // the maximum (percentual) decrease of the success probability with the extend
-    let incGun: Double = 0.3 // the (percentual) increase of the success probability when using a gun
-    let gunCrimeExt: Double = 5 // the extend of a crime that gives the initiator a gun
-    let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
-    let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
-    let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
-    let gunAcqExt: Double = 5 // the extend of a crime to get a gun
+    static private let baseGain: Double = 0.1
+    static private let baseCost: Double = 0.15
+    static private let costGun: Double = 0.1
+    static private let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
+    static private let maxExt: Double = 100
+    static private let maxDecExt: Double = 0.7 // the maximum (percentual) decrease of the success probability with the extend
+    static private let incGun: Double = 0.3 // the (percentual) increase of the success probability when using a gun
+    static private let gunCrimeExt: Double = 5 // the extend of a crime that gives the initiator a gun
+    static private let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
+    static private let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
+    static private let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
+    static private let gunAcqExt: Double = 5 // the extend of a crime to get a gun
     
-    // pre calculations
+    // attributes to help calculations
+    private let smallPhiNoGun: Double
+    private let smallPhiGun: Double
+    private let indivBaseProb: Double
+    private let stealsGun: Bool
+    private let gunAcqCost: Double
     
-    let smallPhiNoGun = -maxDecExt/maxExt
-    let smallPhiGun = incGun/maxExt + smallPhiNoGun
-    let indivBaseProb = increaseProb(baseProb, by: arousal*maxIncA/maxAttr + dominance*maxIncD/maxAttr)
-    let largePhiHlp = indivBaseProb*(-baseGain - baseCost) + baseCost + moral
-    let largePhiNoGun = largePhiHlp + indivBaseProb*pleasure*smallPhiNoGun
-    let largePhiGun = largePhiHlp + indivBaseProb*(pleasure*smallPhiGun - smallPhiGun*costGun)
-    let extHlp = 2*indivBaseProb*(baseGain + baseCost)
-    let stealsGun = !gunPos && !gunAcq
-    
-    // extend
-    
-    let _extNoGun = largePhiNoGun/(extHlp*smallPhiNoGun)
-    let extNoGun = _extNoGun > maxExt ? maxExt : _extNoGun
-    let _extGun = largePhiGun/(extHlp*smallPhiGun)
-    let extGun = _extGun > maxExt ? maxExt : _extGun
-    
-    // functions for pleasure change
-    
-    func gain(e: Double) -> Double {
-        return baseGain * e
+    init(initiator: Agent) {
+        
+        self.ini = initiator
+        arousal = initiator.emotion.arousal
+        pleasure = initiator.emotion.pleasure
+        dominance = initiator.emotion.dominance
+        maxAttr = attributeBound.1
+        moral = initiator.moral
+        gunPos = initiator.ownsGun
+        let _gunAcq = canBuyGun(initiator)
+        gunAcq = _gunAcq
+        
+        // pre calculations
+        
+        smallPhiNoGun = -CG.maxDecExt/CG.maxExt
+        smallPhiGun = CG.incGun/CG.maxExt + smallPhiNoGun
+        indivBaseProb = increaseProb(CG.baseProb, by: arousal*CG.maxIncA/maxAttr + dominance*CG.maxIncD/maxAttr)
+        
+        stealsGun = !initiator.ownsGun && !_gunAcq
+        gunAcqCost = CG.cost(e: CG.gunAcqExt, g: false)
     }
     
-    func cost(e: Double, g: Bool) -> Double {
-        return baseCost * e + (g ? costGun : 0)
+    private static func gain(e: Double) -> Double {
+        return CG.baseGain * e
     }
     
-    let gunAcqCost = cost(e: gunAcqExt, g: false)
+    private static func cost(e: Double, g: Bool) -> Double {
+        return CG.baseCost * e + (g ? CG.costGun : 0)
+    }
     
-    func prob(e: Double, g1: Bool, g2: Bool) -> Double { // g1: initiator has gun, g2: victim has gun
+    private func prob(e: Double, g1: Bool, g2: Bool) -> Double { // g1: initiator has gun, g2: victim has gun
         let phi = g1 ? smallPhiGun : smallPhiNoGun
-        return increaseProb(indivBaseProb, by: phi - (g2 ? decVicGun : 0))
+        return increaseProb(indivBaseProb, by: phi - (g2 ? CG.decVicGun : 0))
     }
     
-    func visualizedChange(e: Double, g: Bool) -> Double {
+    private func visualizedChange(e: Double, g: Bool) -> Double {
         let p = prob(e: e, g1: g, g2: false) // the initiator assumes that the victim has no gun
         let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0)
-        return p*(gain(e: e) - pleasure) - (1-p)*cost(e: e, g: g) + additional
+        return p*(CG.gain(e: e) - pleasure) - (1-p)*CG.cost(e: e, g: g) + additional
     }
     
-    // decision making
-    
-    if extNoGun <= 0 && extGun <= 0 { // if a extend is smaller than 0, the extend is not used
-        return nil
-    }
-    let vcNoGun = visualizedChange(e: extNoGun, g: false)
-    let vcGun = visualizedChange(e: extGun, g: true)
-    let gun = extGun <= 0 ? false : extNoGun <= 0 ? true : vcGun > vcNoGun ? true : false
-    let ext = gun ? extGun : extNoGun
-    if (gun ? vcGun : vcNoGun) <= 0 {
-        return nil
-    }
-    
-    
-    
-    // crime execution
-    
-    // parameters
-    
-    let sigGain: Double = 0.5 // standard deviation of the gain
-    let sigCost: Double = 0.5 // standard deviation of the cost
-    let incDSucc: Double = 1 // increase of the dominance after a successful crime
-    let decDFail: Double = 0.7 // decrease of the dominance after a failed crime
-    let incA: Double = 1.5 // increase of the arousal after a crime
-    let baseDecPVic: Double = 0.1 // base decrease of pleasure for victim
-    let baseDecDVic: Double = 0.07 // base decrease of dominance for victim
-    let decExtFail: Double = 3 // the factor by which the extend (for the victim) is decreased after a fail
-    let maxReach = 3
-    
-    // precomputations
-    
-    let vic: Agent = vicNode.value
-    let success = rand.nextProb() > prob(e: ext, g1: gun, g2: vic.ownsGun)
-    let gunAcqUpdate = (gun && stealsGun && rand.nextProb() > prob(e: gunAcqExt, g1: false, g2: false)) ? gunAcqCost : 0
-    let reach = Int(Double(maxReach)*ext/maxExt)
-    
-    // update for initiator
-    
-    if success {
-        ini.emotion += (gunAcqUpdate + rand.nextNormal(mu: gain(e: ext), sig: sigGain), incA, incDSucc)
-    } else {
-        ini.emotion += (gunAcqUpdate - rand.nextNormal(mu: cost(e: ext, g: gun), sig: sigCost), incA, -decDFail)
-    }
-    if gun && !ini.ownsGun {
-        ini.ownsGun = true
+    /**
+     - returns: A tuple with the calculated extend and gun usage, or nil if no crime will be commited
+    */
+    func makeDecision() -> (Double, Bool)? {
+        
+        // precomputation
+        
+        let largePhiHlp = indivBaseProb*(-CG.baseGain - CG.baseCost) + CG.baseCost + moral
+        let largePhiNoGun = largePhiHlp + indivBaseProb*pleasure*smallPhiNoGun
+        let largePhiGun = largePhiHlp + indivBaseProb*(pleasure*smallPhiGun - smallPhiGun*CG.costGun)
+        let extHlp = 2*indivBaseProb*(CG.baseGain + CG.baseCost)
+        
+        // possible decisions
+        
+        let _extNoGun = largePhiNoGun/(extHlp*smallPhiNoGun)
+        let extNoGun = _extNoGun > CG.maxExt ? CG.maxExt : _extNoGun
+        let _extGun = largePhiGun/(extHlp*smallPhiGun)
+        let extGun = _extGun > CG.maxExt ? CG.maxExt : _extGun
+        
+        // decision making
+        
+        if extNoGun <= 0 && extGun <= 0 { // if a extend is smaller than 0, the extend is not used
+            return nil
+        }
+        let vcNoGun = visualizedChange(e: extNoGun, g: false)
+        let vcGun = visualizedChange(e: extGun, g: true)
+        let gun = extGun <= 0 ? false : extNoGun <= 0 ? true : vcGun > vcNoGun ? true : false
+        let ext = gun ? extGun : extNoGun
+        if (gun ? vcGun : vcNoGun) <= 0 {
+            return nil
+        }
+        return (ext, gun)
     }
     
-    // update for victim
-    
-    let feltExt = success ? ext : ext / decExtFail
-    let vicDeath = rand.nextProb() > feltExt/maxExt // whether the victim dies or not
-    let pDec = ext*baseDecPVic
-    let dDec = ext*baseDecDVic
-    if !vicDeath {
-        vic.emotion += (-pDec, 0, -dDec)
-    }
-    
-    // propagation
-    
-    // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
-    var next = Queue<(GraphNode<Agent>, GraphNode<Agent>, Edge<Agent>, Int)>()
-    // all the visitedNodes
-    var visited: [Agent] = []
-    vic.visited = true
-    visited.append(vic)
-    for n in vicNode.edges {
-        next.insert((vicNode, n.value.next, n.value, reach))
-    }
-    
-    while !next.isEmpty {
-        let cur = next.remove()!
-        if !cur.1.value.visited {
-            
-            // update for neighbor
-            // the propagated emotion should only be increased by a max factor of 3 when the weight is high
-            let tmp: Double = cur.2.weight*cur.2.weight
-            let incFact: Double = 3*tmp/(tmp + 20*cur.2.weight + 1) + 1
-            // but should be decreased quadratically
-            let decFact: Double = Double((reach + 2 - cur.3)^^2)
-            cur.1.value.emotion += (incFact*pDec/decFact, 0, incFact*dDec/decFact)
-            
-            if cur.3 > 0 {
-                for nextEdge in cur.1.edges {
-                    if !nextEdge.value.next.value.visited {
-                        next.insert((cur.1, nextEdge.value.next, nextEdge.value, cur.3-1))
+    /**
+     - returns: whether the victim died or not
+     */
+    @discardableResult
+    func executeCrime(on vicNode: GraphNode<Agent>, with ext: Double, gun: Bool) -> Bool {
+
+        // parameters
+        
+        let sigGain: Double = 0.5 // standard deviation of the gain
+        let sigCost: Double = 0.5 // standard deviation of the cost
+        let incDSucc: Double = 1 // increase of the dominance after a successful crime
+        let decDFail: Double = 0.7 // decrease of the dominance after a failed crime
+        let incA: Double = 1.5 // increase of the arousal after a crime
+        let baseDecPVic: Double = 0.1 // base decrease of pleasure for victim
+        let baseDecDVic: Double = 0.07 // base decrease of dominance for victim
+        let decExtFail: Double = 3 // the factor by which the extend (for the victim) is decreased after a fail
+        let maxReach = 3
+        
+        // precomputations
+        
+        let vic: Agent = vicNode.value
+        let success = rand.nextProb() > prob(e: ext, g1: gun, g2: vic.ownsGun)
+        let gunAcqUpdate = (gun && stealsGun && rand.nextProb() > prob(e: CG.gunAcqExt, g1: false, g2: false)) ? gunAcqCost : 0
+        let reach = Int(Double(maxReach)*ext/CG.maxExt)
+        
+        // update for initiator
+        
+        if success {
+            ini.emotion += (gunAcqUpdate + rand.nextNormal(mu: CG.gain(e: ext), sig: sigGain), incA, incDSucc)
+        } else {
+            ini.emotion += (gunAcqUpdate - rand.nextNormal(mu: CG.cost(e: ext, g: gun), sig: sigCost), incA, -decDFail)
+        }
+        if gun && !ini.ownsGun {
+            ini.ownsGun = true
+        }
+        
+        // update for victim
+        
+        let feltExt = success ? ext : ext / decExtFail
+        let vicDeath = rand.nextProb() > feltExt/CG.maxExt // whether the victim dies or not
+        let pDec = ext*baseDecPVic
+        let dDec = ext*baseDecDVic
+        if !vicDeath {
+            vic.emotion += (-pDec, 0, -dDec)
+        }
+        
+        // propagation
+        
+        // holds an array with tuples which hold the next agents to be modified as a second argument, the previous agent that calls the next agent to be modified as a first argument, the edge between the next and the previous agent and the remaining iterations.
+        var next = Queue<(GraphNode<Agent>, GraphNode<Agent>, Edge<Agent>, Int)>()
+        // all the visitedNodes
+        var visited: [Agent] = []
+        vic.visited = true
+        visited.append(vic)
+        for n in vicNode.edges {
+            next.insert((vicNode, n.value.next, n.value, reach))
+        }
+        
+        while !next.isEmpty {
+            let cur = next.remove()!
+            if !cur.1.value.visited {
+                
+                // update for neighbor
+                // the propagated emotion should only be increased by a max factor of 3 when the weight is high
+                let tmp: Double = cur.2.weight*cur.2.weight
+                let incFact: Double = 3*tmp/(tmp + 20*cur.2.weight + 1) + 1
+                // but should be decreased quadratically
+                let decFact: Double = Double((reach + 2 - cur.3)^^2)
+                cur.1.value.emotion += (incFact*pDec/decFact, 0, incFact*dDec/decFact)
+                
+                if cur.3 > 0 {
+                    for nextEdge in cur.1.edges {
+                        if !nextEdge.value.next.value.visited {
+                            next.insert((cur.1, nextEdge.value.next, nextEdge.value, cur.3-1))
+                        }
                     }
                 }
+                cur.1.value.visited = true
+                visited.append(cur.1.value)
             }
-            cur.1.value.visited = true
-            visited.append(cur.1.value)
         }
+        
+        for a in visited {
+            a.visited = false
+        }
+        
+        // victim death
+        
+        if vicDeath {
+            graph.removeNode(node: vicNode)
+        }
+        
+        return vicDeath
     }
-    
-    for a in visited {
-        a.visited = false
-    }
-    
-    // victim death
-    
-    if vicDeath {
-        graph.removeNode(node: vicNode)
-    }
-    
-    return (ext, gun, vicDeath)
 }
