@@ -7,7 +7,6 @@ class Agent : Hashable {
 
 	var cma: CMA
 
-    var enthusiasm: Float
     var moral: Float
 	var age: Int
 
@@ -20,10 +19,9 @@ class Agent : Hashable {
     /// A value that indicates whether this agent was already visited in a graph traversal
     var visited = false
 
-	init(id: Int, enthusiasm: Float = 2.0, moral: Float = 3.0, age: Int = 0, ownsGun: Bool = false) {
+	init(id: Int, moral: Float = 3.0, age: Int = 0, ownsGun: Bool = false) {
 		self.ID = id
 		self.hashValue = ID
-		self.enthusiasm = enthusiasm
 		self.moral = moral
 		self.age = age
 		self.ownsGun = ownsGun
@@ -41,7 +39,6 @@ class Agent : Hashable {
 	// Randomizes agent attributes to make them more heterogenous
 	// Does not touch the age, you have to do that yourself.
 	public func randomize() {
-		enthusiasm = Float(rand.nextNormal(mu: Double(enthusiasm), sig: 2.0))
 		moral = Float(rand.nextNormal(mu: Double(moral), sig: 2.0))
 
 		if rand.next(prob: 0.3225) { // Person owns a firearm
@@ -56,7 +53,7 @@ class Agent : Hashable {
 	}
 
     private func determineExtend() -> Int {
-        return Int(positive(fromFS: enthusiasm)*1.5)
+        return Int(1.5) // TODO: Revise extend calculation
     }
 
     private func determineWeapon() -> Weapon {
@@ -78,9 +75,9 @@ class Agent : Hashable {
         for t in CrimeType.all {
             let possibleExtend = t.attributes.isExtendable ? extend : 1
             let weapon = determineWeapon()
-            let expectedOutcome = t.getOutcome(val: increaseProbability(0.5, by: positive(fromFS: enthusiasm)), for: weapon)
+            let expectedOutcome = t.getOutcome(val: increaseProbability(0.5, by: positive(fromFS: 0.0)), for: weapon) //TODO: Replaced enthusiasm with 0.0, find better replacement
             let candidateCMA = t.wishedUpdate(attributes: cma, for: expectedOutcome, by: possibleExtend)
-            if val(candidateCMA) - 5*moral > val(newCMA) {
+            if val(candidateCMA) - 5*moral > val(newCMA) { // TODO: Revise influence of moral
                 newCMA = candidateCMA
                 type = t
             }

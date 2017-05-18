@@ -15,14 +15,28 @@ public class GraphNode<T: Hashable>: Hashable {
 	}
 
 	// Add an edge to this node
+	// If edge is already present it will add the weights
 	func add_edge(to other: GraphNode<T>, weight: Float = 0) {
-		let edge = Edge(to: other, weight: weight)
-		edges[edge.hashValue] = edge
+		if edges[other.hashValue] == nil {
+			let edge = Edge(to: other, weight: weight)
+			edges[edge.hashValue] = edge
+		} else {
+			edges[other.hashValue]!.weight += weight
+		}
 	}
 
 	// Removes the edge from this node to the given one if it exists
 	func removeEdge(to other: GraphNode<T>) {
         edges.removeValue(forKey: other.hashValue)
+	}
+
+	// Returns the weight of the edge from this node to the other or 0 if the edge doesn't exist
+	public func getEdgeWeight(to other: GraphNode<T>) -> Float {
+		if edges[other.hashValue] == nil {
+			return 0.0
+		} else {
+			return edges[other.hashValue]!.weight
+		}
 	}
 
 	// Conforming to Equatable for Hashable.

@@ -11,6 +11,7 @@ murders = []
 others = []
 gunMurders = []
 gunOthers = []
+avgConnectedness = []
 values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
 for val in values:
 	popCount.append(val[0])
@@ -19,6 +20,7 @@ for val in values:
 	others.append(val[3])
 	gunMurders.append(val[4])
 	gunOthers.append(val[5])
+	avgConnectedness.append(val[6])
 
 length = len(popCount)
 
@@ -34,6 +36,11 @@ plt.plot(
 	happiness,
 	'y-',
 	label="Average happiness level")
+plt.plot(
+	range(0, length),
+	avgConnectedness,
+	'y:',
+	label="Average Connectedness value")
 plt.plot(
 	range(0, length),
 	murders,
