@@ -37,10 +37,10 @@ class Agent : Hashable {
 	// Randomizes agent attributes to make them more heterogenous
 	// Does not touch the age, you have to do that yourself.
 	public func randomize(_ pars: Parameters) {
-		moral = rand.nextNormal(mu: Double((pars.0).0), sig: Double((pars.0).1))
-		emotion.pleasure = rand.nextNormal(mu: Double((pars.1).0), sig: Double((pars.1).1))
-		emotion.arousal = rand.nextNormal(mu: Double((pars.2).0), sig: Double((pars.2).1))
-		emotion.dominance = rand.nextNormal(mu: Double((pars.3).0), sig: Double((pars.3).1))
+		moral = rand.nextNormal(mu: Double((pars.0).0), sig: Double((pars.0).1), range: attributeBound)
+		emotion.pleasure = rand.nextNormal(mu: Double((pars.1).0), sig: Double((pars.1).1), range: attributeBound)
+		emotion.arousal = rand.nextNormal(mu: Double((pars.2).0), sig: Double((pars.2).1), range: attributeBound)
+		emotion.dominance = rand.nextNormal(mu: Double((pars.3).0), sig: Double((pars.3).1), range: attributeBound)
 
 		if rand.next(prob: 0.3225) { // Person owns a firearm
 			ownsGun = true

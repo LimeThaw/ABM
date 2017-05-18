@@ -1,9 +1,6 @@
 import Foundation
 import Dispatch
 
-// all the attributes in our ABM lie in this interval. This constant must be in this file, because Globals is in the ABM module
-public let attributeBound: (Double, Double) = (-10, 10)
-
 // Simple, non-thread-safe, non-cryptographic pseudo-random number generator
 // using linear congruence
 public struct Random{
@@ -56,7 +53,7 @@ public struct Random{
     }
 
 	/// Returns a random, normal-distributed Float.
-	public mutating func nextNormal(mu: Double = 0, sig: Double = 1) -> Double {
+	public mutating func nextNormal(mu: Double = 0, sig: Double = 1, range: (Double, Double)? = nil) -> Double {
         var ret: Double = 0
         repeat {
             var u1 = 0.0
@@ -69,7 +66,7 @@ public struct Random{
             }
             let u3 = u1 * sqrt(-2*log(s)/s) // Box-Muller transform
             ret = u3 * sqrt(sig) + mu // Transformation to requested distribution
-        } while ret < Double(attributeBound.0) || ret > Double(attributeBound.1) // repeat until in attribute bound
+        } while range != nil && (ret < range!.0 || ret > range!.1) // repeat until in attribute bound
         return ret
 	}
 }
