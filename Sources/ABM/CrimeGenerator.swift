@@ -27,7 +27,7 @@ struct CrimeGenerator {
     static private let baseCost: Double = 0.15
     static private let costGun: Double = 0.1
     static private let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
-    static private let maxExt: Double = 100
+    static private let maxExt: Double = 10
     static private let maxDecExt: Double = 0.7 // the maximum (percentual) decrease of the success probability with the extend
     static private let incGun: Double = 0.3 // the (percentual) increase of the success probability when using a gun
     static private let gunCrimeExt: Double = 5 // the extend of a crime that gives the initiator a gun
