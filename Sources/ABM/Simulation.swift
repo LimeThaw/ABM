@@ -1,7 +1,7 @@
 import Foundation
 import Util
 
-let EDGE_DECAY = 0.1 // TODO: Independent variable?
+let EDGE_DECAY = 0.001 // TODO: Independent variable?
 let INITIAL_EDGE_WEIGHT = 1.1
 
 let THREAD_COUNT = 1
@@ -79,7 +79,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
 			let aFac = (agent.emotion.arousal - attributeBound.0) / (attributeBound.1 - attributeBound.0)
-			while rand.next(prob: 0.9*aFac) {
+			while rand.next(prob: 0.1*aFac) {
 				// Who do you wanna invite?
 				if rand.next() && node.edges.count > 0 {
 					// Your friends?
@@ -161,7 +161,7 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
 @discardableResult
-func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100) -> Double {
+func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 10000) -> Double {
     // Reset environment variables
     rand = Random(13579)
     tmpc = Counter(0)
