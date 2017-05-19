@@ -63,7 +63,7 @@ func mate(mom: Parameters, dad: Parameters) -> Parameters {
 }
 
 func findParameters() {
-	rand = Random(clock())
+	rand = Random()
 	var best = [(Double, Parameters)]()
 
 	var population = [Parameters]()

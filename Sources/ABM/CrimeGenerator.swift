@@ -102,9 +102,9 @@ struct CrimeGenerator {
         // possible decisions
 
         let _extNoGun = getExtend(gun: false)
-        let extNoGun = _extNoGun > CG.maxExt || _extNoGun.isNaN ? CG.maxExt : _extNoGun
+        let extNoGun = _extNoGun > CG.maxExt ? CG.maxExt : _extNoGun
         let _extGun = getExtend(gun: true)
-        let extGun = _extGun > CG.maxExt || _extGun.isNaN ? CG.maxExt : _extGun
+        let extGun = _extGun > CG.maxExt ? CG.maxExt : _extGun
 
         // decision making
 
