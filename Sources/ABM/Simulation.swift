@@ -23,8 +23,8 @@ func +=(left: inout Record, right: Record) {
 }
 
 func deviation(of rec: Record, last: Record) -> Float {
-	var ret = ((rec.2 / Float(rec.0)) * 100000.0 - 1.020821918)^^4 // Violent crime rate
-	ret += (((rec.3 / Float(rec.0)) * 100000.0 - 0.28051726)^^5) // Firearm crime rate
+	var ret = ((rec.2 / Float(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
+	ret += (((rec.3 / Float(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
 	ret += ((Float(rec.0-last.0) / Float(rec.0) * 100000.0)^^2) // Population change
 	return ret
 }
@@ -33,6 +33,7 @@ func deviation(of rec: Record, last: Record) -> Float {
 let input = read("snap/gplus_med.txt")
 let inList = input.characters.split{ $0 == " " || $0 == "\n" }.map{String($0)}
 
+@discardableResult
 func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		-> ([() -> Void], Record) {
 
@@ -42,6 +43,9 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	for node in nodeList {
 
 		let agent = node.value
+		// Validate agent atttibutes
+		agent.checkAttributes()
+
 		// Kill agent if too old
 		if rand.nextProb() < deathProb(age: agent.age) {
 			//print("death")
@@ -73,7 +77,8 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
-			while rand.next(prob: 0.9) {
+			let aFac = (agent.emotion.arousal - attributeBound.0) / (attributeBound.1 - attributeBound.0)
+			while rand.next(prob: 0.9*aFac) {
 				// Who do you wanna invite?
 				if rand.next() && node.edges.count > 0 {
 					// Your friends?
@@ -106,7 +111,6 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 						}
 					}
 					agent.updateConnectedness(node: node)
-					// Unknown parameters: first weight, weight decay, weight increase, meeting probability
 				}
 			}
 
@@ -162,7 +166,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 
 	// Insert nodes from input
 	graph = Graph<Agent>()
-	var loadedNodes = [String:Int]()
+	/*var loadedNodes = [String:Int]()
 	for i in 0..<(inList.count/2) {
 		let one = inList[2*i]
 		let two = inList[2*i+1]
@@ -187,21 +191,21 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		if graph.nodes.count >= n {
 			break
 		}
-	}
+	}*/
 	//print("\(graph.nodes.count) Agents are entering the matrix...")
 
 	// generate social network
-	/*for i in 0..<n {
-		var newAgent = Agent(id: tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
-		newAgent.randomize()
+	for _ in 0..<n {
+		let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+		newAgent.randomize(pars)
 		_ = graph.addNode(withValue: newAgent)
 	}
 
-	for i in 0...3*n {
-		var fst = Int(rand.next()%n)
-		var snd = Int(rand.next()%n)
-		graph.addEdge(from: fst, to: snd, weight: Float(rand.nextNormal(mu: 1.0)))
-	}*/
+	for _ in 0...pars.6/2*n {
+		let fst = Int(rand.next()%n)
+		let snd = Int(rand.next()%n)
+		graph.addEdge(from: fst, to: snd, weight: rand.nextNormal(mu: 1.0))
+	}
 
 	for i in 0..<n {
 		let node = graph.find(hash: i)
@@ -216,14 +220,17 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	let threadGroup = DispatchGroup()
 	let threadQueue = DispatchQueue.global()
 
-	for _ in 0..<days {
+	var badness = Float(0.0)
+
+	simLoop: for _ in 0..<days {
 	    tic()
 
 		var record = Record(0, 0.0, 0.0, 0.0, 0.0)
 		let cnt = graph.nodes.count
 		if cnt == 0 {
-			print("THEY'RE ALL DEAD!")
-			break
+			//print("💀", terminator: "")
+			badness = Float.infinity
+			break simLoop
 		}
 		let hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
 
@@ -274,12 +281,9 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		crimeCounts += [record]
 	    //print(record)
 	    totalTime += toc()
-
-		print(".", terminator: "")
 	}
 
 	// Calculate the goodness/badness value as sum of differences squared
-	var badness = Float(0.0)
 	var last = crimeCounts[0]
 	for rec in crimeCounts {
 		badness += deviation(of: rec, last: last)

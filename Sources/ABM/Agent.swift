@@ -59,6 +59,13 @@ class Agent : Hashable {
 		}
 	}
 
+	func checkAttributes() {
+		emotion.pleasure = clamp(emotion.pleasure, from: attributeBound.0, to: attributeBound.1)
+		emotion.arousal = clamp(emotion.arousal, from: attributeBound.0, to: attributeBound.1)
+		emotion.dominance = clamp(emotion.dominance, from: attributeBound.0, to: attributeBound.1)
+		moral = clamp(moral, from: attributeBound.0, to: attributeBound.1)
+	}
+
 	static func ==(_ first: Agent, _ second: Agent) -> Bool {
 		return first.ID == second.ID
 	}
