@@ -23,8 +23,8 @@ struct CrimeGenerator {
     private let gunPos: Bool
     private let gunAcq: Bool
 
-    static private let baseGain: Double = 0.1
-    static private let baseCost: Double = 0.15
+    static var baseGain: Double = 0.1
+    static var baseCost: Double = 0.15
     static private let costGun: Double = 0.1
     static private let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
     static private let maxExt: Double = 10
@@ -42,10 +42,12 @@ struct CrimeGenerator {
     private let indivBaseProb: Double
     private let stealsGun: Bool
     private let gunAcqCost: Double
+	private let myRand: Random
 
-    init(initiator: Agent) {
+    init(initiator: Agent, generator: Random) {
 
         self.ini = initiator
+		myRand = generator
         arousal = initiator.emotion.arousal
         pleasure = initiator.emotion.pleasure
         dominance = initiator.emotion.dominance
@@ -70,7 +72,7 @@ struct CrimeGenerator {
     }
 
     private static func cost(e: Double, g: Bool) -> Double {
-        return CG.baseCost * e + (g ? CG.costGun : 0)
+        return CG.baseCost * e + (g ? CG.costGun : 0) - (CHECK_HYPOTHESIS_1 && g ? HYPOTHESIS_1_PENALTY : 0)
     }
 
     private func prob(e: Double, g1: Bool, g2: Bool) -> Double { // g1: initiator has gun, g2: victim has gun
@@ -80,10 +82,10 @@ struct CrimeGenerator {
 
     func visualizedChange(e: Double, g: Bool) -> Double {
         let p = prob(e: e, g1: g, g2: false) // the initiator assumes that the victim has no gun
-        let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0)
+        let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0) - (CHECK_HYPOTHESIS_1 && g ? HYPOTHESIS_1_PENALTY : 0)
         return p*(CG.gain(e: e) - pleasure) - (1-p)*CG.cost(e: e, g: g) + additional
     }
-    
+
     func getExtend(gun: Bool) -> Double {
         let largePhiHlp = indivBaseProb*(-CG.baseGain - CG.baseCost) + CG.baseCost + moral
         let largePhiNoGun = largePhiHlp + indivBaseProb*pleasure*smallPhiNoGun
@@ -100,9 +102,9 @@ struct CrimeGenerator {
         // possible decisions
 
         let _extNoGun = getExtend(gun: false)
-        let extNoGun = _extNoGun > CG.maxExt ? CG.maxExt : _extNoGun
+        let extNoGun = _extNoGun > CG.maxExt || _extNoGun.isNaN ? CG.maxExt : _extNoGun
         let _extGun = getExtend(gun: true)
-        let extGun = _extGun > CG.maxExt ? CG.maxExt : _extGun
+        let extGun = _extGun > CG.maxExt || _extGun.isNaN ? CG.maxExt : _extGun
 
         // decision making
 
@@ -150,6 +152,10 @@ struct CrimeGenerator {
             ini.emotion += (gunAcqUpdate + rand.nextNormal(mu: CG.gain(e: ext), sig: sigGain), incA, incDSucc)
         } else {
             ini.emotion += (gunAcqUpdate - rand.nextNormal(mu: CG.cost(e: ext, g: gun), sig: sigCost), incA, -decDFail)
+			if CHECK_HYPOTHESIS_2 {
+				ini.criminalHistory = true
+				ini.ownsGun = false
+			}
         }
         if gun && !ini.ownsGun {
             ini.ownsGun = true

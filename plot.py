@@ -8,20 +8,16 @@ infile.close()
 
 popCount = []
 happiness = []
-murders = []
-others = []
-gunMurders = []
-gunOthers = []
+crimes = []
+gunCrimes = []
 avgConnectedness = []
 values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
 for val in values:
 	popCount.append(val[0])
 	happiness.append(val[1])
-	murders.append(val[2])
-	others.append(val[3])
-	gunMurders.append(val[4])
-	gunOthers.append(val[5])
-	avgConnectedness.append(val[6])
+	crimes.append(val[2])
+	gunCrimes.append(val[3])
+	avgConnectedness.append(val[4])
 
 length = len(popCount)
 
@@ -48,31 +44,21 @@ plt.plot(
 	label="Average Connectedness value")
 plt.plot(
 	range(0, length),
-	murders,
-	'r-',
-	label="Murders per 100")
-plt.plot(
-	range(0, length),
-	gunMurders,
-	'r:',
-	label="Murders involving firearms per 100")
-plt.plot(
-	range(0, length),
-	others,
+	crimes,
 	'b-',
-	label="Other crimes per 100")
+	label="Crime rate per 100")
 plt.plot(
 	range(0, length),
-	gunOthers,
+	gunCrimes,
 	'b:',
-	label="Other crimes involving firearms per 100")
+	label="Crime rate involving firearms per 100")
 plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 120])
 
 populationChange = [0] + map(lambda p, pp: (float(p)-float(pp))/float(p)*100000, popCount[1:], popCount[:-1])
-violentCrimes = map(lambda c, p: float(c)/float(p)*100000, murders, popCount)
-firearmCrimes = map(lambda c, p: float(c)/float(p)*100000, gunMurders, popCount)
+violentCrimes = map(lambda c, p: float(c)/float(p)*100000, crimes, popCount)
+firearmCrimes = map(lambda c, p: float(c)/float(p)*100000, gunCrimes, popCount)
 
 plt.subplot(122)
 
@@ -103,13 +89,13 @@ plt.plot(
 plt.plot(
 	[0, length-1],
 	[cmpData["firearmCrimes"]]*2,
-	'r-',
+	'c-',
 	label="Firearm crimes in the US"
 )
 plt.plot(
 	range(0, length),
 	firearmCrimes,
-	'r:',
+	'c:',
 	label="Firearm crime rate in our model"
 )
 plt.xlabel("Day")

@@ -10,6 +10,8 @@ class Agent : Hashable {
     var moral: Double = 0
 	var age: Int = 0
 
+	var criminalHistory = false // TODO: Does this need to be distributed at start?
+
 	/*var wealth: Float = 301000
 	var daily_income: Float = 145.896067416 // Average values US obtained through google
 	var daily_cost: Float = 115.936986301*/
@@ -55,6 +57,13 @@ class Agent : Hashable {
 		for edge in node.edges {
 			connectedness += pow(edge.value.weight, 2)
 		}
+	}
+
+	func checkAttributes() {
+		emotion.pleasure = clamp(emotion.pleasure, from: attributeBound.0, to: attributeBound.1)
+		emotion.arousal = clamp(emotion.arousal, from: attributeBound.0, to: attributeBound.1)
+		emotion.dominance = clamp(emotion.dominance, from: attributeBound.0, to: attributeBound.1)
+		moral = clamp(moral, from: attributeBound.0, to: attributeBound.1)
 	}
 
 	static func ==(_ first: Agent, _ second: Agent) -> Bool {

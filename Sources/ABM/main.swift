@@ -1,8 +1,9 @@
 //findParameters()
 
-let pars = Parameters((0.992748141, 0.0917848274), (0.288447559, 0.157691628), (0.399068922, 0.867913127), (0.0405847281, 0.150922269))
+let pars = Parameters((-0.621338074310782, 4.188313190184803), (-2.4472367989276296, 8.199796487628749), (9.33856204985088, 6.5226973101920622), (5.87263765101055, 0.544361275915361), 1.4449010808652121, 1.9561452025811001, 8)
+runSimulation(pars, days: 100, population: 1000)
 /*
-// check for pleasure change
+ check for pleasure change
 for i in Int(attributeBound.0)...Int(attributeBound.1) {
     let a = Agent(0, age: 0)
     a.emotion = Emotion(Double(i), 0, 0)
@@ -47,5 +48,3 @@ for i in Int(attributeBound.0)...Int(attributeBound.1) {
     print("Extend with gun for moral \(i): \(g.getExtend(gun: true))")
     print("Extend without gun for moral \(i): \(g.getExtend(gun: false))")
 }*/
-
-runSimulation(pars, days: 10)
