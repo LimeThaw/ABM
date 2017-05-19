@@ -73,7 +73,7 @@ struct CrimeGenerator {
     }
 
     private static func cost(e: Double, g: Bool) -> Double {
-        return CG.baseCost * e + (g ? CG.costGun : 0)
+        return CG.baseCost * e + (g ? CG.costGun : 0) - (CHECK_HYPOTHESIS_1 && g ? HYPOTHESIS_1_PENALTY : 0)
     }
 
     private func prob(e: Double, g1: Bool, g2: Bool) -> Double { // g1: initiator has gun, g2: victim has gun
@@ -83,7 +83,7 @@ struct CrimeGenerator {
 
     private func visualizedChange(e: Double, g: Bool) -> Double {
         let p = prob(e: e, g1: g, g2: false) // the initiator assumes that the victim has no gun
-        let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0)
+        let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0) - CHECK_HYPOTHESIS_1 && g ? HYPOTHESIS_1_PENALTY : 0
         return p*(CG.gain(e: e) - pleasure) - (1-p)*CG.cost(e: e, g: g) + additional
     }
 
