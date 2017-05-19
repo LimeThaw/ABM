@@ -14,7 +14,15 @@ public protocol DynamicHashable: class, Hashable {
  RAHT stands for Random Access Hash Table, whereas random access is understood here, that this datastructure can output a random entry efficiently.
  
  RAHT requires its entries to inherit from the protocol DynamicHashable. The dynamicHashValue should be reserved to operations of RAHT and should not be accessed anywhere else.
- Every entry is stored inside the data dictionary with its hashValue as key and the table array. The dynamicHashValue indicates the position inside the table.
+ Every entry is stored inside the data dictionary with its hashValue as key and the table array. The dynamicHashValue indicates the position inside the table and is therefore set, whenever the entry changes its place inside the table or gets added to the table.
+ The density is defined as the number of elements in the collection (count) and the size of the table. An empty table has a density of 1.
+ 
+ When inserting an element, a random (unoccupied) place in the table is searched and the element is inserted there. If the density is above 0.7, the element is appended to the end of the table. Obviously the element is also added to data.
+ 
+ When deleting an element, the according element is searched in data and removed from there. The dynamic hash value of the element then indicates where to find it in table and is removed from there as well. Afterwards a shrink operation is executed that works as follows:
+ When the density is below 0.3 and the uppermost entry of table is occupied, the entry is moved to a random other place in the table and the uppermost entry is removed. Afterwards the uppermost entry gets removed, until it is occupied, or the density reaches 0.5.
+ The shrink operation assures, that the density is never below 0.3 and therefore random accesses are fast enough.
+ A random access selects a random index above equal to 0 and below table's size and checks whether the entry in table is occupied. If yes, the entry is returned, otherwise it is tried again.
  */
 public struct RAHT<Entry: DynamicHashable> {
     var table: [Entry?] = []

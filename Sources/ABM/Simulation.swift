@@ -161,7 +161,7 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
 @discardableResult
-func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 10000) -> Double {
+func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 1000) -> Double {
     // Reset environment variables
     rand = Random(13579)
     tmpc = Counter(0)
