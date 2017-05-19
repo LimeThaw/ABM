@@ -73,6 +73,9 @@ public struct Edge<T: Hashable>: Hashable {
 // Generic graph class. Contains a list of nodes and a list of edges connecting the nodes.
 public class Graph<T: Hashable> {
     public private(set) var nodes: [Int:GraphNode<T>] = [:]
+	var indices = AVLTree<Int>()
+	var indexList = [Int]()
+
 
 	public init() {}
 
@@ -86,6 +89,8 @@ public class Graph<T: Hashable> {
 	// Inserts a node into the graph
 	public func addNode(_ newNode: GraphNode<T>) {
         nodes[newNode.hashValue] = newNode
+		indices = indices.insert(newNode.hashValue)
+		indexList = indices.toList()
 	}
 
 	// Removes a node from the graph, and takes care of all undirected edges to/from it.
@@ -99,6 +104,8 @@ public class Graph<T: Hashable> {
 			}
 		}
 		nodes[node.hashValue] = nil
+		indices = indices.delete(node.hashValue)
+		indexList = indices.toList()
 	}
 
 	public func removeNode(withValue value: T) {
@@ -147,10 +154,6 @@ public class Graph<T: Hashable> {
 
     public func getNode(index i: Int) -> GraphNode<T>? {
         assert(i >= 0 && i < nodes.count)
-        var it = nodes.makeIterator()
-        for _ in 0..<i {
-            _ = it.next()
-        }
-        return it.next()?.value
+		return nodes[indexList[i%indexList.count]]
     }
 }

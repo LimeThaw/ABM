@@ -290,7 +290,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		last = rec
 	}
 
-	//print("Average time for one day: \(Float(totalTime)/1000000000/Float(days))s")
+	print("Average time for one day: \(Float(totalTime)/1000000000/Float(days))s")
 
 	//print(crime_counts)
 

@@ -279,14 +279,14 @@ extension AVLTreeNode {
             return []
         }
     }
-    
+
     func printTree() {
         var help: [[T?]] = [] // an array that hold the entries in the correct order for every level
         var levels = self.height()
         for _ in 0..<self.height() {
             help.append([])
         }
-        
+
         func insertIntoHelp(tree: AVLTreeNode<T>, level: Int) {
             switch tree {
             case let .Node(v, l, r, _):
@@ -309,7 +309,7 @@ extension AVLTreeNode {
                 }
             }
         }
-        
+
         insertIntoHelp(tree: self, level: 0)
         var strHelp: [[String]] = [] // holds the string representations for every entry in the level
         var longestString = 0
@@ -331,7 +331,7 @@ extension AVLTreeNode {
             }
             strHelp.append(cur)
         }
-        
+
         longestString += 1 // every item is printed with at least one leading space
         // center the strings
         for i in 0..<strHelp.count {
@@ -346,7 +346,7 @@ extension AVLTreeNode {
                 strHelp[i][j] = cur
             }
         }
-        
+
         // create the lines
         let width = longestString*2^^(levels-1)
         var lines: [String] = [] // the lines that are printed to the console
@@ -360,12 +360,12 @@ extension AVLTreeNode {
                 paddingStart += " "
             }
             let paddingEnd = (boxSize - longestString) % 2 == 0 ? paddingStart : paddingStart + " "
-            
+
             // write the line
             for j in 0..<2^^i {
                 cur += paddingStart + strHelp[i][j] + paddingEnd
             }
-            
+
             // add the connection line
             if !firstLine {
                 // whitespaces
@@ -378,7 +378,7 @@ extension AVLTreeNode {
                 for _ in 3*gapStartSize ..< boxSize*2-2 {
                     gapEnd += " "
                 }
-                
+
                 var conLn = ""
                 for j in 0..<2^^(i-1) {
                     conLn += gapStart
@@ -389,12 +389,12 @@ extension AVLTreeNode {
                 }
                 lines.append(conLn)
             }
-            
+
             lines.append(cur)
-            
+
             firstLine = false
         }
-        
+
         // print lines
         for l in lines {
             print(l)
@@ -407,7 +407,7 @@ public extension AVLTree {
     public func toList() -> [T] {
         return root.toList()
     }
-    
+
     /**
      Prints this AVLTree nicely to the console
      */
