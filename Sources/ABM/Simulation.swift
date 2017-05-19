@@ -156,6 +156,10 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	rand = Random(13579)
 	tmpc = Counter(0)
 
+	// Apply parameters for crime generator
+	CrimeGenerator.baseGain = pars.4
+	CrimeGenerator.baseCost = pars.5
+
 	// Insert nodes from input
 	graph = Graph<Agent>()
 	var loadedNodes = [String:Int]()
@@ -184,7 +188,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 			break
 		}
 	}
-	print("\(graph.nodes.count) Agents are entering the matrix...")
+	//print("\(graph.nodes.count) Agents are entering the matrix...")
 
 	// generate social network
 	/*for i in 0..<n {
@@ -218,6 +222,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		var record = Record(0, 0.0, 0.0, 0.0, 0.0)
 		let cnt = graph.nodes.count
 		if cnt == 0 {
+			print("THEY'RE ALL DEAD!")
 			break
 		}
 		let hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
@@ -269,6 +274,8 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		crimeCounts += [record]
 	    //print(record)
 	    totalTime += toc()
+
+		print(".", terminator: "")
 	}
 
 	// Calculate the goodness/badness value as sum of differences squared

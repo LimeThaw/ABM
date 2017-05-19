@@ -23,8 +23,8 @@ struct CrimeGenerator {
     private let gunPos: Bool
     private let gunAcq: Bool
 
-    static private let baseGain: Double = 0.1
-    static private let baseCost: Double = 0.15
+    static var baseGain: Double = 0.1
+    static var baseCost: Double = 0.15
     static private let costGun: Double = 0.1
     static private let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
     static private let maxExt: Double = 10
@@ -99,7 +99,7 @@ struct CrimeGenerator {
     func makeDecision() -> (Double, Bool)? {
 
         // possible decisions
-		
+
         let _extNoGun = getExtend(gun: false)
         let extNoGun = _extNoGun > CG.maxExt || _extNoGun.isNaN ? CG.maxExt : _extNoGun
         let _extGun = getExtend(gun: true)
@@ -151,7 +151,10 @@ struct CrimeGenerator {
             ini.emotion += (gunAcqUpdate + rand.nextNormal(mu: CG.gain(e: ext), sig: sigGain), incA, incDSucc)
         } else {
             ini.emotion += (gunAcqUpdate - rand.nextNormal(mu: CG.cost(e: ext, g: gun), sig: sigCost), incA, -decDFail)
-			ini.criminalHistory = true
+			if CHECK_HYPOTHESIS_2 {
+				ini.criminalHistory = true
+				ini.ownsGun = false
+			}
         }
         if gun && !ini.ownsGun {
             ini.ownsGun = true
