@@ -6,7 +6,7 @@ let EDGE_DECAY = 0.1 // TODO: Independent variable?
 let INITIAL_EDGE_WEIGHT = 1.1
 let RANDOM_SEED = 13579
 
-let THREAD_COUNT = 2
+let THREAD_COUNT = 1
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
@@ -54,9 +54,11 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 		if rand.nextProb() < deathProb(age: agent.age) {
 			//print("death")
 			changes.append({
-				graph.removeNode(node: node)
-				for edge in node.edges.values {
-					edge.next.value.updateConnectedness(node: edge.next)
+				if graph.find(node: node.value) != nil {
+					graph.removeNode(node: node)
+					for edge in node.edges.values {
+						edge.next.value.updateConnectedness(node: edge.next)
+					}
 				}
 			})
 		} else {

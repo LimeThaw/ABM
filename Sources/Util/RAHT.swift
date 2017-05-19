@@ -15,7 +15,7 @@ public struct RAHT<Entry: DynamicHashable> {
     var data: [Int:Entry] = [:]
     public var count: Int { return data.count }
     var rand: Random
-    
+
     public init(seed: Int? = nil) {
         if let s = seed {
             rand = Random(s)
@@ -23,7 +23,7 @@ public struct RAHT<Entry: DynamicHashable> {
             rand = Random()
         }
     }
-    
+
     private var density: Float { return table.count > 0 ? Float(count)/Float(table.count) : 1}
     private mutating func randomEntry(_ condition: (Entry?) -> Bool = {$0 != nil}) -> Int {
         var hash = 0
@@ -33,7 +33,7 @@ public struct RAHT<Entry: DynamicHashable> {
         return hash
     }
 
-    
+
     public mutating func insert(_ val: Entry) {
         if data[val.hashValue] == nil {
             data[val.hashValue] = val
@@ -47,7 +47,7 @@ public struct RAHT<Entry: DynamicHashable> {
             }
         }
     }
-    
+
     private mutating func shrink() {
         if density < 0.3 && table.last! != nil{
             let last = table.removeLast()!
@@ -59,10 +59,9 @@ public struct RAHT<Entry: DynamicHashable> {
             table.removeLast()
         }
     }
-    
+
     @discardableResult
     mutating func remove(staticHash: Int) -> Entry? {
-        assert(staticHash >= 0 && staticHash < table.count)
         if let entry = data.removeValue(forKey: staticHash) {
             let dhash = entry.dynamicHashValue
             table[dhash] = nil
@@ -70,20 +69,20 @@ public struct RAHT<Entry: DynamicHashable> {
         }
         return nil
     }
-    
+
     @discardableResult
     mutating func remove(_ val: Entry) -> Entry? {
         return remove(staticHash: val.hashValue)
     }
-    
+
     func has(staticHash: Int) -> Bool {
         return data[staticHash] != nil
     }
-    
+
     func get(staticHash: Int) -> Entry? {
         return data[staticHash]
     }
-    
+
     mutating func getRandom() -> Entry? {
         if count == 0 {
             return nil
@@ -96,7 +95,7 @@ extension RAHT: Sequence {
     public func makeIterator() -> DictionaryIterator<Int, Entry> {
         return data.makeIterator()
     }
-    
+
     public var values: LazyMapCollection<[Int:Entry], Entry> {
         return data.values
     }
