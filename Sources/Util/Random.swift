@@ -69,4 +69,9 @@ public struct Random{
         } while range != nil && (ret < range!.0 || ret > range!.1) // repeat until in attribute bound
         return ret
 	}
+
+	public mutating func duplicate() -> Random {
+		current += 2
+		return Random(current-1)
+	}
 }

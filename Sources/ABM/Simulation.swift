@@ -2,7 +2,10 @@ import Foundation
 import Util
 import Dispatch
 
-let THREAD_COUNT = 1
+let EDGE_DECAY = 0.1 // TODO: Independent variable?
+let INITIAL_EDGE_WEIGHT = 1.1
+
+let THREAD_COUNT = 4
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
@@ -71,7 +74,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	                let next = rand.next(max: graph.nodes.count)
 	                vicNode = graph.getNode(index: next)!
 	            } while vicNode.value != agent
-	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
+	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)} // FIXME: Rand usage?!
 	        }
 			record.4 += Double(agent.connectedness)
 
@@ -91,26 +94,29 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 				}
 			}
 			// Now let's get RIGGITY RIGGITY REKT SON!
-			changes.append {
-				if graph.nodes[node.hashValue] != nil { // You dead yet?
-					for peer in peers {
-						if graph.nodes[peer.hashValue] != nil { // Is your buddy still alive?
-							let oldWeight = node.getEdgeWeight(to: peer)
-							let newWeight = oldWeight == 0 ? 1.1 : rand.nextProb() * oldWeight / 10 // Up to 10% increase
-							graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
-							peer.value.updateConnectedness(node: peer)
-						}
+
+			for peer in peers {
+				let oldWeight = node.getEdgeWeight(to: peer)
+				let weightIncrease = rand.nextProb() * oldWeight / 10 // Up to 10% increase
+				let newWeight = oldWeight == 0 ? INITIAL_EDGE_WEIGHT : weightIncrease
+				changes.append {
+					if graph.nodes[node.hashValue] != nil && graph.nodes[peer.hashValue] != nil {
+						graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
+						peer.value.updateConnectedness(node: peer)
 					}
-					for edge in node.edges.values {
-						let weight = edge.weight - 0.05 // 0.1 decay per day
+				}
+			}
+			for edge in node.edges.values {
+				let weight = edge.weight - EDGE_DECAY
+				changes.append {
+					if graph.nodes[node.hashValue] != nil && graph.nodes[edge.hashValue] != nil {
 						if weight < 0 {
 							graph.removeEdge(from: node.hashValue, to: edge.hashValue)
 						} else {
-							graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -0.1)
+							graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -EDGE_DECAY)
 							edge.next.value.updateConnectedness(node: edge.next)
 						}
 					}
-					agent.updateConnectedness(node: node)
 				}
 			}
 
@@ -123,14 +129,12 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 			}
 			// Age factor: The older the agent the less likely he is to change his beliefs
 			let oldFac = ((agent.age == 0) ? 0 : (1.0 - (1.0 / Double(agent.age + 1)) + 0.1))
-			newMoral = (1.0 - oldFac) * newMoral / Double(node.edges.count) + oldFac * agent.moral
+			newMoral = (1.0 - oldFac) * newMoral / Double(node.edges.count) + oldFac * agent.moral + rand.nextNormal(mu: 0, sig: 0.2)
 
 			changes.append({
 				// bring a bit movement into the people
-				agent.moral += rand.nextNormal(mu: 0, sig: 0.2)
 				agent.age += 1
 				agent.moral = newMoral
-				agent.updateConnectedness(node: node)
 			})
 		}
 	}

@@ -78,7 +78,7 @@ func findParameters() {
 			rand.nextProb()*2, // base gain
 			rand.nextProb()*2, // base cost
 			rand.next(max: 10)
-		)) // TODO: Implement ranges
+		))
 	}
 
 	var results = [(Double, Parameters)]()
