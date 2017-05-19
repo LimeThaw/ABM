@@ -43,10 +43,12 @@ struct CrimeGenerator {
     private let indivBaseProb: Double
     private let stealsGun: Bool
     private let gunAcqCost: Double
+	private let myRand: Random
 
-    init(initiator: Agent) {
+    init(initiator: Agent, generator: Random) {
 
         self.ini = initiator
+		myRand = generator
         arousal = initiator.emotion.arousal
         pleasure = initiator.emotion.pleasure
         dominance = initiator.emotion.dominance

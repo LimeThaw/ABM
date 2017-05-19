@@ -5,7 +5,7 @@ import Dispatch
 let EDGE_DECAY = 0.1 // TODO: Independent variable?
 let INITIAL_EDGE_WEIGHT = 1.1
 
-let THREAD_COUNT = 4
+let THREAD_COUNT = 2
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
@@ -37,7 +37,7 @@ func deviation(of rec: Record, last: Record) -> Double {
 let input = read("snap/gplus_med.txt")
 let inList = input.characters.split{ $0 == " " || $0 == "\n" }.map{String($0)}
 
-func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
+func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, generator rand: inout Random)
 		-> ([() -> Void], Record) {
 
 	var changes = [() -> Void]()
@@ -63,7 +63,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	            agent.ownsGun = true
 	        }
 
-	        let generator = CrimeGenerator(initiator: agent)
+	        let generator = CrimeGenerator(initiator: agent, generator: rand.duplicate())
 	        if let decision = generator.makeDecision() {
 				record.2 += 1.0
 				if decision.1 {
@@ -250,8 +250,9 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 			subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0)))
 			let i = subresults.count - 1
 			threadGroup.enter()
+			var newRand = rand.duplicate()
 			threadQueue.async {{ (rand: Random) in
-				subresults[i] = updateNodes(sublist, within: graph)
+				subresults[i] = updateNodes(sublist, within: graph, generator: &newRand)
 				threadGroup.leave()
 			}(rand)}
 		}
@@ -302,7 +303,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	badness += ((crimes/Double(days) - 1.020821918)^^2)
 	badness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 
-	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 
