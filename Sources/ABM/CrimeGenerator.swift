@@ -30,7 +30,6 @@ struct CrimeGenerator {
     static private let maxExt: Double = 10
     static private let maxDecExt: Double = 0.7 // the maximum (percentual) decrease of the success probability with the extend
     static private let incGun: Double = 0.3 // the (percentual) increase of the success probability when using a gun
-    static private let gunCrimeExt: Double = 5 // the extend of a crime that gives the initiator a gun
     static private let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
     static private let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
     static private let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
@@ -79,7 +78,7 @@ struct CrimeGenerator {
         return increaseProb(indivBaseProb, by: phi - (g2 ? CG.decVicGun : 0))
     }
 
-    private func visualizedChange(e: Double, g: Bool) -> Double {
+    func visualizedChange(e: Double, g: Bool) -> Double {
         let p = prob(e: e, g1: g, g2: false) // the initiator assumes that the victim has no gun
         let additional: Double = -e*moral - dominance + ((g && stealsGun) ? gunAcqCost : 0)
         return p*(CG.gain(e: e) - pleasure) - (1-p)*CG.cost(e: e, g: g) + additional
