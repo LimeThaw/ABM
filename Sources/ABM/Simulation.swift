@@ -47,10 +47,10 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
             // Kill agent if too old
             if rand.nextProb() < deathProb(age: agent.age) {
                 //print("death")
-                    graph.removeNode(node: node)
-                    for edge in node.edges.values {
-                        edge.next.value.updateConnectedness(node: edge.next)
-                    }
+                graph.removeNode(node: node)
+                for edge in node.edges.values {
+                    edge.next.value.updateConnectedness(node: edge.next)
+                }
             } else {
                 if agent.emotion.dominance < -5 && canBuyGun(agent){
                     agent.ownsGun = true
@@ -72,17 +72,23 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
                  */
                 if graph.nodes.count > 1, let decision = generator.makeDecision() {
                     print(decision.0)
+                    if decision.1 {
+                        record.2 += 1
+                    }
+                    record.3 += 1
                     var vicNode = GraphNode<Agent>(value: agent)
                     repeat {
                         vicNode = graph.getRandomNode()!
-                    } while vicNode.value != agent
-                    generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)
+                    } while vicNode.value == agent
+                    if generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1) {
+                        record.4 += 1
+                    }
                 }
                 record.6 += Float(agent.connectedness)
                 
                 // Now get your friends and have a party
                 var peers = [GraphNode<Agent>]() // Your m8s
-                while rand.next(prob: 0.9) {
+                while rand.next(prob: 0.5) {
                     // Who do you wanna invite?
                     if rand.next() && node.edges.count > 0 {
                         // Your friends?
@@ -94,27 +100,27 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
                     }
                 }
                 // Now let's get RIGGITY RIGGITY REKT SON!
-                    if graph.find(hash: node.hashValue) != nil { // You dead yet?
-                        for peer in peers {
-                            if graph.find(hash: peer.hashValue) != nil { // Is your buddy still alive?
-                                let oldWeight = node.getEdgeWeight(to: peer)
-                                let newWeight = oldWeight == 0 ? 1.1 : rand.nextProb() * oldWeight / 10 // Up to 10% increase
-                                graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
-                                peer.value.updateConnectedness(node: peer)
-                            }
+                if graph.find(hash: node.hashValue) != nil { // You dead yet?
+                    for peer in peers {
+                        if graph.find(hash: peer.hashValue) != nil { // Is your buddy still alive?
+                            let oldWeight = node.getEdgeWeight(to: peer)
+                            let newWeight = oldWeight == 0 ? 1.1 : rand.nextProb() * oldWeight / 10 // Up to 10% increase
+                            graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
+                            peer.value.updateConnectedness(node: peer)
                         }
-                        for edge in node.edges.values {
-                            let weight = edge.weight - 0.05 // 0.1 decay per day
-                            if weight < 0 {
-                                graph.removeEdge(from: node.hashValue, to: edge.hashValue)
-                            } else {
-                                graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -0.1)
-                                edge.next.value.updateConnectedness(node: edge.next)
-                            }
-                        }
-                        agent.updateConnectedness(node: node)
-                        // Unknown parameters: first weight, weight decay, weight increase, meeting probability
                     }
+                    for edge in node.edges.values {
+                        let weight = edge.weight - 0.05 // 0.1 decay per day
+                        if weight < 0 {
+                            graph.removeEdge(from: node.hashValue, to: edge.hashValue)
+                        } else {
+                            graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -0.1)
+                            edge.next.value.updateConnectedness(node: edge.next)
+                        }
+                    }
+                    agent.updateConnectedness(node: node)
+                    // Unknown parameters: first weight, weight decay, weight increase, meeting probability
+                }
                 
                 var newMoral: Double = 0.0
                 var totalWeight: Double = 0.0

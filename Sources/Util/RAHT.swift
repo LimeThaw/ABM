@@ -10,6 +10,12 @@ public protocol DynamicHashable: class, Hashable {
     var dynamicHashValue: Int { get set }
 }
 
+/**
+ RAHT stands for Random Access Hash Table, whereas random access is understood here, that this datastructure can output a random entry efficiently.
+ 
+ RAHT requires its entries to inherit from the protocol DynamicHashable. The dynamicHashValue should be reserved to operations of RAHT and should not be accessed anywhere else.
+ Every entry is stored inside the data dictionary with its hashValue as key and the table array. The dynamicHashValue indicates the position inside the table.
+ */
 public struct RAHT<Entry: DynamicHashable> {
     var table: [Entry?] = []
     var data: [Int:Entry] = [:]
@@ -25,6 +31,7 @@ public struct RAHT<Entry: DynamicHashable> {
     }
     
     private var density: Float { return table.count > 0 ? Float(count)/Float(table.count) : 1}
+    
     private mutating func randomEntry(_ condition: (Entry?) -> Bool = {$0 != nil}) -> Int {
         var hash = 0
         repeat  {
@@ -62,7 +69,6 @@ public struct RAHT<Entry: DynamicHashable> {
     
     @discardableResult
     mutating func remove(staticHash: Int) -> Entry? {
-        assert(staticHash >= 0 && staticHash < table.count)
         if let entry = data.removeValue(forKey: staticHash) {
             let dhash = entry.dynamicHashValue
             table[dhash] = nil
