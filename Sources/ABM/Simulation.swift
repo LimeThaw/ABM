@@ -11,7 +11,7 @@ var graph = Graph<Agent>()
 var tmpc = Counter(0)
 
 //                  Population, happiness, Crime rate, Gun crime rate, avg connectedness
-typealias Record = (Int,        Float,     Float,      Float,          Float)
+typealias Record = (Int,        Double,    Double,     Double,         Double)
 
 infix operator +=
 func +=(left: inout Record, right: Record) {
@@ -22,10 +22,11 @@ func +=(left: inout Record, right: Record) {
 	left.4 += right.4
 }
 
-func deviation(of rec: Record, last: Record) -> Float {
-	var ret = ((rec.2 / Float(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
-	ret += (((rec.3 / Float(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
-	ret += ((Float(rec.0-last.0) / Float(rec.0) * 100000.0)^^2) // Population change
+func deviation(of rec: Record, last: Record) -> Double {
+	var ret = ((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
+	ret += (((rec.3 / Double(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
+	ret += ((Double(rec.0-last.0) / Double(rec.0) * 100000.0)^^2) // Population change
+	// FIXME: No comparison for popChange
 	return ret
 }
 
@@ -33,7 +34,6 @@ func deviation(of rec: Record, last: Record) -> Float {
 let input = read("snap/gplus_med.txt")
 let inList = input.characters.split{ $0 == " " || $0 == "\n" }.map{String($0)}
 
-@discardableResult
 func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 		-> ([() -> Void], Record) {
 
@@ -73,7 +73,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>)
 	            } while vicNode.value != agent
 	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
 	        }
-			record.4 += Float(agent.connectedness)
+			record.4 += Double(agent.connectedness)
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
@@ -155,7 +155,8 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
-func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100) -> Float {
+@discardableResult
+func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100) -> Double {
 	// Reset environment variables
 	rand = Random(13579)
 	tmpc = Counter(0)
@@ -220,7 +221,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	let threadGroup = DispatchGroup()
 	let threadQueue = DispatchQueue.global()
 
-	var badness = Float(0.0)
+	var badness = Double(0.0)
 
 	simLoop: for _ in 0..<days {
 	    tic()
@@ -229,13 +230,13 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		let cnt = graph.nodes.count
 		if cnt == 0 {
 			//print("💀", terminator: "")
-			badness = Float.infinity
+			badness = Double.infinity
 			break simLoop
 		}
 		let hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
 
 		let list = graph.nodes.map({ $0.value })
-		let stride = Int(ceil(Float(cnt) / Float(THREAD_COUNT)))
+		let stride = Int(ceil(Double(cnt) / Double(THREAD_COUNT)))
 
 		let sublists = list.chunks(stride)
 		var subresults = [([()->Void], Record)]()
@@ -274,10 +275,10 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		}
 
 		record.0 = cnt
-		record.1 = Float(hap + 50.0)
-		record.2 = record.2 * 100.0 / Float(cnt)
-		record.3 = record.3 * 100.0 / Float(cnt)
-		record.4 = record.4 / Float(cnt)
+		record.1 = Double(hap + 50.0)
+		record.2 = record.2 * 100.0 / Double(cnt)
+		record.3 = record.3 * 100.0 / Double(cnt)
+		record.4 = record.4 / Double(cnt)
 		crimeCounts += [record]
 	    //print(record)
 	    totalTime += toc()
@@ -285,12 +286,19 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 
 	// Calculate the goodness/badness value as sum of differences squared
 	var last = crimeCounts[0]
+	var popChange = 0.0, crimes = 0.0, gunCrimes = 0.0
 	for rec in crimeCounts {
-		badness += deviation(of: rec, last: last)
+		//badness += deviation(of: rec, last: last)
+		popChange += (Double(rec.0-last.0) / Double(rec.0) * 100000.0)
+		crimes += ((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)
+		gunCrimes += (rec.3 / Double(rec.0) * 100000.0 - 0.28051726)
 		last = rec
 	}
+	badness += ((popChange/Double(days) - 214.794520548)^^2)
+	badness += ((crimes/Double(days) - 1.020821918)^^2)
+	badness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 
-	print("Average time for one day: \(Float(totalTime)/1000000000/Float(days))s")
+	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 

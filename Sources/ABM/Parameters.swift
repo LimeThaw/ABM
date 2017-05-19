@@ -77,10 +77,10 @@ func findParameters() {
 	}
 
 	for _ in 1...ROUNDS {
-		var results = [(Float, Parameters)]()
+		var results = [(Double, Parameters)]()
 		for pars in population {
-			let val = runSimulation(pars, days: 30, population: 100)
-			if val == Float.infinity {
+			let val = runSimulation(pars, days: 365, population: 100)
+			if val == Double.infinity {
 				print("☠️", terminator: " ")
 			} else {
 				print("👍", terminator: " ")
@@ -106,6 +106,6 @@ func findParameters() {
 		}
 		population += newPopulation
 
-		//uncertainty /= 2.0
+		uncertainty = clamp(uncertainty*0.9, from: 0.1, to: Double.infinity)
 	}
 }
