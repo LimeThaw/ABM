@@ -13,8 +13,15 @@ let BIRTH_RATE = 0.000033973
 var graph = Graph<Agent>()
 var tmpc = Counter(0)
 
-//                  Population, happiness, Crime rate, Gun crime rate, avg connectedness
-typealias Record = (Int,        Double,    Double,     Double,         Double)
+// Records interesting values for one day
+typealias Record = (
+	Int,		// Population
+	Double,		// happiness
+	Double,		// Crime rate
+	Double,		// Gun crime rate
+	Double,		// Average connectedness
+	Double		// Gun possession rate
+)
 
 infix operator +=
 func +=(left: inout Record, right: Record) {
@@ -23,6 +30,7 @@ func +=(left: inout Record, right: Record) {
 	left.2 += right.2
 	left.3 += right.3
 	left.4 += right.4
+	left.5 += right.5
 }
 
 func deviation(of rec: Record, last: Record) -> Double {
@@ -41,13 +49,19 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 		-> ([() -> Void], Record) {
 
 	var changes = [() -> Void]()
-	var record = Record(0, 0.0, 0.0, 0.0, 0.0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 	for node in nodeList {
 
 		let agent = node.value
+
 		// Validate agent atttibutes
 		agent.checkAttributes()
+
+		// Check if agent owns a gun
+		if agent.ownsGun {
+			record.5 += 1.0
+		}
 
 		// Kill agent if too old
 		if rand.nextProb() < deathProb(age: agent.age) {
@@ -60,7 +74,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 			})
 		} else {
 			if agent.emotion.dominance < -5 && canBuyGun(agent){
-	            agent.ownsGun = true
+	            changes.append{ agent.ownsGun = true }
 	        }
 
 	        let generator = CrimeGenerator(initiator: agent, generator: rand.duplicate())
@@ -230,7 +244,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	simLoop: for _ in 0..<days {
 	    tic()
 
-		var record = Record(0, 0.0, 0.0, 0.0, 0.0)
+		var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
 		let cnt = graph.nodes.count
 		if cnt == 0 {
 			//print("💀", terminator: "")
@@ -247,7 +261,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 
 		threadGroup.wait()
 		for sublist in sublists {
-			subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0)))
+			subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)))
 			let i = subresults.count - 1
 			threadGroup.enter()
 			var newRand = rand.duplicate()
@@ -284,6 +298,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		record.2 = record.2 * 100.0 / Double(cnt)
 		record.3 = record.3 * 100.0 / Double(cnt)
 		record.4 = record.4 / Double(cnt)
+		record.5 = record.5 / Double(cnt) * 100.0
 		crimeCounts += [record]
 	    //print(record)
 	    totalTime += toc()

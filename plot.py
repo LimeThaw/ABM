@@ -11,6 +11,7 @@ happiness = []
 crimes = []
 gunCrimes = []
 avgConnectedness = []
+gunPossession = []
 values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
 for val in values:
 	popCount.append(val[0])
@@ -18,6 +19,7 @@ for val in values:
 	crimes.append(val[2])
 	gunCrimes.append(val[3])
 	avgConnectedness.append(val[4])
+	gunPossession.append(val[5])
 
 length = len(popCount)
 
@@ -52,6 +54,11 @@ plt.plot(
 	gunCrimes,
 	'b:',
 	label="Crime rate involving firearms per 100")
+plt.plot(
+	range(0, length),
+	gunPossession,
+	'c-',
+	label="Gun possession rate per 100")
 plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 120])
