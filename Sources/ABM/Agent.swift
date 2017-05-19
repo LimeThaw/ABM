@@ -25,7 +25,6 @@ class Agent : Hashable {
 		ID = id
 		hashValue = ID
         emotion = Emotion()
-        moral = rand.nextNormal(mu: Double((pars.0).0), sig: Double((pars.0).1), range: attributeBound)
 		self.age = age
 	}
 

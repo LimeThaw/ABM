@@ -2,8 +2,8 @@ import Foundation
 import Util
 import Dispatch
 
-let EDGE_DECAY = 0.1 // TODO: Independent variable?
-let INITIAL_EDGE_WEIGHT = 1.1
+var INITIAL_EDGE_WEIGHT = 1.1
+var EDGE_DECAY = 0.1
 
 let THREAD_COUNT = 1
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
@@ -165,7 +165,7 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 		var next = Int(rand.next()%graph.nodes.count)
 		next = [Int](graph.nodes.keys)[next]
 		graph.addEdge(from: newNode.hashValue, to: next,
-			weight: rand.nextNormal(mu: 1.5, sig: 0.5))
+		weight: INITIAL_EDGE_WEIGHT)
 		graph.nodes[next]?.value.updateConnectedness(node: graph.nodes[next]!)
 	}
 	newAgent.updateConnectedness(node: graph.nodes[newAgent.hashValue]!)
@@ -182,6 +182,10 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	// Apply parameters for crime generator
 	CrimeGenerator.baseGain = pars.4
 	CrimeGenerator.baseCost = pars.5
+
+	// Apply edge based parameters
+	INITIAL_EDGE_WEIGHT = pars.7
+	EDGE_DECAY = pars.8
 
 	// Insert nodes from input
 	graph = Graph<Agent>()

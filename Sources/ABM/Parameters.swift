@@ -27,7 +27,9 @@ typealias Parameters = (
 	Distribution,	// Dominance
 	Double,			// BaseGain
 	Double,			// BaseCost
-	Int				// Average edges per agent
+	Int,			// Average edges per agent
+	Double,			// Initial weight of new edges
+	Double			// Weight decay per day
 )
 
 func mate(mom: Distribution, dad: Distribution) -> Distribution {
@@ -61,7 +63,9 @@ func mate(mom: Parameters, dad: Parameters) -> Parameters {
 		mate(mom: mom.3, dad: dad.3),
 		mate(mom: mom.4, dad: dad.4),
 		mate(mom: mom.5, dad: dad.5),
-		mate(mom: mom.6, dad: dad.6)
+		mate(mom: mom.6, dad: dad.6),
+		mate(mom: mom.7, dad: dad.7, max: 10.0),
+		mate(mom: mom.8, dad: dad.8, max: 1.0)
 	)
 }
 
@@ -150,7 +154,9 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
 			rand.nextProb()*2, // base gain
 			rand.nextProb()*2, // base cost
-			rand.next(max: 10)
+			rand.next(max: 10), // Average edges per agent
+			rand.nextProb()*10, // Initial weight of edges
+			rand.nextProb() // Edge weight decay rate
 		)
 
 		// Test it in simulation
