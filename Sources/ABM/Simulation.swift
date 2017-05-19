@@ -4,13 +4,14 @@ import Dispatch
 
 let EDGE_DECAY = 0.1 // TODO: Independent variable?
 let INITIAL_EDGE_WEIGHT = 1.1
+let RANDOM_SEED = 13579
 
 let THREAD_COUNT = 2
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
 
-var graph = Graph<Agent>()
+var graph = Graph<Agent>(seed: RANDOM_SEED)
 var tmpc = Counter(0)
 
 //                  Population, happiness, Crime rate, Gun crime rate, avg connectedness
@@ -64,19 +65,16 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 	        }
 
 	        let generator = CrimeGenerator(initiator: agent, generator: rand.duplicate())
-	        if let decision = generator.makeDecision() {
-				record.2 += 1.0
-				if decision.1 {
-					record.3 += 1.0
-				}
-	            var vicNode = GraphNode<Agent>(value: agent)
-	            repeat {
-	                let next = rand.next(max: graph.nodes.count)
-	                vicNode = graph.getNode(index: next)!
-	            } while vicNode.value != agent
-	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)} // FIXME: Rand usage?!
-	        }
 			record.4 += Double(agent.connectedness)
+			if graph.nodes.count > 1, let decision = generator.makeDecision() {
+			   //print(decision.0)
+			   var vicNode = GraphNode<Agent>(value: agent)
+			   repeat {
+				   vicNode = graph.getRandomNode()!
+			   } while vicNode.value == agent
+			   generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)
+			}
+			record.4 += agent.connectedness
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
@@ -89,8 +87,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 					peers.append(node.edges[node.edges.index(node.edges.startIndex, offsetBy: ind)].value.next)
 				} else {
 					// Or some hot chicks?
-					let ind = rand.next(max: graph.nodes.count)
-					peers.append(graph.nodes[graph.nodes.index(graph.nodes.startIndex, offsetBy: ind)].value)
+					peers.append(graph.getRandomNode()!)
 				}
 			}
 			// Now let's get RIGGITY RIGGITY REKT SON!
@@ -100,7 +97,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 				let weightIncrease = rand.nextProb() * oldWeight / 10 // Up to 10% increase
 				let newWeight = oldWeight == 0 ? INITIAL_EDGE_WEIGHT : weightIncrease
 				changes.append {
-					if graph.nodes[node.hashValue] != nil && graph.nodes[peer.hashValue] != nil {
+					if graph.find(hash: node.hashValue) != nil && graph.find(hash: peer.hashValue) != nil {
 						graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
 						peer.value.updateConnectedness(node: peer)
 					}
@@ -109,7 +106,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 			for edge in node.edges.values {
 				let weight = edge.weight - EDGE_DECAY
 				changes.append {
-					if graph.nodes[node.hashValue] != nil && graph.nodes[edge.hashValue] != nil {
+					if graph.find(hash: node.hashValue) != nil && graph.find(hash: edge.hashValue) != nil {
 						if weight < 0 {
 							graph.removeEdge(from: node.hashValue, to: edge.hashValue)
 						} else {
@@ -143,18 +140,18 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 }
 
 func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
-	//print("birth")
-	let newAgent = Agent(tmpc.next()!)
-	newAgent.randomize(pars)
-	let newNode = graph.addNode(withValue: newAgent)
-	for _ in 1...3 {
-		var next = Int(rand.next()%graph.nodes.count)
-		next = [Int](graph.nodes.keys)[next]
-		graph.addEdge(from: newNode.hashValue, to: next,
-			weight: rand.nextNormal(mu: 1.5, sig: 0.5))
-		graph.nodes[next]?.value.updateConnectedness(node: graph.nodes[next]!)
-	}
-	newAgent.updateConnectedness(node: graph.nodes[newAgent.hashValue]!)
+    //print("birth")
+    let newAgent = Agent(tmpc.next()!)
+    newAgent.randomize(pars)
+    let newNode = graph.addNode(withValue: newAgent)
+    for _ in 1...3 {
+        if let next = graph.getRandomNode() {
+            graph.addEdge(from: newNode.hashValue, to: next.hashValue,
+                          weight: rand.nextNormal(mu: 1.5, sig: 0.5))
+            next.value.updateConnectedness(node: next)
+        }
+    }
+    newAgent.updateConnectedness(node: graph.find(hash: newAgent.hashValue)!)
 }
 
 // Runs the simulation with the given parameters for the given number of days and returns the
@@ -162,7 +159,7 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 @discardableResult
 func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100) -> Double {
 	// Reset environment variables
-	rand = Random(13579)
+	rand = Random(RANDOM_SEED)
 	tmpc = Counter(0)
 
 	// Apply parameters for crime generator
@@ -170,7 +167,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	CrimeGenerator.baseCost = pars.5
 
 	// Insert nodes from input
-	graph = Graph<Agent>()
+	graph = Graph<Agent>(seed: RANDOM_SEED)
 	/*var loadedNodes = [String:Int]()
 	for i in 0..<(inList.count/2) {
 		let one = inList[2*i]
