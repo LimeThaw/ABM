@@ -12,6 +12,9 @@ let ROUNDS = 10 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
+let DAYS = 30 // Number of days to simulate
+let POP = 100 // Number of agents to simulate
+
 // The parameters describing rand.nextProb() normal distribution
 //                        mu,    sigma
 typealias Distribution = (Double, Double)
@@ -38,11 +41,11 @@ func mate(mom: Distribution, dad: Distribution) -> Distribution {
 	return child
 }
 
-func mate(mom: Double, dad: Double) -> Double {
+func mate(mom: Double, dad: Double, max: Double = 2) -> Double {
 	var ret = 0.0
 	repeat {
 		ret = (rand.next(prob: 0.5) ? mom : dad) + (rand.next(prob: MUTATION_RATE) ? rand.nextNormal(sig: uncertainty): 0.0)
-	} while ret < 0 || ret > 2
+	} while ret < 0 || ret > max
 	return ret
 }
 
@@ -67,7 +70,7 @@ func findParameters() {
 	var best = [(Double, Parameters)]()
 
 	var population = [Parameters]()
-	let lower = attributeBound.0
+	/*let lower = attributeBound.0
 	let range = attributeBound.1 - attributeBound.0
 	for _ in 1...POP_SIZE {
 		population.append((
@@ -79,7 +82,8 @@ func findParameters() {
 			rand.nextProb()*2, // base cost
 			rand.next(max: 10)
 		))
-	}
+	}*/
+	population = randomSearch(sets: POP_SIZE, days: DAYS, pop: POP)
 
 	var results = [(Double, Parameters)]()
 	var first = true
@@ -95,7 +99,7 @@ func findParameters() {
 				continue
 			}
 
-			let val = runSimulation(pars, days: 30, population: 100)
+			let val = runSimulation(pars, days: DAYS, population: POP)
 			let out = val == Double.infinity ? "☠️" : "👍"
 			print(out, terminator: " ")
 			results.append((val, pars))
@@ -127,4 +131,38 @@ func findParameters() {
 		first = false
 	}
 	try? NSString(string: String(describing: best)).write(toFile: "population.txt", atomically: false, encoding: 2)
+}
+
+func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Parameters] {
+
+	// Our best guesses
+	var best = [Parameters]()
+
+	while best.count < sets {
+
+		// Generate random parameter set
+		let lower = attributeBound.0
+		let range = attributeBound.1 - attributeBound.0
+		let pars = Parameters(
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
+			rand.nextProb()*2, // base gain
+			rand.nextProb()*2, // base cost
+			rand.next(max: 10)
+		)
+
+		// Test it in simulation
+		let val = runSimulation(pars, days: days, population: pop)
+
+		//if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0) {
+		if val < Double.infinity {
+			best.append(pars)
+			print("Found one:\n\(pars)\n")
+		}
+	}
+
+	//try? NSString(string: String(describing: best)).write(toFile: "population_rand.txt", atomically: false, encoding: 2)
+	return best
 }

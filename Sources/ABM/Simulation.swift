@@ -88,7 +88,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 	                let next = rand.next(max: graph.nodes.count)
 	                vicNode = graph.getNode(index: next)!
 	            } while vicNode.value != agent
-	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)} // FIXME: Rand usage?!
+	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
 	        }
 			record.4 += Double(agent.connectedness)
 
@@ -318,7 +318,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	badness += ((crimes/Double(days) - 1.020821918)^^2)
 	badness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 
-	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 
