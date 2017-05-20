@@ -1,7 +1,7 @@
 //findParameters()
 
 let pars = Parameters((-0.621338074310782, 4.188313190184803), (-2.4472367989276296, 8.199796487628749), (9.33856204985088, 6.5226973101920622), (5.87263765101055, 0.544361275915361), 1.4449010808652121, 1.9561452025811001, 8)
-runSimulation(pars, days: 100, population: 10000)
+runSimulation(pars, days: 100, population: 1000)
 /*
  check for pleasure change
 for i in Int(attributeBound.0)...Int(attributeBound.1) {
