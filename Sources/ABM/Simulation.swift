@@ -35,8 +35,7 @@ func +=(left: inout Record, right: Record) {
 func deviation(of rec: Record, last: Record) -> Double {
 	var ret = ((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
 	ret += (((rec.3 / Double(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
-	ret += ((Double(rec.0-last.0) / Double(rec.0) * 100000.0)^^2) // Population change
-	// FIXME: No comparison for popChange
+	ret += ((Double(rec.0-last.0) / Double(rec.0) * 100000.0 - 214.794520548)^^2) // Population change
 	return ret
 }
 
@@ -183,6 +182,8 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	// Apply parameters for crime generator
 	CrimeGenerator.baseGain = pars.4
 	CrimeGenerator.baseCost = pars.5
+	CrimeGenerator.maxDecExt = pars.9
+	CrimeGenerator.incGun = pars.10
 
 	// Apply edge based parameters
 	INITIAL_EDGE_WEIGHT = pars.7
@@ -291,13 +292,18 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 
 	// Calculate the goodness/badness value as sum of differences squared
 	var last = crimeCounts[0]
-	var popChange = 0.0, crimes = 0.0, gunCrimes = 0.0
+	var popChange = 0.0, crimes = 0.0, gunCrimes = 0.0, crimeCnt = 0.0
 	for rec in crimeCounts {
-		//badness += deviation(of: rec, last: last)
-		popChange += (Double(rec.0-last.0) / Double(rec.0) * 100000.0)
-		crimes += ((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)
-		gunCrimes += (rec.3 / Double(rec.0) * 100000.0 - 0.28051726)
+		badness += deviation(of: rec, last: last)
+		popChange += abs(Double(rec.0-last.0) / Double(rec.0) * 100000.0)
+		crimes += abs((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)
+		crimeCnt += rec.2
+		gunCrimes += abs(rec.3 / Double(rec.0) * 100000.0 - 0.28051726)
 		last = rec
+	}
+	badness = badness/Double(crimeCounts.count)
+	if crimeCnt == 0.0 {
+		badness = Double.infinity
 	}
 	badness += ((popChange/Double(days) - 214.794520548)^^2)
 	badness += ((crimes/Double(days) - 1.020821918)^^2)
@@ -309,6 +315,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 
 	if write {
 		try? NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)
+		print(" Violent crimes committed: \(crimeCnt)")
 	}
 
 	return badness

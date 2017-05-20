@@ -6,9 +6,9 @@
 import Foundation
 import Util
 
-let POP_SIZE = 50 // Size of the population; Number of parameter sets per generation
+let POP_SIZE = 25 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 20 // Number of rounds to do natural selection for
+let ROUNDS = 10 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
@@ -29,7 +29,9 @@ typealias Parameters = (
 	Double,			// BaseCost
 	Int,			// Average edges per agent
 	Double,			// Initial weight of new edges
-	Double			// Weight decay per day
+	Double,			// Weight decay per day
+	Double,			// the maximum (percentual) decrease of the success probability with the extend aka maxDecExt
+	Double			// the (percentual) increase of the success probability when using a gun aka incGun
 )
 
 func mate(mom: Distribution, dad: Distribution) -> Distribution {
@@ -43,7 +45,7 @@ func mate(mom: Distribution, dad: Distribution) -> Distribution {
 	return child
 }
 
-func mate(mom: Double, dad: Double, max: Double = 2) -> Double {
+func mate(mom: Double, dad: Double, max: Double = Double.infinity) -> Double {
 	var ret = 0.0
 	repeat {
 		ret = (rand.next(prob: 0.5) ? mom : dad) + (rand.next(prob: MUTATION_RATE) ? rand.nextNormal(sig: uncertainty): 0.0)
@@ -61,11 +63,13 @@ func mate(mom: Parameters, dad: Parameters) -> Parameters {
 		mate(mom: mom.1, dad: dad.1),
 		mate(mom: mom.2, dad: dad.2),
 		mate(mom: mom.3, dad: dad.3),
-		mate(mom: mom.4, dad: dad.4),
-		mate(mom: mom.5, dad: dad.5),
+		mate(mom: mom.4, dad: dad.4, max: 2.0),
+		mate(mom: mom.5, dad: dad.5, max: 2.0),
 		mate(mom: mom.6, dad: dad.6),
 		mate(mom: mom.7, dad: dad.7, max: 10.0),
-		mate(mom: mom.8, dad: dad.8, max: 1.0)
+		mate(mom: mom.8, dad: dad.8, max: 1.0),
+		mate(mom: mom.9, dad: dad.9, max: 3.0),
+		mate(mom: mom.10, dad: dad.10, max: 3.0)
 	)
 }
 
@@ -156,11 +160,13 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 			rand.nextProb()*2, // base cost
 			rand.next(max: 10), // Average edges per agent
 			rand.nextProb()*10, // Initial weight of edges
-			rand.nextProb() // Edge weight decay rate
+			rand.nextProb(), // Edge weight decay rate
+			rand.nextProb()*3, // maxDecExt
+			rand.nextProb()*3 // incGun
 		)
 
 		// Test it in simulation
-		let val = runSimulation(pars, days: days, population: pop)
+		let val = runSimulation(pars, days: days, population: pop, write: false)
 
 		//if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0) {
 		if val < Double.infinity {
