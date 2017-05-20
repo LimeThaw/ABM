@@ -1,11 +1,9 @@
 import Foundation
 import Util
-import Dispatch
 
 var EDGE_DECAY = 0.001 // TODO: Independent variable?
 var INITIAL_EDGE_WEIGHT = 1.1
 
-let THREAD_COUNT = 1
 // Data source: http://data.worldbank.org/indicator/SP.DYN.CBRT.IN?end=2015&locations=US&start=1960&view=chart
 // Recalculated per person and day
 let BIRTH_RATE = 0.000033973
@@ -177,7 +175,7 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
 @discardableResult
-func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100) -> Double {
+func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100, write: Bool = true) -> Double {
 	// Reset environment variables
 	rand = Random(RAND_SEED)
 	tmpc = Counter(0)
@@ -243,8 +241,6 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	// run the model
 	var crimeCounts: [Record] = []
 	var totalTime = 0
-	let threadGroup = DispatchGroup()
-	let threadQueue = DispatchQueue.global()
 
 	var badness = Double(0.0)
 
@@ -261,28 +257,11 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 		let hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
 
 		let list = graph.nodes.map({ $0.value })
-		let stride = Int(ceil(Double(cnt) / Double(THREAD_COUNT)))
 
-		let sublists = list.chunks(stride)
-		var subresults = [([()->Void], Record)]()
-
-		threadGroup.wait()
-		for sublist in sublists {
-			subresults.append(([], Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)))
-			let i = subresults.count - 1
-			threadGroup.enter()
-			var newRand = rand.duplicate()
-			threadQueue.async {{ (rand: Random) in
-				subresults[i] = updateNodes(sublist, within: graph, generator: &newRand)
-				threadGroup.leave()
-			}(rand)}
-		}
-		threadGroup.wait() // Wai for all threads to finish
-
-		for subresult in subresults {
-			changes += subresult.0
-			record += subresult.1
-		}
+		var newRand = rand.duplicate()
+		let subresult = updateNodes(list, within: graph, generator: &newRand)
+		changes += subresult.0
+		record += subresult.1
 
 		for change in changes {
 			change()
@@ -324,11 +303,13 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100)
 	badness += ((crimes/Double(days) - 1.020821918)^^2)
 	badness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 
-	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+	// print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 
-	try? NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)
+	if write {
+		try? NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)
+	}
 
 	return badness
 }

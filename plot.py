@@ -31,7 +31,7 @@ plt.subplot(121)
 # plot styles
 plt.plot(
 	range(0, length),
-	popCount,
+	map(lambda n: float(n)/100.0, popCount),
 	'g-',
 	label="Population count")
 plt.plot(
