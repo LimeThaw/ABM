@@ -76,7 +76,7 @@ public struct RAHT<Entry: DynamicHashable> {
     }
     
     @discardableResult
-    mutating func remove(staticHash: Int) -> Entry? {
+    public mutating func remove(staticHash: Int) -> Entry? {
         if let entry = data.removeValue(forKey: staticHash) {
             let dhash = entry.dynamicHashValue
             table[dhash] = nil
@@ -86,19 +86,19 @@ public struct RAHT<Entry: DynamicHashable> {
     }
     
     @discardableResult
-    mutating func remove(_ val: Entry) -> Entry? {
+    public mutating func remove(_ val: Entry) -> Entry? {
         return remove(staticHash: val.hashValue)
     }
     
-    func has(staticHash: Int) -> Bool {
+    public func has(staticHash: Int) -> Bool {
         return data[staticHash] != nil
     }
     
-    func get(staticHash: Int) -> Entry? {
+    public func get(staticHash: Int) -> Entry? {
         return data[staticHash]
     }
     
-    mutating func getRandom() -> Entry? {
+    public mutating func getRandom() -> Entry? {
         if count == 0 {
             return nil
         }

@@ -50,13 +50,17 @@ class Agent : Hashable {
 			ownsGun = false
 		}
 	}
-
+/*
 	func updateConnectedness(node: GraphNode<Agent>) {
 		connectedness = 0
 		for edge in node.edges {
 			connectedness += pow(edge.value.weight, 2)
 		}
-	}
+	}*/
+    
+    public static func conVal(from weight: Double) -> Double{
+        return weight^^2
+    }
 
 	func checkAttributes() {
 		emotion.pleasure = clamp(emotion.pleasure, from: attributeBound.0, to: attributeBound.1)
