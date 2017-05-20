@@ -174,6 +174,7 @@ struct CrimeGenerator {
         let pDec = ext*baseDecPVic
         let dDec = ext*baseDecDVic
         if !vicDeath {
+            print("yippie, I survived 🎉🤗")
             vic.emotion += (-pDec, 0, -dDec)
         }
 

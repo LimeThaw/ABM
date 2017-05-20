@@ -10,6 +10,31 @@ let BIRTH_RATE = 0.000033973
 let RAND_SEED = 13579
 
 var graph = Graph<Agent>(seed: rand.next())
+
+extension Graph where T: Agent {
+    func addEdge(from fst: GraphNode<T>, to snd: GraphNode<T>, weight: Double) {
+        add_edge(from: fst, to: snd, weight: weight)
+        let con = Agent.conVal(from: weight)
+        fst.value.connectedness += con
+        snd.value.connectedness += con
+    }
+    
+    func removeEdge(from fst: GraphNode<T>, to snd: GraphNode<T>) {
+        let edge = remove_edge(from: fst, to: snd)! // assume edge is in graph
+        let con = Agent.conVal(from: edge.weight)
+        fst.value.connectedness -= con
+        snd.value.connectedness -= con
+    }
+    
+    func removeNode(node: GraphNode<T>) {
+        if nodes.remove(node) != nil {
+            for edge in node.edges.values {
+                removeEdge(from: node, to: edge.next)
+            }
+        }
+    }
+}
+
 var tmpc = Counter(0)
 
 // Records interesting values for one day
@@ -67,9 +92,6 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 			//print("death")
 			changes.append({
 				graph.removeNode(node: node)
-				for edge in node.edges.values {
-					edge.next.value.updateConnectedness(node: edge.next)
-				}
 			})
 		} else {
 			if agent.emotion.dominance < -5 && canBuyGun(agent){
@@ -112,8 +134,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 				let newWeight = oldWeight == 0 ? INITIAL_EDGE_WEIGHT : weightIncrease
 				changes.append {
                     if graph.find(hash: node.hashValue) != nil && graph.find(hash: peer.hashValue) != nil {
-						graph.addEdge(from: node.hashValue, to: peer.hashValue, weight: newWeight)
-						peer.value.updateConnectedness(node: peer)
+						graph.addEdge(from: node, to: peer, weight: newWeight)
 					}
 				}
 			}
@@ -122,10 +143,9 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 				changes.append {
 					if graph.find(hash: node.hashValue) != nil && node.edges[edge.hashValue] != nil {
 						if weight < 0 {
-							graph.removeEdge(from: node.hashValue, to: edge.hashValue)
+							graph.removeEdge(from: node, to: edge.next)
 						} else {
-							graph.addEdge(from: node.hashValue, to: edge.hashValue, weight: -EDGE_DECAY)
-							edge.next.value.updateConnectedness(node: edge.next)
+							graph.addEdge(from: node, to: edge.next, weight: -EDGE_DECAY)
 						}
 					}
 				}
@@ -164,12 +184,9 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
     let newNode = graph.addNode(withValue: newAgent)
     for _ in 1...3 {
         if let next = graph.getRandomNode() {
-            graph.addEdge(from: newNode.hashValue, to: next.hashValue,
-                          weight: rand.nextNormal(mu: 1.5, sig: 0.5))
-            next.value.updateConnectedness(node: next)
+            graph.addEdge(from: newNode, to: next, weight: rand.nextNormal(mu: 1.5, sig: 0.5))
         }
     }
-    newAgent.updateConnectedness(node: graph.find(hash: newAgent.hashValue)!)
 }
 
 // Runs the simulation with the given parameters for the given number of days and returns the
@@ -226,14 +243,9 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	}
 
 	for _ in 0...pars.6/2*n {
-		let fst = Int(rand.next()%n)
-		let snd = Int(rand.next()%n)
-		graph.addEdge(from: fst, to: snd, weight: rand.nextNormal(mu: 1.0))
-	}
-
-	for i in 0..<n {
-		let node = graph.find(hash: i)
-		node?.value.updateConnectedness(node: node!)
+        let fst = graph.getRandomNode()!
+        let snd = graph.getRandomNode()!
+        graph.addEdge(from: fst, to: snd, weight: rand.nextNormal(mu: 1.0))
 	}
 
 	var changes = [()->Void]()
@@ -303,7 +315,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	badness += ((crimes/Double(days) - 1.020821918)^^2)
 	badness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 
-	// print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 
