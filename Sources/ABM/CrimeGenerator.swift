@@ -145,7 +145,7 @@ struct CrimeGenerator {
 
         let vic: Agent = vicNode.value
         let succProb = prob(e: ext, g1: gun, g2: vic.ownsGun)
-        let success = rand.nextProb() < succProb
+        let success = rand.nextProb() <= succProb
         print("Success probability: \(succProb)")
         let gunAcqUpdate = (gun && stealsGun && rand.nextProb() > prob(e: CG.gunAcqExt, g1: false, g2: false)) ? gunAcqCost : 0
         let reach = Int(Double(maxReach)*ext/CG.maxExt)
