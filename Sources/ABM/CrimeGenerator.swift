@@ -25,11 +25,11 @@ struct CrimeGenerator {
 
     static var baseGain: Double = 0.1
     static var baseCost: Double = 0.15
-    static private let costGun: Double = 0.1
+    static private let costGun: Double = 2
     static private let baseProb: Double = 0.54 // from FBI statistics: success rate of violent crimes
     static private let maxExt: Double = 10
-    static private let maxDecExt: Double = 0.7 // the maximum (percentual) decrease of the success probability with the extend
-    static private let incGun: Double = 0.3 // the (percentual) increase of the success probability when using a gun
+    static private let maxDecExt: Double = 0.4 // the maximum (percentual) decrease of the success probability with the extend
+    static private let incGun: Double = 0.1 // the (percentual) increase of the success probability when using a gun
     static private let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
     static private let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
     static private let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
@@ -126,6 +126,8 @@ struct CrimeGenerator {
      */
     @discardableResult
     func executeCrime(on vicNode: GraphNode<Agent>, with ext: Double, gun: Bool) -> Bool {
+        print("==========")
+        print("New crime with extend: \(ext) and using gun: \(gun)")
 
         // parameters
 
@@ -142,7 +144,9 @@ struct CrimeGenerator {
         // precomputations
 
         let vic: Agent = vicNode.value
-        let success = rand.nextProb() > prob(e: ext, g1: gun, g2: vic.ownsGun)
+        let succProb = prob(e: ext, g1: gun, g2: vic.ownsGun)
+        let success = rand.nextProb() < succProb
+        print("Success probability: \(succProb)")
         let gunAcqUpdate = (gun && stealsGun && rand.nextProb() > prob(e: CG.gunAcqExt, g1: false, g2: false)) ? gunAcqCost : 0
         let reach = Int(Double(maxReach)*ext/CG.maxExt)
 
@@ -164,7 +168,9 @@ struct CrimeGenerator {
         // update for victim
 
         let feltExt = success ? ext : ext / decExtFail
-        let vicDeath = rand.nextProb() > feltExt/CG.maxExt // whether the victim dies or not
+        let deathProb: Double = feltExt/CG.maxExt
+        let vicDeath = rand.nextProb() < feltExt/CG.maxExt // whether the victim dies or not
+        print("Death probability: \(deathProb)")
         let pDec = ext*baseDecPVic
         let dDec = ext*baseDecDVic
         if !vicDeath {

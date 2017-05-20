@@ -95,7 +95,7 @@ public class Graph<T: Hashable> {
 	// Directed edges to it are not deleted, unless there is an undirected edge in the opposite
 	// direction.
 	public func removeNode(node: GraphNode<T>) {
-        assert(nodes.has(staticHash: node.hashValue), "Should not remove node that is not contained in graph")
+        //assert(nodes.has(staticHash: node.hashValue), "Should not remove node that is not contained in graph")
 		for next in node.edges.values {
 			if next.type == .UNDIRECTED {
 				removeEdge(from: next.next.hashValue, to:node.hashValue)
