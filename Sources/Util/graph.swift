@@ -1,11 +1,12 @@
 // Generic node class. Simply stores a value of a chosen type.
-public class GraphNode<T: Hashable>: Hashable {
+public class GraphNode<T: Hashable>: DynamicHashable {
 	public private(set) var value: T // The value assigned to a specific node
     public private(set) var edges: [Int:Edge<T>] // The connections to other nodes with a weight
 	// Note: For undirected edges the other node should have an edge to this one with
 	// 	     the same assigned weight
 
-	public var hashValue: Int
+	public let hashValue: Int
+    public var dynamicHashValue: Int = 0
 
 	// Constructor
 	public init(value: T) {
@@ -72,12 +73,11 @@ public struct Edge<T: Hashable>: Hashable {
 
 // Generic graph class. Contains a list of nodes and a list of edges connecting the nodes.
 public class Graph<T: Hashable> {
-    public private(set) var nodes: [Int:GraphNode<T>] = [:]
-	var indices = AVLTree<Int>()
-	var indexList = [Int]()
+    public private(set) var nodes: RAHT<GraphNode<T>>
 
-
-	public init() {}
+    public init(seed: Int) {
+        nodes = RAHT<GraphNode<T>>(seed: seed)
+    }
 
 	// Adds a new node with the given value to the graph
 	public func addNode(withValue newValue: T) -> GraphNode<T> {
@@ -88,24 +88,20 @@ public class Graph<T: Hashable> {
 
 	// Inserts a node into the graph
 	public func addNode(_ newNode: GraphNode<T>) {
-        nodes[newNode.hashValue] = newNode
-		indices = indices.insert(newNode.hashValue)
-		indexList = indices.toList()
+        nodes.insert(newNode)
 	}
 
 	// Removes a node from the graph, and takes care of all undirected edges to/from it.
 	// Directed edges to it are not deleted, unless there is an undirected edge in the opposite
 	// direction.
 	public func removeNode(node: GraphNode<T>) {
-        assert(nodes[node.hashValue] != nil, "Should not remove node that is not contained in graph")
+        assert(nodes.has(staticHash: node.hashValue), "Should not remove node that is not contained in graph")
 		for next in node.edges.values {
 			if next.type == .UNDIRECTED {
 				removeEdge(from: next.next.hashValue, to:node.hashValue)
 			}
 		}
-		nodes[node.hashValue] = nil
-		indices = indices.delete(node.hashValue)
-		indexList = indices.toList()
+		nodes.remove(node)
 	}
 
 	public func removeNode(withValue value: T) {
@@ -119,14 +115,14 @@ public class Graph<T: Hashable> {
 
 	// Find with the node's hash value
 	public func find(hash: Int) -> GraphNode<T>? {
-		return nodes[hash]
+		return nodes.get(staticHash: hash)
 	}
 
 	// Adds an edge with the specified weights between nodes with the specified keys.
 	// Unless requested otherwise it will be an undirected/bidirectional edge
 	public func addEdge(from first: Int, to second: Int, weight: Double, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
-		let fst = nodes[first]
-		let snd = nodes[second]
+		let fst = find(hash: first)
+		let snd = find(hash: second)
 		if fst == nil || snd == nil {
 			print("!Warning: Tried to insert edge between non-existing nodes")
 			return
@@ -139,8 +135,8 @@ public class Graph<T: Hashable> {
 	}
 
 	public func removeEdge(from first: Int, to second: Int, _ kind: EdgeKind = EdgeKind.UNDIRECTED) {
-		let fst = nodes[first]
-		let snd = nodes[second]
+		let fst = find(hash: first)
+		let snd = find(hash: second)
 		if fst == nil || snd == nil {
 			print("!Warning: Tried to remove edge between non-existing nodes")
 			return
@@ -151,9 +147,8 @@ public class Graph<T: Hashable> {
 			}
 		}
 	}
-
-    public func getNode(index i: Int) -> GraphNode<T>? {
-        assert(i >= 0 && i < nodes.count)
-		return nodes[indexList[i%indexList.count]]
+    
+    public func getRandomNode() -> GraphNode<T>? {
+        return nodes.getRandom()
     }
 }
