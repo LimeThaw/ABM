@@ -15,6 +15,8 @@ var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 let DAYS = 365 // Number of days to simulate
 let POP = 10000 // Number of agents to simulate
 
+let RAND_POP_SIZE = 100
+
 // The parameters describing rand.nextProb() normal distribution
 //                        mu,    sigma
 typealias Distribution = (Double, Double)
@@ -53,8 +55,12 @@ func mate(mom: Double, dad: Double, max: Double = Double.infinity) -> Double {
 	return ret
 }
 
-func mate(mom: Int, dad: Int) -> Int {
-	return (rand.next(prob: 0.5) ? mom : dad) + (rand.next(prob: MUTATION_RATE) ? Int(rand.nextNormal(sig: uncertainty)): 0)
+func mate(mom: Int, dad: Int, max: Int = Int.max) -> Int {
+	var ret = 0
+	repeat {
+	 	ret = (rand.next(prob: 0.5) ? mom : dad) + (rand.next(prob: MUTATION_RATE) ? Int(rand.nextNormal(sig: uncertainty)): 0)
+	} while ret < 0 || ret > max
+	return ret
 }
 
 func mate(mom: Parameters, dad: Parameters) -> Parameters {
@@ -177,4 +183,45 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 
 	//try? NSString(string: String(describing: best)).write(toFile: "population_rand.txt", atomically: false, encoding: 2)
 	return best
+}
+
+func randomParameters() {
+
+	var best = [(Double, Parameters)]()
+
+	for _ in 1...RAND_POP_SIZE {
+
+		// Generate random parameter set
+		let lower = attributeBound.0
+		let range = attributeBound.1 - attributeBound.0
+		let pars = Parameters(
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
+			rand.nextProb()*2, // base gain
+			rand.nextProb()*2, // base cost
+			rand.next(max: 10), // Average edges per agent
+			rand.nextProb()*10, // Initial weight of edges
+			rand.nextProb(), // Edge weight decay rate
+			rand.nextProb()*3, // maxDecExt
+			rand.nextProb()*3 // incGun
+		)
+
+		// Test it in simulation
+		let val = runSimulation(pars, days: DAYS, population: POP, write: false)
+
+		var out = ""
+		if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0){
+			best.append((val, pars))
+			out = "👑"
+		} else {
+			out = "😐"
+		}
+		print(out, terminator: " ")
+		fflush(stdout)
+
+	}
+
+	try? NSString(string: String(describing: best)).write(toFile: "population_rand.txt", atomically: false, encoding: 2)
 }

@@ -109,9 +109,6 @@ plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 10])
 
-print(gunCrimes)
-print(firearmCrimes)
-
 fail = 0.0
 for i in range(0, length):
 	fail += (cmpData["violentCrimes"] - violentCrimes[i])**2
