@@ -6,13 +6,13 @@
 import Foundation
 import Util
 
-let POP_SIZE = 25 // Size of the population; Number of parameter sets per generation
+let POP_SIZE = 50 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 10 // Number of rounds to do natural selection for
+let ROUNDS = 30 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
-let DAYS = 30 // Number of days to simulate
+let DAYS = 365 // Number of days to simulate
 let POP = 10000 // Number of agents to simulate
 
 // The parameters describing rand.nextProb() normal distribution
