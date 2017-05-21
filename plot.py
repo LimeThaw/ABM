@@ -12,7 +12,7 @@ crimes = []
 gunCrimes = []
 avgConnectedness = []
 gunPossession = []
-values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
+values = map(lambda x: x.split(", "), values[2:-2].split("), ("))[730:]
 for val in values:
 	popCount.append(val[0])
 	happiness.append(val[1])
@@ -20,6 +20,20 @@ for val in values:
 	gunCrimes.append(val[3])
 	avgConnectedness.append(val[4])
 	gunPossession.append(val[5])
+
+# Let's average!
+tmpCrimes = crimes
+tmpGunCrimes = gunCrimes
+crimes = []
+gunCrimes = []
+for i in range(0, len(tmpCrimes)/30):
+	avg1 = 0.0
+	avg2 = 0.0
+	for j in range(0, 30):
+		avg1 += float(tmpCrimes[i*30+j])
+		avg2 += float(tmpGunCrimes[i*30+j])
+	crimes.append(avg1/30.0*10000)
+	gunCrimes.append(avg2/30.0*10000)
 
 length = len(popCount)
 
@@ -31,26 +45,26 @@ plt.subplot(121)
 # plot styles
 plt.plot(
 	range(0, length),
-	map(lambda n: float(n)/100.0, popCount),
+	map(lambda n: float(n)/1000.0, popCount),
 	'g-',
-	label="Population count")
+	label="Population count in thousands")
 plt.plot(
 	range(0, length),
 	happiness,
 	'y-',
 	label="Average happiness level")
-plt.plot(
+'''plt.plot(
 	range(0, length),
 	avgConnectedness,
 	'y:',
-	label="Average Connectedness value")
+	label="Average Connectedness value")'''
 plt.plot(
-	range(0, length),
+	map(lambda n: n*30, range(0, length/30)),
 	crimes,
 	'b-',
-	label="Crime rate per 100")
+	label="Crime rate per million")
 plt.plot(
-	range(0, length),
+	map(lambda n: n*30, range(0, length/30)),
 	gunCrimes,
 	'b:',
 	label="Crime rate involving firearms per 100")
@@ -61,7 +75,7 @@ plt.plot(
 	label="Gun possession rate per 100")
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, length, 0, 1200])
+plt.axis([0, length, 0, 120])
 
 populationChange = [0] + map(lambda p, pp: (float(p)-float(pp))/float(p)*100000, popCount[1:], popCount[:-1])
 violentCrimes = map(lambda c: float(c)*100, crimes)
@@ -88,7 +102,7 @@ plt.plot(
 	label="Violent crime rate in the US"
 )
 plt.plot(
-	range(0, length),
+	map(lambda n: n*30, range(0, length/30)),
 	violentCrimes,
 	'b:',
 	label="Violent crime rate in our model"
@@ -100,7 +114,7 @@ plt.plot(
 	label="Firearm crime rate in the US"
 )
 plt.plot(
-	range(0, length),
+	map(lambda n: n*30, range(0, length/30)),
 	firearmCrimes,
 	'c:',
 	label="Firearm crime rate in our model"
@@ -108,15 +122,5 @@ plt.plot(
 plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 100])
-
-fail = 0.0
-for i in range(0, length):
-	fail += (cmpData["violentCrimes"] - violentCrimes[i])**2
-	fail += (cmpData["firearmCrimes"] - firearmCrimes[i])**2
-
-for i in range(1, length): # Start from one because on day 0 change is always 0
-	fail += (cmpData["populationChange"] - populationChange[i])**2
-
-print("Square sum error: " + str(fail))
 
 plt.show()
