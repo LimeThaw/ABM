@@ -28,7 +28,7 @@ public struct RAHT<Entry: DynamicHashable> {
     var table: [Entry?] = []
     var data: [Int:Entry] = [:]
     public var count: Int { return data.count }
-    var rand: Random
+    public private(set) var rand: Random
     
     public init(seed: Int? = nil) {
         if let s = seed {

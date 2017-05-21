@@ -6,7 +6,7 @@ import Dispatch
 public struct Random{
 
     /// The current raw value of this random number generator (the value of the last call to next() )
-	private(set) var current: Int
+	public private(set) var current: Int
 
     public init(_ seed: Int){
         current = seed

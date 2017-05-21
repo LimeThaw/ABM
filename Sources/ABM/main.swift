@@ -1,4 +1,5 @@
 import Util
+import Foundation
 
 //findParameters()
 /*
@@ -19,10 +20,22 @@ let pars = Parameters(
 	rand.nextProb()*3 // incGun
 )
 */
+let pars = Parameters(
+    moral: (-4.2622542445819702, 3.4810815090480847),
+    p: (1.3556664616187657, 8.7657570594990517),
+    a: (8.2471501029646817, 1.7875767246530458),
+    d: (4.5236066220039746, 0.11783115717011376),
+    baseGain: 0.34535768009132711,
+    baseCost: 0.95861243728283441,
+    edges: 9,
+    edgeWeight: 5.8615959018665356,
+    weightDec: 0.22607543810101494,
+    maxDecExt: 1.393571496553806,
+    incGun: 1.4445897001508325
+)
 
-let pars = Parameters((-4.2622542445819702, 3.4810815090480847), (1.3556664616187657, 8.7657570594990517), (8.2471501029646817, 1.7875767246530458), (4.5236066220039746, 0.11783115717011376), 0.34535768009132711, 0.95861243728283441, 0, 5.8615959018665356, 0.22607543810101494, 1.393571496553806, 1.4445897001508325)
-
-runSimulation(pars, days: 30, population: 10000)
+//try! runSimulation(pars, days: 30, population: 10_000, g: loadGraph(from: URL(fileURLWithPath: "graph.txt")))
+runSimulation(pars, days: 30, population: 10_000)
 /*
  check for pleasure change
 for i in Int(attributeBound.0)...Int(attributeBound.1) {

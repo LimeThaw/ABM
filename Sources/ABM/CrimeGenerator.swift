@@ -33,7 +33,7 @@ struct CrimeGenerator {
     static private let maxIncA: Double = 0.1 // the maximum (percentual) increase of the success probability with the arousal
     static private let maxIncD: Double = 0.1 // the maximum (percentual) increase of the success probability with the dominance
     static private let decVicGun: Double = 0.2 // the (percentual) decrease of the success probability when the victim has a gun
-    static private let gunAcqExt: Double = CG.maxExt/4.0 // the extend of a crime to get a gun
+    static private let gunAcqExt: Double = CG.maxExt/10.0 // the extend of a crime to get a gun
     static private let maxPDecMor: Double = 3 // the maximum decrease of the pleasure update through the moral
 
     // attributes to help calculations
@@ -174,7 +174,7 @@ struct CrimeGenerator {
         let pDec = ext*baseDecPVic
         let dDec = ext*baseDecDVic
         if !vicDeath {
-            print("yippie, I survived 🎉🤗")
+            //print("yippie, I survived 🎉🤗")
             vic.emotion += (-pDec, 0, -dDec)
         }
 
