@@ -49,7 +49,7 @@ class Agent : Hashable {
 			connectedness += pow(edge.value.weight, 2)
 		}
 	}*/
-    
+
     public static func conVal(from weight: Double) -> Double{
         return weight^^2
     }
@@ -107,7 +107,7 @@ func deathProb(age: Int) -> Double {
 	// 2*sig^2
 	let twoS2 = 200.0
 
-	var exponent = age-79
+	var exponent = Double(age)/365.0-79.0
 	exponent *= exponent
 	return coeff * exp(-Double(exponent)/twoS2)
 }

@@ -12,7 +12,7 @@ crimes = []
 gunCrimes = []
 avgConnectedness = []
 gunPossession = []
-values = map(lambda x: x.split(", "), values[2:-2].split("), ("))[730:]
+values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
 for val in values:
 	popCount.append(val[0])
 	happiness.append(val[1])
@@ -39,7 +39,7 @@ length = len(popCount)
 
 cmpData = json.loads(open("data.json").read())
 
-plt.subplot(121)
+plt.subplot(211)
 
 # See https://matplotlib.org/api/pyplot_api.html?highlight=plot#matplotlib.pyplot.plot for
 # plot styles
@@ -90,7 +90,7 @@ for i in range(0, len(tmpCrimes)/30):
 		avg += float(tmpPop[i*30+j])
 	populationChange.append(avg/30.0)
 
-plt.subplot(122)
+plt.subplot(212)
 
 plt.plot(
 	[0, length-1],
@@ -130,6 +130,6 @@ plt.plot(
 )
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, length, 0, 10])
+plt.axis([0, length, -1, 5])
 
 plt.show()

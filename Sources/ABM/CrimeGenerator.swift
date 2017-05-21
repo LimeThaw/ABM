@@ -169,7 +169,7 @@ struct CrimeGenerator {
 
         let feltExt = success ? ext : ext / decExtFail
         //let deathProb: Double = feltExt/CG.maxExt
-        let vicDeath = rand.nextProb() < feltExt/CG.maxExt // whether the victim dies or not
+        let vicDeath = rand.nextProb() < (feltExt/CG.maxExt)^^2 // whether the victim dies or not
         //print("Death probability: \(deathProb)")
         let pDec = ext*baseDecPVic
         let dDec = ext*baseDecDVic

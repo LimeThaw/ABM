@@ -70,6 +70,7 @@ func storeGraph(to file: URL) {
     var header = ""
     header += "\(rand.current)\n"
     header += "\(graph.nodes.rand.current)\n"
+	header += "\(counter.cur)\n"
     var agentContent = ""
     var edgeContent = ""
     for node in graph.nodes {
@@ -84,7 +85,7 @@ func storeGraph(to file: URL) {
         agentContent += "\(agent.emotion.dominance)\n"
         agentContent += "\(agent.moral)\n"
         agentContent += "\(agent.ownsGun)\n"
-        
+
         for edge in node.value.edges {
             if !edge.value.next.value.visited {
                 edgeContent += "Edge:\n"
@@ -93,10 +94,10 @@ func storeGraph(to file: URL) {
                 edgeContent += "\(edge.value.weight)\n"
             }
         }
-        
+
         node.value.value.visited = true
     }
-    
+
     let content = header + agentContent + edgeContent
     try! content.write(to: file, atomically: false, encoding: .utf8)
 }
@@ -104,17 +105,19 @@ func storeGraph(to file: URL) {
 func loadGraph(from file: URL, withSeed s: Bool = true) throws -> Graph<Agent> {
     let content = try String(contentsOf: file, encoding: .utf8)
     let array = content.characters.split(separator: "\n").map(String.init)
-    
+
     var i = 0
-    
+
     let seed1 = Int(array[i])!
     let seed2 = Int(array[i+1])!
+	let count = Int(array[i+1])!
     if s {
         rand = Random(seed1)
+		counter = Counter(count)
     }
     let g = s ? Graph<Agent>(seed: seed2) : Graph<Agent>(seed: rand.next())
-    i += 2
-    
+    i += 3
+
     while i < array.count {
         if array[i] == "Agent:" {
             let a = Agent(Int(array[i+1])!, age: Int(array[i+2])!)
@@ -137,7 +140,7 @@ func loadGraph(from file: URL, withSeed s: Bool = true) throws -> Graph<Agent> {
             i += 1
         }
     }
-    print("done")
+    print("Done loading graph")
     return g
 }
 
@@ -191,9 +194,9 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s
 			let aFac = (agent.emotion.arousal - attributeBound.0) / (attributeBound.1 - attributeBound.0)
-			while rand.next(prob: 0.01*aFac) {
+			while rand.next(prob: 0.1*aFac) {
 				// Who do you wanna invite?
-				if rand.next() && node.edges.count > 0 {
+				if rand.next(prob: 0.8) && node.edges.count > 0 {
 					// Your friends?
 					let ind = rand.next(max: node.edges.count)
 					peers.append(node.edges[node.edges.index(node.edges.startIndex, offsetBy: ind)].value.next)
@@ -269,9 +272,6 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
 // deviation from empirical data
 @discardableResult
 func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100, write: Bool = true, g: Graph<Agent>? = nil) -> Double {
-	// Reset environment variables
-	rand = Random(RAND_SEED)
-	tmpc = Counter(0)
 
 	// Apply parameters for crime generator
 	CrimeGenerator.baseGain = pars.4
@@ -284,13 +284,17 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	EDGE_DECAY = pars.8
 
     if g == nil {
+		// Reset environment variables
+		rand = Random(RAND_SEED)
+		tmpc = Counter(0)
+
         // Insert nodes from input
         graph = Graph<Agent>(seed: RAND_SEED)
         /*var loadedNodes = [String:Int]()
          for i in 0..<(inList.count/2) {
          let one = inList[2*i]
          let two = inList[2*i+1]
-         
+
          var oneId = loadedNodes[one]
          if oneId == nil {
          let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
@@ -298,7 +302,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
          oneId = graph.addNode(withValue: newAgent).hashValue
          loadedNodes[one] = oneId
          }
-         
+
          var twoId = loadedNodes[two]
          if twoId == nil {
          let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
@@ -306,21 +310,21 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
          twoId = graph.addNode(withValue: newAgent).hashValue
          loadedNodes[two] = twoId
          }
-         
+
          graph.addEdge(from: oneId!, to: twoId!, weight: rand.nextNormal(mu: 1.0))
          if graph.nodes.count >= n {
          break
          }
          }*/
         //print("\(graph.nodes.count) Agents are entering the matrix...")
-        
+
         // generate social network
         for _ in 0..<n {
             let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
             newAgent.randomize(pars)
             _ = graph.addNode(withValue: newAgent)
         }
-        
+
         for _ in 0...pars.6/2*n {
             let fst = graph.getRandomNode()!
             let snd = graph.getRandomNode()!
@@ -380,6 +384,8 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		record.5 = record.5 / Double(cnt) * 100.0
 		crimeCounts += [record]
 	    //print(record)
+		print(".", terminator:"")
+		fflush(stdout)
 	    totalTime += toc()
 	}
 

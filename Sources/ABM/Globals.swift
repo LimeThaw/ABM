@@ -24,5 +24,4 @@ let CHECK_HYPOTHESIS_1 = false
 let HYPOTHESIS_1_PENALTY = 2.0
 let CHECK_HYPOTHESIS_2 = false
 
-
 // statistics
