@@ -1,6 +1,8 @@
 import Util
 import Foundation
 
+print("first")
+
 //findParameters()
 /*
 rand = Random()

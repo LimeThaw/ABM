@@ -11,8 +11,6 @@ let RAND_SEED = 13579
 
 var graph = Graph<Agent>(seed: rand.current)
 
-print("first")
-
 extension Graph where T: Agent {
     func addEdge(from fst: GraphNode<T>, to snd: GraphNode<T>, weight: Double) {
         assert(nodes.has(staticHash: fst.hashValue) && nodes.has(staticHash: snd.hashValue))
