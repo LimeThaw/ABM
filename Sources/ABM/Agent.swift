@@ -28,14 +28,6 @@ class Agent : Hashable {
 		self.age = age
 	}
 
-	convenience init(_ id: Int) {
-		self.init(id, age: 0)
-	}
-
-	convenience init() {
-		self.init(counter.next() ?? -1)
-	}
-
 	// Randomizes agent attributes to make them more heterogenous
 	// Does not touch the age, you have to do that yourself.
 	public func randomize(_ pars: Parameters) {

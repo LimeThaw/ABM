@@ -23,17 +23,17 @@ typealias Distribution = (Double, Double)
 
 // A set of independent parameters for our simulation
 typealias Parameters = (
-	Distribution,	// Moral
-	Distribution,	// Pleasure
-	Distribution,	// Arousal
-	Distribution,	// Dominance
-	Double,			// BaseGain
-	Double,			// BaseCost
-	Int,			// Average edges per agent
-	Double,			// Initial weight of new edges
-	Double,			// Weight decay per day
-	Double,			// the maximum (percentual) decrease of the success probability with the extend aka maxDecExt
-	Double			// the (percentual) increase of the success probability when using a gun aka incGun
+    moral: Distribution,	// Moral
+    p: Distribution,	// Pleasure
+    a: Distribution,	// Arousal
+    d: Distribution,	// Dominance
+    baseGain: Double,			// BaseGain
+    baseCost: Double,			// BaseCost
+    edges: Int,			// Average edges per agent
+    edgeWeight: Double,			// Initial weight of new edges
+    weightDec: Double,			// Weight decay per day
+    maxDecExt: Double,			// the maximum (percentual) decrease of the success probability with the extend aka maxDecExt
+    incGun: Double			// the (percentual) increase of the success probability when using a gun aka incGun
 )
 
 func mate(mom: Distribution, dad: Distribution) -> Distribution {

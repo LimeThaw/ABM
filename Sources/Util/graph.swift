@@ -59,7 +59,7 @@ public struct Edge<T: Hashable>: Hashable {
     public var weight: Double // The weight of the edge
     public let type: EdgeKind
     
-    public var hashValue: Int { return next.value.hashValue }
+    public var hashValue: Int { return next.hashValue }
     
     init(to other: GraphNode<T>, weight: Double, kind: EdgeKind = .UNDIRECTED) {
         next = other
@@ -81,6 +81,7 @@ public class Graph<T: Hashable> {
     }
     
     // Adds a new node with the given value to the graph
+    @discardableResult
     public func addNode(withValue newValue: T) -> GraphNode<T> {
         let ret = GraphNode<T>(value: newValue)
         addNode(ret)
