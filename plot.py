@@ -48,7 +48,7 @@ plt.plot(
 	map(lambda n: float(n)/1000.0, popCount),
 	'g-',
 	label="Population count in thousands")
-'''plt.plot(
+plt.plot(
 	range(0, length),
 	happiness,
 	'y-',
@@ -57,7 +57,7 @@ plt.plot(
 	range(0, length),
 	avgConnectedness,
 	'y:',
-	label="Average Connectedness value")'''
+	label="Average Connectedness value")
 plt.plot(
 	map(lambda n: n*30, range(0, length/30)),
 	crimes,

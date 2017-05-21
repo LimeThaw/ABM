@@ -384,8 +384,8 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		record.5 = record.5 / Double(cnt) * 100.0
 		crimeCounts += [record]
 	    //print(record)
-		print(".", terminator:"")
-		fflush(stdout)
+		/*print(".", terminator:"")
+		fflush(stdout)*/
 	    totalTime += toc()
 	}
 
@@ -405,7 +405,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		badness = Double.infinity
 	}
 	var avgBadness = 0.0
-	avgBadness += ((popChange/Double(days) - 214.794520548)^^2)
+	avgBadness += ((popChange/Double(days) - 2.14794520548)^^2)
 	avgBadness += ((crimes/Double(days) - 1.020821918)^^2)
 	avgBadness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 	badness += (avgBadness^^5)
