@@ -48,12 +48,12 @@ plt.plot(
 	map(lambda n: float(n)/1000.0, popCount),
 	'g-',
 	label="Population count in thousands")
-plt.plot(
+'''plt.plot(
 	range(0, length),
 	happiness,
 	'y-',
 	label="Average happiness level")
-'''plt.plot(
+plt.plot(
 	range(0, length),
 	avgConnectedness,
 	'y:',
@@ -68,36 +68,45 @@ plt.plot(
 	gunCrimes,
 	'b:',
 	label="Crime rate involving firearms per 100")
-plt.plot(
+'''plt.plot(
 	range(0, length),
 	gunPossession,
 	'c-',
-	label="Gun possession rate per 100")
+	label="Gun possession rate per 100")'''
 plt.xlabel("Day")
 plt.legend()
 plt.axis([0, length, 0, 120])
 
-populationChange = [0] + map(lambda p, pp: (float(p)-float(pp))/float(p)*100000, popCount[1:], popCount[:-1])
-violentCrimes = map(lambda c: float(c)*100, crimes)
-firearmCrimes = map(lambda c: float(c)*100, gunCrimes)
+populationChange = [0] + map(lambda p, pp: (float(p)-float(pp))/float(pp)*100000, popCount[1:], popCount[:-1])
+violentCrimes = map(lambda c: float(c)/10, crimes)
+firearmCrimes = map(lambda c: float(c)/10, gunCrimes)
+
+# Let's average!
+tmpPop = populationChange
+populationChange = []
+for i in range(0, len(tmpCrimes)/30):
+	avg = 0.0
+	for j in range(0, 30):
+		avg += float(tmpPop[i*30+j])
+	populationChange.append(avg/30.0)
 
 plt.subplot(122)
 
 plt.plot(
 	[0, length-1],
-	[cmpData["populationChange"]/100]*2,
+	[cmpData["populationChange"]*100000]*2,
 	'g-',
 	label="Population change rate in the US"
 )
 plt.plot(
-	range(0, length),
-	map(lambda n: n/100, populationChange),
+	map(lambda n: n*30, range(0, length/30)),
+	populationChange,
 	'g:',
 	label="Population change in our model"
 )
 plt.plot(
 	[0, length-1],
-	[cmpData["violentCrimes"]/10]*2,
+	[cmpData["violentCrimes"]]*2,
 	'b-',
 	label="Violent crime rate in the US"
 )
@@ -109,7 +118,7 @@ plt.plot(
 )
 plt.plot(
 	[0, length-1],
-	[cmpData["firearmCrimes"]/10]*2,
+	[cmpData["firearmCrimes"]]*2,
 	'c-',
 	label="Firearm crime rate in the US"
 )
@@ -121,6 +130,6 @@ plt.plot(
 )
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, length, 0, 100])
+plt.axis([0, length, 0, 10])
 
 plt.show()
