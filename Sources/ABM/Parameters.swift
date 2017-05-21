@@ -15,7 +15,7 @@ var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 let DAYS = 365 // Number of days to simulate
 let POP = 10000 // Number of agents to simulate
 
-let RAND_POP_SIZE = 100
+let RAND_POP_SIZE = 5000
 
 // The parameters describing rand.nextProb() normal distribution
 //                        mu,    sigma
@@ -215,6 +215,7 @@ func randomParameters() {
 		if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0){
 			best.append((val, pars))
 			out = "👑"
+			print("\n\(val): \(pars)")
 		} else {
 			out = "😐"
 		}

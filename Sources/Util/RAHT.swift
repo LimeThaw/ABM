@@ -12,13 +12,13 @@ public protocol DynamicHashable: class, Hashable {
 
 /**
  RAHT stands for Random Access Hash Table, whereas random access is understood here, that this datastructure can output a random entry efficiently.
- 
+
  RAHT requires its entries to inherit from the protocol DynamicHashable. The dynamicHashValue should be reserved to operations of RAHT and should not be accessed anywhere else.
  Every entry is stored inside the data dictionary with its hashValue as key and the table array. The dynamicHashValue indicates the position inside the table and is therefore set, whenever the entry changes its place inside the table or gets added to the table.
  The density is defined as the number of elements in the collection (count) and the size of the table. An empty table has a density of 1.
- 
+
  When inserting an element, a random (unoccupied) place in the table is searched and the element is inserted there. If the density is above 0.7, the element is appended to the end of the table. Obviously the element is also added to data.
- 
+
  When deleting an element, the according element is searched in data and removed from there. The dynamic hash value of the element then indicates where to find it in table and is removed from there as well. Afterwards a shrink operation is executed that works as follows:
  When the density is below 0.3 and the uppermost entry of table is occupied, the entry is moved to a random other place in the table and the uppermost entry is removed. Afterwards the uppermost entry gets removed, until it is occupied, or the density reaches 0.5.
  The shrink operation assures, that the density is never below 0.3 and therefore random accesses are fast enough.
@@ -29,7 +29,7 @@ public struct RAHT<Entry: DynamicHashable> {
     var data: [Int:Entry] = [:]
     public var count: Int { return data.count }
     var rand: Random
-    
+
     public init(seed: Int? = nil) {
         if let s = seed {
             rand = Random(s)
@@ -37,9 +37,9 @@ public struct RAHT<Entry: DynamicHashable> {
             rand = Random()
         }
     }
-    
+
     private var density: Float { return table.count > 0 ? Float(count)/Float(table.count) : 1}
-    
+
     private mutating func randomEntry(_ condition: (Entry?) -> Bool = {$0 != nil}) -> Int {
         var hash = 0
         repeat  {
@@ -48,7 +48,7 @@ public struct RAHT<Entry: DynamicHashable> {
         return hash
     }
 
-    
+
     public mutating func insert(_ val: Entry) {
         if data[val.hashValue] == nil {
             data[val.hashValue] = val
@@ -62,7 +62,7 @@ public struct RAHT<Entry: DynamicHashable> {
             }
         }
     }
-    
+
     private mutating func shrink() {
         if density < 0.3 && table.last! != nil{
             let last = table.removeLast()!
@@ -74,7 +74,7 @@ public struct RAHT<Entry: DynamicHashable> {
             table.removeLast()
         }
     }
-    
+
     @discardableResult
     public mutating func remove(staticHash: Int) -> Entry? {
         if let entry = data.removeValue(forKey: staticHash) {
@@ -84,20 +84,20 @@ public struct RAHT<Entry: DynamicHashable> {
         }
         return nil
     }
-    
+
     @discardableResult
     public mutating func remove(_ val: Entry) -> Entry? {
         return remove(staticHash: val.hashValue)
     }
-    
+
     public func has(staticHash: Int) -> Bool {
         return data[staticHash] != nil
     }
-    
+
     public func get(staticHash: Int) -> Entry? {
         return data[staticHash]
     }
-    
+
     public mutating func getRandom() -> Entry? {
         if count == 0 {
             return nil
@@ -110,7 +110,7 @@ extension RAHT: Sequence {
     public func makeIterator() -> DictionaryIterator<Int, Entry> {
         return data.makeIterator()
     }
-    
+
     public var values: LazyMapCollection<[Int:Entry], Entry> {
         return data.values
     }

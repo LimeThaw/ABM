@@ -18,14 +18,14 @@ extension Graph where T: Agent {
         fst.value.connectedness += con
         snd.value.connectedness += con
     }
-    
+
     func removeEdge(from fst: GraphNode<T>, to snd: GraphNode<T>) {
         let edge = remove_edge(from: fst, to: snd)! // assume edge is in graph
         let con = Agent.conVal(from: edge.weight)
         fst.value.connectedness -= con
         snd.value.connectedness -= con
     }
-    
+
     func removeNode(node: GraphNode<T>) {
         if nodes.remove(node) != nil {
             for edge in node.edges.values {
@@ -321,9 +321,9 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	avgBadness += ((popChange/Double(days) - 214.794520548)^^2)
 	avgBadness += ((crimes/Double(days) - 1.020821918)^^2)
 	avgBadness += ((gunCrimes/Double(days) - 0.28051726)^^2)
-	badness += avgBadness^2
+	badness += (avgBadness^^2)
 
-	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 
