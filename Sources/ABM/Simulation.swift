@@ -321,9 +321,9 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	avgBadness += ((popChange/Double(days) - 214.794520548)^^2)
 	avgBadness += ((crimes/Double(days) - 1.020821918)^^2)
 	avgBadness += ((gunCrimes/Double(days) - 0.28051726)^^2)
-	badness += (avgBadness^^2)
+	badness += (avgBadness^^5)
 
-	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 

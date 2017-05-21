@@ -61,11 +61,11 @@ plt.plot(
 	label="Gun possession rate per 100")
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, length, 0, 120])
+plt.axis([0, length, 0, 1200])
 
 populationChange = [0] + map(lambda p, pp: (float(p)-float(pp))/float(p)*100000, popCount[1:], popCount[:-1])
-violentCrimes = map(lambda c: float(c)*1000, crimes)
-firearmCrimes = map(lambda c: float(c)*1000, gunCrimes)
+violentCrimes = map(lambda c: float(c)*100, crimes)
+firearmCrimes = map(lambda c: float(c)*100, gunCrimes)
 
 plt.subplot(122)
 
@@ -83,7 +83,7 @@ plt.plot(
 )
 plt.plot(
 	[0, length-1],
-	[cmpData["violentCrimes"]]*2,
+	[cmpData["violentCrimes"]/10]*2,
 	'b-',
 	label="Violent crime rate in the US"
 )
@@ -95,7 +95,7 @@ plt.plot(
 )
 plt.plot(
 	[0, length-1],
-	[cmpData["firearmCrimes"]]*2,
+	[cmpData["firearmCrimes"]/10]*2,
 	'c-',
 	label="Firearm crime rate in the US"
 )
@@ -107,7 +107,7 @@ plt.plot(
 )
 plt.xlabel("Day")
 plt.legend()
-plt.axis([0, length, 0, 10])
+plt.axis([0, length, 0, 100])
 
 fail = 0.0
 for i in range(0, length):

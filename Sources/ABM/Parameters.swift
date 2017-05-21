@@ -6,14 +6,14 @@
 import Foundation
 import Util
 
-let POP_SIZE = 50 // Size of the population; Number of parameter sets per generation
+let POP_SIZE = 20 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 30 // Number of rounds to do natural selection for
+let ROUNDS = 10 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
-let DAYS = 365 // Number of days to simulate
-let POP = 10000 // Number of agents to simulate
+let DAYS = 30 // Number of days to simulate
+let POP = 100000 // Number of agents to simulate
 
 let RAND_POP_SIZE = 5000
 
@@ -178,6 +178,8 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 		if val < Double.infinity {
 			best.append(pars)
 			print("Found one:\n\(pars)\n")
+		} else {
+			print("*")
 		}
 	}
 
