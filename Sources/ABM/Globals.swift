@@ -22,6 +22,6 @@ public let attributeBound: (Double, Double) = (-10, 10)
 
 let CHECK_HYPOTHESIS_1 = false
 let HYPOTHESIS_1_PENALTY = 2.0
-let CHECK_HYPOTHESIS_2 = false
+let CHECK_HYPOTHESIS_2 = true
 
 // statistics

@@ -67,7 +67,7 @@ plt.plot(
 	map(lambda n: n*30, range(0, length/30)),
 	gunCrimes,
 	'b:',
-	label="Crime rate involving firearms per 100")
+	label="Crime rate involving firearms per million")
 '''plt.plot(
 	range(0, length),
 	gunPossession,
