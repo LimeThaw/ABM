@@ -6,9 +6,9 @@
 import Foundation
 import Util
 
-let POP_SIZE = 20 // Size of the population; Number of parameter sets per generation
+let POP_SIZE = 40 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 2 // Number of rounds to do natural selection for
+let ROUNDS = 20 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
@@ -163,15 +163,15 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
             maxDecExt = rand.nextProb()*3
             incGun = rand.nextProb()*3
         }
-		let pars = Parameters( (1,3), (0,1), (0,1), (0,1),
-			/*(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
+		let pars = Parameters(
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance*/
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
 			rand.nextProb(), // base gain
 			rand.nextProb(), // base cost
-			/*rand.next(max: 10), // Average edges per agent
-			rand.nextProb()*10, // Initial weight of edges*/ 5,9,
+			rand.next(max: 10), // Average edges per agent
+			rand.nextProb()*10, // Initial weight of edges
 			rand.nextProb(), // Edge weight decay rate
 			maxDecExt, // maxDecExt
 			incGun // incGun
@@ -199,22 +199,28 @@ func randomParameters() {
 
 	for _ in 1...RAND_POP_SIZE {
 
-		// Generate random parameter set
-		let lower = attributeBound.0
-		let range = attributeBound.1 - attributeBound.0
-		let pars = Parameters(
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
-			rand.nextProb()*2, // base gain
-			rand.nextProb()*2, // base cost
-			rand.next(max: 10), // Average edges per agent
-			rand.nextProb()*10, // Initial weight of edges
-			rand.nextProb(), // Edge weight decay rate
-			rand.nextProb()*3, // maxDecExt
-			rand.nextProb()*3 // incGun
-		)
+        // Generate random parameter set
+        let lower = attributeBound.0
+        let range = attributeBound.1 - attributeBound.0
+        var maxDecExt: Double = 0
+        var incGun: Double = 0
+        while incGun >= maxDecExt {
+            maxDecExt = rand.nextProb()*3
+            incGun = rand.nextProb()*3
+        }
+        let pars = Parameters(
+            (rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
+            (rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
+            (rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
+            (rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
+            rand.nextProb(), // base gain
+            rand.nextProb(), // base cost
+            rand.next(max: 10), // Average edges per agent
+            rand.nextProb()*10, // Initial weight of edges
+            rand.nextProb(), // Edge weight decay rate
+            maxDecExt, // maxDecExt
+            incGun // incGun
+        )
 
 		// Test it in simulation
 		let val = runSimulation(pars, days: DAYS, population: POP, write: false)
