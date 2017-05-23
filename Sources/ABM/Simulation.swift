@@ -66,7 +66,7 @@ func deviation(of rec: Record, last: Record) -> Double {
 	return ret
 }
 
-func storeGraph(to file: URL) {
+func storeGraph(to file: URL = URL(fileURLWithPath: "graph.txt")) {
     var header = ""
     header += "\(rand.current)\n"
     header += "\(graph.nodes.rand.current)\n"
@@ -100,11 +100,16 @@ func storeGraph(to file: URL) {
 
     let content = header + agentContent + edgeContent
     try! content.write(to: file, atomically: false, encoding: .utf8)
+    print("Graph data written")
 }
 
-func loadGraph(from file: URL, withSeed s: Bool = true) throws -> Graph<Agent> {
+func getGraphData(from file: URL = URL(fileURLWithPath: "graph.txt")) throws -> [String] {
     let content = try String(contentsOf: file, encoding: .utf8)
-    let array = content.characters.split(separator: "\n").map(String.init)
+    return content.characters.split(separator: "\n").map(String.init)
+}
+
+func loadGraph(from file: URL = URL(fileURLWithPath: "graph.txt"), withSeed s: Bool = true, data: [String]? = nil) throws -> Graph<Agent> {
+    let array = data == nil ? try getGraphData(from: file) : data!
 
     var i = 0
 
@@ -168,7 +173,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 
 		// Kill agent if too old
 		if rand.nextProb() < deathProb(age: agent.age) {
-			//print("death")
+			//print("death for age: \(agent.age)")
 			changes.append({
 				graph.removeNode(node: node)
 			})
@@ -268,10 +273,15 @@ func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
     }
 }
 
+func newKids(pop: Int) -> Int {
+    let newGuys = Double(pop) * BIRTH_RATE
+    return Int(newGuys) + ((rand.nextProb() < newGuys - floor(newGuys)) ? 1 : 0)
+}
+
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
 @discardableResult
-func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100, write: Bool = true, g: Graph<Agent>? = nil) -> Double {
+func runSimulation(ageDist: [(Int, Bool)], _ pars: Parameters, days: Int = 365, write: Bool = true, g: Graph<Agent>? = nil) -> Double {
 
 	// Apply parameters for crime generator
 	CrimeGenerator.baseGain = pars.4
@@ -286,7 +296,6 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
     if g == nil {
 		// Reset environment variables
 		rand = Random(RAND_SEED)
-		tmpc = Counter(0)
 
         // Insert nodes from input
         graph = Graph<Agent>(seed: RAND_SEED)
@@ -319,13 +328,17 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
         //print("\(graph.nodes.count) Agents are entering the matrix...")
 
         // generate social network
-        for _ in 0..<n {
-            let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
-            newAgent.randomize(pars)
-            _ = graph.addNode(withValue: newAgent)
+        
+        for person in ageDist {
+            if person.1 {
+                let newAgent = Agent(counter.next()!, age: person.0)
+                newAgent.randomize(pars)
+                _ = graph.addNode(withValue: newAgent)
+                //print("Age: \(Double(person.0)/365.0)")
+            }
         }
 
-        for _ in 0...pars.6/2*n {
+        for _ in 0...pars.6/2*graph.nodes.count {
             let fst = graph.getRandomNode()!
             let snd = graph.getRandomNode()!
             graph.addEdge(from: fst, to: snd, weight: rand.nextNormal(mu: 1.0))
@@ -367,13 +380,10 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		changes = [()->Void]()
 
 		// Birth new children!
-		var newGuys = Double(graph.nodes.count) * BIRTH_RATE
-		while newGuys >= 1 {
+        var realNewGuys = newKids(pop: graph.nodes.count)
+		while realNewGuys > 0 {
 			addBaby(to: graph, with: pars)
-			newGuys -= 1.0
-		}
-		if rand.next(prob: newGuys) {
-			addBaby(to: graph, with: pars)
+			realNewGuys -= 1
 		}
 
 		record.0 = cnt
@@ -384,8 +394,10 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		record.5 = record.5 / Double(cnt) * 100.0
 		crimeCounts += [record]
 	    //print(record)
-		/*print(".", terminator:"")
-		fflush(stdout)*/
+        let emojiRand = rand.nextProb()
+        let emoji = emojiRand < 0.2 ? "🕶" : emojiRand < 0.4 ? "🦋" : emojiRand < 0.6 ? "💰" : emojiRand < 0.8 ? "🤠" : "🥊"
+		//print(emoji, terminator:"  ")
+		fflush(stdout)
 	    totalTime += toc()
 	}
 
@@ -410,14 +422,14 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	avgBadness += ((gunCrimes/Double(days) - 0.28051726)^^2)
 	badness += (avgBadness^^5)
 
-	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
-    storeGraph(to: URL(fileURLWithPath: "graph.txt"))
+	//print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
 
 	//print(crime_counts)
 
 	if write {
 		try? NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)
 		print(" Violent crimes committed: \(crimeCnt)")
+        storeGraph(to: URL(fileURLWithPath: "graph.txt"))
 	}
 
 	return badness

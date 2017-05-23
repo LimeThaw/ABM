@@ -6,16 +6,18 @@
 import Foundation
 import Util
 
-let POP_SIZE = 40 // Size of the population; Number of parameter sets per generation
+let POP_SIZE = 20 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 20 // Number of rounds to do natural selection for
+let ROUNDS = 10 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
-let DAYS = 30 // Number of days to simulate
+let DAYS = 10 // Number of days to simulate
 let POP = 100_000 // Number of agents to simulate
 
 let RAND_POP_SIZE = 5000
+
+var graphData = [String]()
 
 // The parameters describing rand.nextProb() normal distribution
 //                        mu,    sigma
@@ -79,9 +81,10 @@ func mate(mom: Parameters, dad: Parameters) -> Parameters {
 	)
 }
 
-func findParameters() {
+func findParameters(ageDist: [(Int, Bool)]) {
 	rand = Random()
 	var best = [(Double, Parameters)]()
+    graphData = try! getGraphData()
 
 	var population = [Parameters]()
 	/*let lower = attributeBound.0
@@ -97,7 +100,7 @@ func findParameters() {
 			rand.next(max: 10)
 		))
 	}*/
-	population = randomSearch(sets: POP_SIZE, days: DAYS, pop: POP)
+	population = randomSearch(sets: POP_SIZE, days: DAYS, ageDist: ageDist)
 
 	var results = [(Double, Parameters)]()
 	var first = true
@@ -113,7 +116,7 @@ func findParameters() {
 				continue
 			}
 
-			let val = runSimulation(pars, days: DAYS, population: POP, write: false)
+            let val = runSimulation(ageDist: ageDist, pars, days: DAYS, write: false)
 			let out = val == Double.infinity ? "☠️" : "👍"
 			print(out, terminator: " ")
 			results.append((val, pars))
@@ -147,7 +150,7 @@ func findParameters() {
 	try? NSString(string: String(describing: best)).write(toFile: "population.txt", atomically: false, encoding: 2)
 }
 
-func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Parameters] {
+func randomSearch(sets: Int = 100, days: Int = 100, ageDist: [(Int, Bool)]) -> [Parameters] {
 
 	// Our best guesses
 	var best = [Parameters]()
@@ -178,7 +181,7 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 		)
 
 		// Test it in simulation
-		let val = runSimulation(pars, days: days, population: pop, write: false)
+        let val = runSimulation(ageDist: ageDist, pars, days: days, write: false)
 
 		//if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0) {
 		if val < Double.infinity {
@@ -193,7 +196,7 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 	return best
 }
 
-func randomParameters() {
+func randomParameters(ageDist: [(Int, Bool)]) {
 
 	var best = [(Double, Parameters)]()
 
@@ -223,7 +226,7 @@ func randomParameters() {
         )
 
 		// Test it in simulation
-		let val = runSimulation(pars, days: DAYS, population: POP, write: false)
+		let val = runSimulation(ageDist: ageDist, pars, days: DAYS, write: false)
 
 		var out = ""
 		if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0){
@@ -239,4 +242,66 @@ func randomParameters() {
 	}
 
 	try? NSString(string: String(describing: best)).write(toFile: "population_rand.txt", atomically: false, encoding: 2)
+}
+
+func localMin(pars: Parameters, precision: Int = 10, ageDist: [(Int, Bool)]) {
+    let days = 30
+    let startSteps: [Double] = [2, 1, /*0.1, 0.01, 0.1, 0.01, 0.1, 0.01,*/ 0.5, 0.5, 2, 1, 1, 0.5, 0.5]
+    let constraints: [(Double) -> Bool] = [
+        { $0 <= 10 && $0 >= -10 },
+        { $0 <= 10 && $0 >= -10 },
+        /*{ $0 <= 10 && $0 >= -10 },
+        { $0 <= 10 && $0 >= -10 },
+        { $0 <= 10 && $0 >= -10 },
+        { $0 <= 10 && $0 >= -10 },
+        { $0 <= 10 && $0 >= -10 },
+        { $0 <= 10 && $0 >= -10 },*/
+        { $0 <= 1 && $0 >= 0 },
+        { $0 <= 1 && $0 >= 0 },
+        { $0 <= 20 && $0 >= 0 },
+        { $0 <= 10 && $0 >= 0 },
+        { $0 <= 1 && $0 >= 0 },
+        { $0 <= 3 && $0 >= 0 },
+        { $0 <= 3 && $0 >= 0 },
+    ]
+    
+    var editingPars: [Double] = [pars.moral.0, pars.moral.1, /*pars.p.0, pars.p.1, pars.a.0, pars.a.1, pars.d.0, pars.d.1,*/ pars.baseGain, pars.baseCost, Double(pars.edges), pars.edgeWeight, pars.weightDec, pars.maxDecExt, pars.incGun]
+    var minFound = false
+    var err = runSimulation(ageDist: ageDist, pars, days: days, write: false)
+    while !minFound {
+        for i in 0..<editingPars.count {
+            print()
+            print("Parameter number: \(i)")
+            if i == 0 {
+                minFound = true
+            }
+            var stepSize = startSteps[i]
+            let minStepSize:Double = stepSize/2^^precision
+            var improved = false
+
+            while abs(stepSize) > minStepSize {
+                if !constraints[i](editingPars[i] + stepSize) {
+                    stepSize /= -2.0
+                } else {
+                    editingPars[i] += stepSize
+                    let prevErr = err
+                    //err = runSimulation(((editingPars[0],editingPars[1]),(editingPars[2],editingPars[3]),(editingPars[4],editingPars[5]),(editingPars[6],editingPars[7]),editingPars[8],editingPars[9],Int(editingPars[10]),editingPars[11],editingPars[12],editingPars[13],editingPars[14]), days: days, population: pop, write: false)
+                    err = runSimulation(ageDist: ageDist, ((editingPars[0],editingPars[1]),pars.p, pars.a, pars.d, editingPars[2],editingPars[3],Int(editingPars[4]),editingPars[5],editingPars[6],editingPars[7],editingPars[8]), days: days, write: false)
+                    if err > prevErr {
+                        //print("Failed: \(editingPars[i]) for error: \(err)")
+                        // reset to previous state
+                        editingPars[i] -= stepSize
+                        err = prevErr
+                        stepSize /= -2.0
+                    } else {
+                        print("Found better one: \(editingPars[i]) for error: \(err)")
+                        improved = true
+                        stepSize *= 1.5
+                    }
+                }
+            }
+            minFound = minFound && !improved
+        }
+        print("Current parameters: \(editingPars)")
+    }
 }

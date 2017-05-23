@@ -97,17 +97,28 @@ func getAge(with variable: Double) -> Int {
 	return rand.next(max: (age.2 - age.1) * 365) + age.1 * 365
 }
 
+private var dProb = [Double](repeating: -1.0, count: 120)
+
 func deathProb(age: Int) -> Double {
 	// Gives the probability that a person of given age dies today
 	// Actually prob. that a RV ~N(79, 10) takes value age
 	// Data from http://data.worldbank.org/indicator/SP.DYN.LE00.IN?end=2015&locations=US&start=1960&view=chart
-
-	// 1/sqrt(2 PI sig^2)
-	let coeff = 0.039894228040143267793994605993438186847585863116493465766
-	// 2*sig^2
-	let twoS2 = 200.0
-
-	var exponent = Double(age)/365.0-79.0
-	exponent *= exponent
-	return coeff * exp(-Double(exponent)/twoS2)
+    
+    let ageY = age/365
+    if ageY > 120 {
+        return 1
+    }
+    if dProb[ageY] == -1.0 {
+        // 2*sig^2
+        let twoS2: Double = 2*sigmaDeath
+        
+        var exponent = Double(ageY)-79.0
+        exponent *= exponent
+        let ret = coeffNormDeath * exp(-1.0/2.0*(Double(exponent)/twoS2)^^2)
+        dProb[ageY] = ret
+        assert(0 <= ret && ret <= 1, "Death probability must be between 0 and 1, is: \(ret)")
+        return ret
+    } else {
+        return dProb[ageY]
+    }
 }

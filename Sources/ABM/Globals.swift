@@ -6,6 +6,7 @@
 //
 //
 import Util
+import Foundation
 
 var counter = Counter()
 var rand = Random(13579)
@@ -24,4 +25,7 @@ let CHECK_HYPOTHESIS_1 = false
 let HYPOTHESIS_1_PENALTY = 2.0
 let CHECK_HYPOTHESIS_2 = false
 
-// statistics
+// Agent
+
+let sigmaDeath: Double = 10
+let coeffNormDeath: Double = 1/(sqrt(2*Double.pi)*sigmaDeath)
