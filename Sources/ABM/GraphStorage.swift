@@ -1,7 +1,7 @@
 import Foundation
 import Util
 
-func storeGraph(_ graph: Graph<Agent>, to file: URL, random rand: Random, counter: Counter) {
+func storeGraph(_ graph: Graph<Agent>, to file: URL) {
     var header = ""
     header += "\(rand.current)\n"
     header += "\(graph.nodes.rand.current)\n"

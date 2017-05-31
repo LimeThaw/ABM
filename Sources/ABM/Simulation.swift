@@ -10,7 +10,6 @@ let BIRTH_RATE = 0.000033973
 let RAND_SEED = 13579
 
 var graph = Graph<Agent>(seed: rand.current)
-var tmpc = Counter(0)
 
 // Records interesting values for one day
 typealias Record = (
@@ -51,14 +50,14 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
     if g == nil {
 		// Reset environment variables
 		rand = Random(RAND_SEED)
-		tmpc = Counter(0)
+		counter = Counter(0)
 
         // Insert nodes from input
         graph = Graph<Agent>(seed: RAND_SEED)
 
         // generate social network
         for _ in 0..<n {
-            let newAgent = Agent(tmpc.next()!, age: getAge(with: rand.nextProb() * 100.0))
+            let newAgent = Agent(counter.next()!, age: getAge(with: rand.nextProb() * 100.0))
             newAgent.randomize(pars)
             _ = graph.addNode(withValue: newAgent)
         }
@@ -161,7 +160,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 
 	// How good is our performance?
 	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
-    storeGraph(graph, to: URL(fileURLWithPath: "graph.txt"), random: rand, counter: tmpc)
+    storeGraph(graph, to: URL(fileURLWithPath: "graph.txt"))
 
 	// Write the simulation result to file "out.txt"
 	if write {

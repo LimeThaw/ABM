@@ -10,7 +10,7 @@ func deviation(of rec: Record, last: Record) -> Double {
 
 func addBaby(to graph: Graph<Agent>, with pars: Parameters) {
     //print("birth")
-    let newAgent = Agent(tmpc.next()!, age: 0)
+    let newAgent = Agent(counter.next()!, age: 0)
     newAgent.randomize(pars)
     let newNode = graph.addNode(withValue: newAgent)
     for _ in 1...3 {
