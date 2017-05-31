@@ -111,3 +111,29 @@ func deathProb(age: Int) -> Double {
 	exponent *= exponent
 	return coeff * exp(-Double(exponent)/twoS2)
 }
+
+extension Graph where T: Agent {
+    func addEdge(from fst: GraphNode<T>, to snd: GraphNode<T>, weight: Double) {
+        assert(nodes.has(staticHash: fst.hashValue) && nodes.has(staticHash: snd.hashValue))
+        add_edge(from: fst, to: snd, weight: weight)
+        let con = Agent.conVal(from: weight)
+        fst.value.connectedness += con
+        snd.value.connectedness += con
+    }
+
+    func removeEdge(from fst: GraphNode<T>, to snd: GraphNode<T>) {
+        assert(fst.edges[snd.hashValue] != nil && snd.edges[fst.hashValue] != nil)
+        let edge = remove_edge(from: fst, to: snd)! // assume edge is in graph
+        let con = Agent.conVal(from: edge.weight)
+        fst.value.connectedness -= con
+        snd.value.connectedness -= con
+        assert(fst.edges[snd.hashValue] == nil && snd.edges[fst.hashValue] == nil)
+    }
+
+    func removeNode(node: GraphNode<T>) {
+        for edge in node.edges.values {
+            removeEdge(from: node, to: edge.next)
+        }
+        nodes.remove(node)
+    }
+}
