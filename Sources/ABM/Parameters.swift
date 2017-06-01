@@ -171,8 +171,8 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 	while best.count < sets {
 
 		// Generate random parameter set
-		let lower = attributeBound.0
-		let range = attributeBound.1 - attributeBound.0
+		/*let lower = attributeBound.0
+		let range = attributeBound.1 - attributeBound.0 */
         var maxDecExt: Double = 0
         var incGun: Double = 0
         while incGun >= maxDecExt {
@@ -183,11 +183,14 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 			/*(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance*/
+			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
+			*/
 			rand.nextProb(), // base gain
 			rand.nextProb(), // base cost
 			/*rand.next(max: 10), // Average edges per agent
-			rand.nextProb()*10, // Initial weight of edges*/ 5,9,
+			rand.nextProb()*10, // Initial weight of edges
+			*/
+			5,9,
 			rand.nextProb(), // Edge weight decay rate
 			maxDecExt, // maxDecExt
 			incGun // incGun

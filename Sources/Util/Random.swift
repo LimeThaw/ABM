@@ -70,6 +70,9 @@ public struct Random{
         return ret
 	}
 
+	// Creates and returns a new Random object. The state variables of the new instance and this
+	// one are chosen s.t. they generate different sequences, and instances obtained by subsequent
+	// duplications from the same instance will be different as well.
 	public mutating func duplicate() -> Random {
 		current += 2
 		return Random(current-1)

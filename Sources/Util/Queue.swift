@@ -51,7 +51,7 @@ public struct Queue<T> {
         }
         count += 1
     }
-	
+
     public mutating func remove() -> T? {
         if isEmpty {
             return nil

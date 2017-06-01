@@ -108,7 +108,6 @@ public func fitToRange(_ val: Double, range: (Double, Double)) -> Double {
 
 // Function for memoization
 
-
 /// Turns a pure function without parameters into a memoizing function where the memoized value can be modified
 public func memoizeIO<T>(_ fun: @escaping () -> T) -> ((inout T) -> ()) -> T {
     var cache: T? = nil
@@ -132,6 +131,7 @@ public func memoize<T>(_ fun: @escaping () -> T) -> () -> T {
     }
 }
 
+// An array extension that allows to split the array into disjoint subarrays of the given length
 extension Array {
     public func chunks(_ chunkSize: Int) -> [[Element]] {
         return stride(from: 0, to: self.count, by: chunkSize).map {
@@ -140,12 +140,16 @@ extension Array {
     }
 }
 
+// Clamps a value between a lower and an upper bound. If the value is not in the desired range it
+// is mapped to the nearest value that is.
 @inline(__always)
 public func clamp<T: Comparable>(_ value: T, from low: T, to high: T) -> T {
 	assert(low <= high)
 	return value < low ? low : value > high ? high : value
 }
 
+// Reads a file pointed to by the path and returns the contents as a string.
+// This method is not very safe, and will crash the program if there is any problem.
 public func read(_ path: String) -> String {
 	let fileHandle = fopen(path, "r")
     fseek(fileHandle, 0, SEEK_END)
