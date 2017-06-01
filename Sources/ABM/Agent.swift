@@ -98,16 +98,40 @@ func getAge(with variable: Double) -> Int {
 }
 
 func deathProb(age: Int) -> Double {
-	// Gives the probability that a person of given age dies today
-	// Actually prob. that a RV ~N(79, 10) takes value age
-	// Data from http://data.worldbank.org/indicator/SP.DYN.LE00.IN?end=2015&locations=US&start=1960&view=chart
 
-	// 1/sqrt(2 PI sig^2)
-	let coeff = 0.039894228040143267793994605993438186847585863116493465766
-	// 2*sig^2
-	let twoS2 = 200.0
+	// Convert age from days to years
+	let yearAge = Double(age)/365.0
 
-	var exponent = Double(age)/365.0-79.0
-	exponent *= exponent
-	return coeff * exp(-Double(exponent)/twoS2)
+	// Agents should not be older than 100 years
+	if yearAge >= 100.0 {
+		return 1.0
+	}
+
+	// Values from https://www.cdc.gov/nchs/data/dvs/mortfinal2007_worktable23r.pdf
+	// Tuples contain probability of death and minimum and maximum age of age group
+	let ages = [
+		(28.6, 0, 5),
+		(15.3, 5, 15),
+		(79.9, 15, 25),
+		(104.9, 25, 35),
+		(184.4, 35, 45),
+		(420.9, 45, 55),
+		(877.7, 55, 65),
+		(2011.3, 65, 75),
+		(5011.6, 75, 85),
+		(12964.5, 85, 100),
+	]
+
+	// The age group index
+	var index = 0
+	for tmpAge in ages {
+		if tmpAge.2 > Int(yearAge) {
+			break
+		} else {
+			index += 1
+		}
+	}
+
+	// Convert from per 100_000 and year to per agent and day
+	return ages[index].0 / 100_000.0 / 365.0
 }
