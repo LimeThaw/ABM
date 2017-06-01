@@ -2,28 +2,22 @@ import Foundation
 import Util
 
 class Agent : Hashable {
-	let ID: Int
-	let hashValue: Int
 
-    var emotion: Emotion
-
-    var moral: Double = 0
-	var age: Int = 0
-
-	var criminalHistory = false // TODO: Does this need to be distributed at start?
-
-	/*var wealth: Float = 301000
-	var daily_income: Float = 145.896067416 // Average values US obtained through google
-	var daily_cost: Float = 115.936986301*/
+	let hashValue: Int // The unique ID of the agent
+    var emotion: Emotion // The emotional state / temperament
+    var moral: Double = 0 // The agent's moral value
+	var age: Int = 0 // How old is our agent?
+	// TODO: Does this need to be distributed at start?
+	var criminalHistory = false // Has the agent ever committed a violent crime?
+	// TODO: Do we want to keep this? Maybe useful output?
 	var connectedness: Double = 0
-	var ownsGun: Bool = false
+	var ownsGun: Bool = false // Does the agent own a gun?
 
     /// A value that indicates whether this agent was already visited in a graph traversal
     var visited = false
 
 	init(_ id: Int, age: Int) {
-		ID = id
-		hashValue = ID
+		hashValue = id
         emotion = Emotion()
 		self.age = age
 	}
@@ -36,24 +30,19 @@ class Agent : Hashable {
 		emotion.arousal = rand.nextNormal(mu: Double((pars.2).0), sig: Double((pars.2).1), range: attributeBound)
 		emotion.dominance = rand.nextNormal(mu: Double((pars.3).0), sig: Double((pars.3).1), range: attributeBound)
 
-		if rand.next(prob: 0.3225) { // Person owns a firearm
+		if rand.next(prob: 0.3225) { // Does this guy get a gun?
 			ownsGun = true
 		} else {
 			ownsGun = false
 		}
 	}
-/*
-	func updateConnectedness(node: GraphNode<Agent>) {
-		connectedness = 0
-		for edge in node.edges {
-			connectedness += pow(edge.value.weight, 2)
-		}
-	}*/
 
+	// Returns the considered connectedness value for an edge with the given weight
     public static func conVal(from weight: Double) -> Double{
         return weight^^2
     }
 
+	// Ensures that all attributes of the agents are within the imposed bounds
 	func checkAttributes() {
 		emotion.pleasure = clamp(emotion.pleasure, from: attributeBound.0, to: attributeBound.1)
 		emotion.arousal = clamp(emotion.arousal, from: attributeBound.0, to: attributeBound.1)
@@ -61,13 +50,15 @@ class Agent : Hashable {
 		moral = clamp(moral, from: attributeBound.0, to: attributeBound.1)
 	}
 
+	// Compares Agent objects by comparing their hashValues
 	static func ==(_ first: Agent, _ second: Agent) -> Bool {
-		return first.ID == second.ID
+		return first.hashValue == second.hashValue
 	}
 }
 
 // Takes a Double between 0 and 100 as percentile, determines an age group and generates a random
 // age in days within that group
+// FIXME: Do we still need this?
 func getAge(with variable: Double) -> Int {
 	assert(0 <= variable && variable <= 100, "Please give a uniformly random float value in [0;100]")
 
@@ -97,6 +88,7 @@ func getAge(with variable: Double) -> Int {
 	return rand.next(max: (age.2 - age.1) * 365) + age.1 * 365
 }
 
+// TODO: Can we get a better method?
 func deathProb(age: Int) -> Double {
 
 	// Convert age from days to years
@@ -134,4 +126,32 @@ func deathProb(age: Int) -> Double {
 
 	// Convert from per 100_000 and year to per agent and day
 	return ages[index].0 / 100_000.0 / 365.0
+}
+
+// Add some useful functions to a graph if its nodes are agents
+// Primarily takes care of connectedness automatically, saving computation time
+extension Graph where T: Agent {
+    func addEdge(from fst: GraphNode<T>, to snd: GraphNode<T>, weight: Double) {
+        assert(nodes.has(staticHash: fst.hashValue) && nodes.has(staticHash: snd.hashValue))
+        add_edge(from: fst, to: snd, weight: weight)
+        let con = Agent.conVal(from: weight)
+        fst.value.connectedness += con
+        snd.value.connectedness += con
+    }
+
+    func removeEdge(from fst: GraphNode<T>, to snd: GraphNode<T>) {
+        assert(fst.edges[snd.hashValue] != nil && snd.edges[fst.hashValue] != nil)
+        let edge = remove_edge(from: fst, to: snd)! // assume edge is in graph
+        let con = Agent.conVal(from: edge.weight)
+        fst.value.connectedness -= con
+        snd.value.connectedness -= con
+        assert(fst.edges[snd.hashValue] == nil && snd.edges[fst.hashValue] == nil)
+    }
+
+    func removeNode(node: GraphNode<T>) {
+        for edge in node.edges.values {
+            removeEdge(from: node, to: edge.next)
+        }
+        nodes.remove(node)
+    }
 }

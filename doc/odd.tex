@@ -1,0 +1,273 @@
+% How to compile:
+
+% pdflatex odd
+% bibtex odd
+% pdflatex odd
+% pdflatex odd
+
+\documentclass{article}
+\usepackage{listings}
+\usepackage{url}
+\title{ODD description of our Agent Based Model}
+\author{Tierry H\"ormann \and Timo Laudi}
+
+\begin{document}
+
+	\maketitle
+
+	\section{Purpose}
+		The purpose of the model is to model human behavior in regard to criminal activity involving
+		firearms and to help identify ways in which we can reduce the number of incidences of such
+		activity.
+		We hypothesize that increasing the penalties for violent crimes involving firearms and the
+		restriction of firearm acquisition and possession would lower the rate of violent crimes
+		involving guns.
+
+	\section{Entities, state variables, and scales} \label{entities}
+		The entities in our simulation are people. They are characterized by the following attributes:
+
+		\begin{itemize}
+			\item Moral:\\
+				This parameter models the moral and social values held by the agent.
+			\item Enthusiasm:\\
+				The higher the enthusiasm the more likely the agent is to commit a crime and the
+				more risk he is going to take.
+			\item Gun possession:\\
+				Indicates if the agent owns a gun. This is considered in the agents' decision
+				making and crucial for testing our hypothesis.
+			\item Age:\\
+				The older a person is, the less likely they are to change their general opinion.
+				We model this by limiting the change in attributes like moral for agents depending
+				on their age.
+			\item Happiness:\\
+				The main optimization parameter of the agent - He will try to maximize it (via
+				crimes). May be modeled  with other, more subtle emotions in a later stage.
+			\item Wealth:\\
+				An agent with little wealth is more inclined to commit a crime that helps him
+				increase this attribute.
+		\end{itemize}
+
+		Crime motivating attributes are Happiness (and/or other emotions) and Wealth. These are
+		considered by the agent for its decisions. The attributes
+		moral, enthusiasm, happiness and wealth are perturbed randomly on a small scale to
+		approximate daily events that take small effect on the attributes, but would exceed the
+		complexity of the simulation.
+		The connectedness of the agent within the graph is also important for the simulation.
+		However, since it can be computed from the graph we do not consider it as an inherent
+		attribute of the agent.
+		\par
+		The agents are simulated within a social network with undirected, weighted edges.
+		The edges represent acquaintances and the weights how well the agents know each other,
+		or how close they are.
+		All agents together are supposed to approximate a small town or similar social group or
+		structure. Each simulation epoch corresponds to a single day, and the whole simulation
+		runs for 10 years.
+		\\\par
+		TODO: Explain the constraints and interactions.
+
+	\section{Process overview and scheduling}
+		Time is modeled in discrete steps of one day. For each day, every agent (that is alive)
+		updates its attributes based on the state of the simulation at the end of the last day.
+		It then decides whether to commit a crime, and if so, what kind of crime to commit. based
+		on that decision it then goes on to execute the crime.
+		\par
+		The updates for each day are divided into three stages: First, crimes are chosen and
+		executed by the agents. Second the social network is updated: People disappear or are
+		introduced to the network and connectedness and edge values are updated. In the last
+		stage, agent attribute updates unrelated to the execution of crimes are performed.
+
+		\begin{lstlisting}[caption=The daily global update routine, label=l_global_update]
+	fun updateWorld() {
+
+	  for agent in network {
+		decision := agent.chooseCrime()
+		if decision /= NO_CRIME {
+		  agent.executeCrime(decision)
+		}
+	  }
+
+		network.updateNodes()
+
+		for agent in network {
+			agent.updateAttributes()
+		}
+
+	}
+		\end{lstlisting}
+
+	\section{Design principles}
+		\subsection{Basic Principles}
+			As a basis for our model we selected three theories with rather different
+			approaches to explaining and modeling behavior. The combination of different
+			views gives a more complete picture of behavioral influences than one theory by
+			itself. The theories and their influence on the model are explained in short below.
+			\begin{itemize}
+				\item Rational choice theory:\\
+					Rational choice theory attempts to explain human behavior by
+					arguing that the choices of a person are always such that they improve the
+					state or assets of the individual.\cite{rationalchoice} The idea comes from
+					the concept of a \textit{homo economicus} in economics. Although this concept
+					by itself is no longer considered complete, we argue that it is useful for our
+					model given the right prediction and evaluation functions for possible choices.
+					Also we try to compensate its weaknesses with the application of other
+					theories.
+					\par TODO: Elaborate...
+
+				\item Social learning theory:\\
+					This theory's approach to behavior modeling is different from rational choice
+					theory in that it expects that the individual is primary driven by external
+					forces, i.e. its social environment, instead of internal ones, i.e. its
+					tendency to aim for the maximum personal gain. \cite{sociallearning} gives
+					a good overview and explanation of the concept. The articles mentions four
+					important aspects in the social learning theory:\par
+					\textbf{Differential reinforcement} introduces the concept of context and its
+					influence on agent behavior. We can support that in our model by having
+					agents consider the moral values of their neighbors in their decisions, and
+					varying edge weights accordingly upon the execution of a crime.\par
+					\textbf{Vicarious learning} adds the notion of an agent observing its neighbors and
+					learning from their actions. We model this aspect through the propagation
+					of moral values within the social network.\par
+					\textbf{Cognitive processes} are not used in our model. The environmental
+					variables are used as they are in the decision and learning processes, as they
+					already represent abstract concepts.\par
+					\textbf{Reciprocal determinism} introduces the infamous chicken-egg-problem.
+					It considers that an action may result in conditioning that promotes the
+					original action, thus effectively creating a reinforcement feedback loop.
+					Our model does not consider this aspect of the theory.
+
+				\item Social control theory:\\
+					In \cite{socialcontrol}, Hirschi describes the connection between deviant
+					or abnormal behavior and lack of attachment to others within one's social
+					environment. We incorporate this notion into our model with the weights of
+					the edges, and the computed attribute of connectedness, which is defined
+					as the sum of squares of all weights on edges to or from an agent. We use
+					the sum of squares to account for the importance of very close relationships
+					like family ties.
+			\end{itemize}
+			\par
+			TODO: How do moral values spread?
+
+		\subsection{Emergence}
+			The most important output of the simulation is the rate of violent crimes involving
+			firearms. Thus it is naturally meant to be emergent. The gun possession rate and
+			wealth is part
+			of the simulation input, and chosen in accordance with statistics. Since gun
+			possession is never changed and wealth only changed randomly, none of them are
+			emergent.
+			The age parameter changes in natural, linear fashion independent of the state of the
+			simulation, so it is not emergent either.
+			\par
+			Other parameters imposed based on statistics will be migration patterns (people
+			moving) and birth and death
+			rates. Moral, enthusiasm and happiness are normalized to a "normal" value, since
+			we don't have a good metric or statistic for them.
+
+		\subsection{Adaptation}
+			Primarily the moral ideas of individuals vary depending on their neighbors in the
+			social graph. The idea is to mimic the emergence of social values and principle
+			within real societies. Since the weight of the edges determines how close two adjacent
+			agents are, an agent's moral is influenced more by neighbors with a higher valued
+			edge in between.
+			Also the execution of a crime has an effect on the attributes
+			of all participating agents.
+			\\\par
+			TODO: Add specific rules, maybe additional adapting attributes, add algo for
+				moral propagation
+			\par
+			TODO: How are the crimes selected, how do they influence attributes?
+
+		\subsection{Objectives}
+			As mentioned in section \ref{entities}, we define a specific subset of the attributes as crime
+			motivating attributes (CMA). These are attributes that the agents want to optimize. As
+			a measure of the goodness of a state we compute a weighted sum of the values of these
+			attributes. When deciding if it wants to commit a crime, an agent predicts the effect
+			of its options on its CMA, computes the resulting sum and compares it to its current
+			CMA sum and that of the other options. Based on that comparison it decides to do
+			nothing or to commit a crime.
+			\\\par TODO: Give specific formula for weighted sum
+
+		\subsection{Learning}
+			We currently do not have an explicit learning algorithm. However,
+			some attributes of the agents (especially moral) are altered after a crime is executed,
+			according to the result. Since some attributes (like moral) are CMAs, this can be
+			regarded as an indirect and implicit learning algorithm.
+			We plan to implement an explicit learning algorithm for our agents, maybe using a
+			neural network approach.
+			\\\par
+			TODO: Find learning algorithm, record crimes (neural network?)
+
+		\subsection{Prediction}
+			-> See code - Predict outcome based on CMA values
+
+		\subsection{Sensing}
+			The agents do not perceive any state of the physical world, since it is not part of our
+			model. They do, however, perceive the moral values of their neighbors in the social
+			graph. The graph structure is primarily imposed as starting condition, but can change
+			in the course of the simulation. The edges of the graph are weighted, and the weight
+			indicates the intimacy of the connection between two agents. The higher this value is,
+			the more are the agents influenced by each other's moral values. The idea is that
+			people have more trust towards people they know well, and that interactions are usually
+			more frequent between close friends or family members.
+
+		\subsection{Interaction}
+			The moral values of the agents are influenced by those of their neighbors. Apart from
+			that Agents interact when someone commits a crime, including the neighbors of the victim.
+			\par
+			TODO: Describe these interactions in more detail.
+
+		\subsection{Stochasticity} \label{stoch}
+			We assume that the selection of a victim occurs randomly within the graph.
+			The entity attributes are also chosen from random distributions according to
+			statistical data or, where such is not available, from adequate distributions
+			around a chosen "normal" value. During the simulation, the projected and actual
+			outcome of crimes is varied randomly to account for the complexity of human thought
+			and decision processes and unpredictable events during crime execution. The random
+			numbers are generated using linear congruence. Where a normal distribution is used
+			we calculated the random number from two uniformly random numbers using the
+			Box-M\"uller transform \cite{boxmuller}.
+
+		\subsection{Collectives}
+			No collectives like families, social circles, gangs etc. are explicitly modeled,
+			although they might emerge during simulation.
+
+		\subsection{Observation}
+			The main output data of the simulation is the rate of criminal activity. We divide
+			those incidents into categories. The data is the output to a file in the form of a
+			list of tuples, where each list entry carries the data for a single day, and the
+			values in the tuples represent the different categories. For better visualization and
+			analyzation they are then rendered into figures and processed into tables using a
+			separate program.
+			\par
+			Following are the main categories we divide our crimes in:
+			\begin{itemize}
+				\item Murders and manslaughter
+				\item Violent assault
+				\item Robbery, burglary, theft etc.
+			\end{itemize}
+			We also check for each instance if a firearm has been involved, and divide them
+			accordingly.
+
+	\section{Initialization}
+		For the initialization we took a social network from the Stanford Large Network Dataset
+		Collection \cite{snapnets} and added our agents with randomly assigned attributes (see
+		section \ref{stoch}) to the nodes. The benefit of this is that we have a realistic
+		social network for our simulation.
+
+	\section{Input data}
+		Our network changes during simulation. Nodes are added or deleted to account for
+		people moving to or away from our simulated town and people dying or being born. To keep
+		these changes realistic we collected statistical data for these events and made our model
+		behave accordingly.
+		\\\par
+		TODO: Find the data, cite it and describe the algorithm for adding/deleting
+
+	\section{Submodels}
+		TODO: Describe in detail the concepts from 'Process overview and scheduling' - add
+		Pseudocode and literature references. -> See code
+
+	\medskip
+
+	\bibliographystyle{apalike}
+	\bibliography{references}{}
+
+\end{document}

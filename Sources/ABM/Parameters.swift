@@ -8,12 +8,12 @@ import Util
 
 let POP_SIZE = 20 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 10 // Number of rounds to do natural selection for
+let ROUNDS = 2 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
 let DAYS = 30 // Number of days to simulate
-let POP = 100000 // Number of agents to simulate
+let POP = 100_000 // Number of agents to simulate
 
 let RAND_POP_SIZE = 5000
 
@@ -36,17 +36,19 @@ typealias Parameters = (
     incGun: Double			// the (percentual) increase of the success probability when using a gun aka incGun
 )
 
+// Combine two normal distributions to create a new one
 func mate(mom: Distribution, dad: Distribution) -> Distribution {
 	var child = (0.0, 0.0)
 	repeat {
 		child.0 = (rand.next(prob: 0.5) ? mom.0 : dad.0) + (rand.next(prob: MUTATION_RATE) ? rand.nextNormal(sig: uncertainty) : 0.0)
-	} while child.0 < attributeBound.0 || child.0 > attributeBound.1 // Make sure erwartungswert is inside bounds
+	} while child.0 < attributeBound.0 || child.0 > attributeBound.1 // Make sure Erwartungswert is inside bounds
 	repeat {
 		child.1 = (rand.next(prob: 0.5) ? mom.1 : dad.1) + (rand.next(prob: MUTATION_RATE) ? rand.nextNormal(sig: uncertainty) : 0.0)
 	} while child.1 < 0 || child.1 > (attributeBound.1 - attributeBound.0)
 	return child
 }
 
+// Combine two Doubles to create a new one
 func mate(mom: Double, dad: Double, max: Double = Double.infinity) -> Double {
 	var ret = 0.0
 	repeat {
@@ -55,6 +57,7 @@ func mate(mom: Double, dad: Double, max: Double = Double.infinity) -> Double {
 	return ret
 }
 
+// Combine two integers to create a new one
 func mate(mom: Int, dad: Int, max: Int = Int.max) -> Int {
 	var ret = 0
 	repeat {
@@ -63,6 +66,9 @@ func mate(mom: Int, dad: Int, max: Int = Int.max) -> Int {
 	return ret
 }
 
+// Combine two normal distributions to create a new one
+// Each parameter of the child can get the value of its mom or dad, and my be perturbed randomly
+// The chance of perturbation is MUTATION_RATE, the maximum magnitude is uncertainty
 func mate(mom: Parameters, dad: Parameters) -> Parameters {
 	return Parameters(
 		mate(mom: mom.0, dad: dad.0),
@@ -83,55 +89,61 @@ func findParameters() {
 	rand = Random()
 	var best = [(Double, Parameters)]()
 
+	// Initialize population for GA
 	var population = [Parameters]()
-	/*let lower = attributeBound.0
-	let range = attributeBound.1 - attributeBound.0
-	for _ in 1...POP_SIZE {
-		population.append((
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
-			rand.nextProb()*2, // base gain
-			rand.nextProb()*2, // base cost
-			rand.next(max: 10)
-		))
-	}*/
+
+	// Filter useless candidates from first generation with a random search
 	population = randomSearch(sets: POP_SIZE, days: DAYS, pop: POP)
 
+	// Array to remember the badness value of each parameter set
 	var results = [(Double, Parameters)]()
+
+	// Remember if this is the first generation - otherwise we already have values for some sets
 	var first = true
 
+	// Let's simulate ALL THE ROUNDS!s
 	for _ in 1...ROUNDS {
+
 		var i = 0
 		for pars in population {
-			if !first && i < POP_SIZE/(MATES_PER_ROUND+1) {
-				let out = results[i].0 == Double.infinity ? "☠️" : "👍"
+			if !first && i < POP_SIZE/(MATES_PER_ROUND+1) { // Test if we already have a value for this
+				let out = results[i].0 == Double.infinity ? "☠️" : "👍" // Output emojis :D
 				print(out, terminator: " ")
 				fflush(stdout)
 				i += 1
 				continue
 			}
 
+			// We need to simulate these
 			let val = runSimulation(pars, days: DAYS, population: POP, write: false)
+
 			let out = val == Double.infinity ? "☠️" : "👍"
 			print(out, terminator: " ")
-			results.append((val, pars))
 			fflush(stdout)
+
+			// Append results if not in yet
+			results.append((val, pars))
 		}
+
 		print("\n")
+
+		// Sort the results by badness ascending to get the best parameter sets
 		results.sort { $0.0 < $1.0 }
 		results = Array(results.prefix(POP_SIZE/(MATES_PER_ROUND+1)))
+
+		// Check to see if we have a new best candidate and if so remember it
 		if (best.count == 0 && results[0].0 < Double.infinity) || (best.count > 0 && results[0].0 < best[best.count-1].0) {
 			best.append(results[0])
 			print("New best:\n\(results[0].1)\n\t-> \(results[0].0)\n")
 		}
+
+		// Delete all but the best sets
 		population = [Parameters]()
 		for r in results {
-			//print("\(r.1)\n\t->\(r.0)\n")
 			population.append(r.1)
 		}
 
+		// Mate the best sets
 		var newPopulation = [Parameters]()
 		for p in population {
 			for _ in 1...MATES_PER_ROUND {
@@ -139,11 +151,15 @@ func findParameters() {
 				newPopulation.append(mate(mom: p, dad: op))
 			}
 		}
+		// And append the offspring to the population
 		population += newPopulation
 
+		// Reduce uncertainty, but not below 0.1
 		uncertainty = clamp(uncertainty*0.9, from: 0.1, to: Double.infinity)
 		first = false
 	}
+
+	// Write best parameter sets to file population.txt
 	try? NSString(string: String(describing: best)).write(toFile: "population.txt", atomically: false, encoding: 2)
 }
 
@@ -155,20 +171,29 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 	while best.count < sets {
 
 		// Generate random parameter set
-		let lower = attributeBound.0
-		let range = attributeBound.1 - attributeBound.0
-		let pars = Parameters(
-			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
+		/*let lower = attributeBound.0
+		let range = attributeBound.1 - attributeBound.0 */
+        var maxDecExt: Double = 0
+        var incGun: Double = 0
+        while incGun >= maxDecExt {
+            maxDecExt = rand.nextProb()*3
+            incGun = rand.nextProb()*3
+        }
+		let pars = Parameters( (1,3), (0,1), (0,1), (0,1),
+			/*(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // moral
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // pleasure
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // arousal
 			(rand.nextProb()*range+lower, rand.nextProb()*range/2.0), // dominance
-			rand.nextProb()*2, // base gain
-			rand.nextProb()*2, // base cost
-			rand.next(max: 10), // Average edges per agent
+			*/
+			rand.nextProb(), // base gain
+			rand.nextProb(), // base cost
+			/*rand.next(max: 10), // Average edges per agent
 			rand.nextProb()*10, // Initial weight of edges
+			*/
+			5,9,
 			rand.nextProb(), // Edge weight decay rate
-			rand.nextProb()*3, // maxDecExt
-			rand.nextProb()*3 // incGun
+			maxDecExt, // maxDecExt
+			incGun // incGun
 		)
 
 		// Test it in simulation
@@ -179,7 +204,7 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 			best.append(pars)
 			print("Found one:\n\(pars)\n")
 		} else {
-			print("*")
+			print("☠️")
 		}
 	}
 
