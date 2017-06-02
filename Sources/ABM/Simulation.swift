@@ -56,11 +56,13 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
         graph = Graph<Agent>(seed: RAND_SEED)
 
         // generate social network
-        for _ in 0..<n {
-            let newAgent = Agent(counter.next()!, age: getAge(with: rand.nextProb() * 100.0))
+		let ageDist = getAgeDist(n)
+		for age in ageDist {
+            let newAgent = Agent(counter.next()!, age: age)
             newAgent.randomize(pars)
             _ = graph.addNode(withValue: newAgent)
-        }
+
+		}
 
         for _ in 0...pars.6/2*n {
             let fst = graph.getRandomNode()!
@@ -111,13 +113,10 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		changes = [()->Void]()
 
 		// Birth new children!
-		var newGuys = Double(graph.nodes.count) * BIRTH_RATE
-		while newGuys >= 1 {
+		var newGuys = newKids(pop: graph.nodes.count)
+		while newGuys > 0 {
 			addBaby(to: graph, with: pars)
-			newGuys -= 1.0
-		}
-		if rand.next(prob: newGuys) {
-			addBaby(to: graph, with: pars)
+			newGuys -= 1
 		}
 
 		// Perform some post-calculations and normalizations on the output

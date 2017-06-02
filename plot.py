@@ -3,7 +3,7 @@ import re # Used for splitting the raw simulation output
 import json # Used for loading the empirical comparison data
 
 # The grouping interval over which data is averaged for smoother output
-AVG_INTERVAL = 120
+AVG_INTERVAL = 30
 
 # Read the simulation output data
 infile = open("out.txt", "r")
@@ -23,6 +23,7 @@ gunPossession = []
 
 # Populate arrays with output data
 values = map(lambda x: x.split(", "), values[2:-2].split("), ("))
+values = map(lambda x: map(lambda y: y.split(" ")[1], x), values)
 for val in values:
 	popCount.append(val[0])
 	happiness.append(val[1])

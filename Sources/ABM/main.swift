@@ -39,7 +39,7 @@ let pars = Parameters(
 let pars2 = Parameters(moral: (-3.4295638963206927, 6.3888950966009954), p: (-5.6098904054036316, 5.8606846269289647), a: (6.0934994385304329, 7.6242846741732935), d: (-6.5410456074003802, 8.8625741667062989), baseGain: 0.29035714584718736, baseCost: 0.85636631095002558, edges: 7, edgeWeight: 9.2212398061835952, weightDec: 0.39244423907634579, maxDecExt: 1.8944286203958021, incGun: 1.3210408044778112)
 
 //try! runSimulation(pars2, days: 365*10, g: loadGraph(from: URL(fileURLWithPath: "graph.txt")))
-runSimulation(pars2, days: 365*10, population: 10_000)
+runSimulation(pars2, days: 365*5, population: 10_000)
 /*
  check for pleasure change
 for i in Int(attributeBound.0)...Int(attributeBound.1) {
