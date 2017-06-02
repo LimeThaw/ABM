@@ -33,7 +33,7 @@ func +=(left: inout Record, right: Record) {
 // Runs the simulation with the given parameters for the given number of days and returns the
 // deviation from empirical data
 @discardableResult
-func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100, write: Bool = true, g: Graph<Agent>? = nil) -> Double {
+func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100, write: Bool = true, g: Graph<Agent>? = nil, ages: [Int]? = nil) -> Double {
 
 	// Apply parameters for crime generator
 	CrimeGenerator.baseGain = pars.4
@@ -54,7 +54,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
         graph = Graph<Agent>(seed: RAND_SEED)
 
         // generate social network
-		let ageDist = getAgeDist(n)
+		let ageDist = ages == nil ? getAgeDist(n) : ages!
 		for age in ageDist {
             let newAgent = Agent(counter.next()!, age: age)
             newAgent.randomize(pars)
@@ -133,26 +133,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	}
 
 	// Calculate the goodness/badness value as sum of differences squared
-	// TODO: Redo badness calculation - this is just a mess!
-	var last = crimeCounts[0]
-	var popChange = 0.0, crimes = 0.0, gunCrimes = 0.0, crimeCnt = 0.0
-	for rec in crimeCounts {
-		badness += deviation(of: rec, last: last)
-		popChange += abs(Double(rec.0-last.0) / Double(rec.0) * 100000.0)
-		crimes += abs((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)
-		crimeCnt += rec.2
-		gunCrimes += abs(rec.3 / Double(rec.0) * 100000.0 - 0.28051726)
-		last = rec
-	}
-	badness = badness/Double(crimeCounts.count)
-	if crimeCnt == 0.0 {
-		badness = Double.infinity
-	}
-	var avgBadness = 0.0
-	avgBadness += ((popChange/Double(days) - 2.14794520548)^^2)
-	avgBadness += ((crimes/Double(days) - 1.020821918)^^2)
-	avgBadness += ((gunCrimes/Double(days) - 0.28051726)^^2)
-	badness += (avgBadness^^5)
+	badness = deviation(of: crimeCounts)
 
 	// How good is our performance?
 	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
@@ -161,7 +142,6 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	// Write the simulation result to file "out.txt"
 	if write {
 		try? NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)
-		print(" Violent crimes committed: \(crimeCnt)")
 	}
 
 	// Return badness value for ranking of parameter sets

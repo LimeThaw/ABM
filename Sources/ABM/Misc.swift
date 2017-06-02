@@ -1,11 +1,36 @@
 import Foundation
 import Util
 
-func deviation(of rec: Record, last: Record) -> Double {
-	var ret = ((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
-	ret += (((rec.3 / Double(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
-	ret += ((Double(rec.0-last.0) / Double(rec.0) * 100000.0 - 214.794520548)^^2) // Population change
-	return ret
+func deviation(of recs: [Record]) -> Double {
+	var last = recs[0] // Used for population change calculation
+	var badness = 0.0 // How much does this run deviate from our "gold standard"?
+	var popChange = 0.0, crimes = 0.0, gunCrimes = 0.0, crimeCnt = 0.0 // Accumulation variables
+																	   // for average comparison
+	for rec in recs {
+		badness += ((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)^^2 // Violent crime rate
+		badness += (((rec.3 / Double(rec.0)) * 100000.0 - 0.28051726)^^2) // Firearm crime rate
+		badness += ((Double(rec.0-last.0) / Double(rec.0) * 100000.0 - 214.794520548)^^2) // Population change
+
+		// Accumulate for average value comparison
+		popChange += abs(Double(rec.0-last.0) / Double(rec.0) * 100000.0)
+		crimes += abs((rec.2 / Double(rec.0)) * 100000.0 - 1.020821918)
+		crimeCnt += rec.2
+		gunCrimes += abs(rec.3 / Double(rec.0) * 100000.0 - 0.28051726)
+
+		last = rec
+	}
+
+	if crimeCnt == 0.0 {
+		return Double.infinity // If there are no crimes, then this is boring!
+	}
+
+	badness = badness / Double(recs.count) // Average square deviation
+
+	badness += ((popChange/Double(recs.count) - 2.14794520548)^^2)
+	badness += ((crimes/Double(recs.count) - 1.020821918)^^2) // Add square deviation for our averages
+	badness += ((gunCrimes/Double(recs.count) - 0.28051726)^^2)
+
+	return badness
 }
 
 // Generates a new agent with age 0 for the given parameters and adds it to the given graph
