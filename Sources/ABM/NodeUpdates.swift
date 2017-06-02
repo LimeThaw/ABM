@@ -5,7 +5,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 		-> ([() -> Void], Record) {
 
 	var changes = [() -> Void]()
-	var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
+	var record = Record(0, 0.0, 0.0, 0.0, 0.0)
 
 	for node in nodeList {
 
@@ -16,7 +16,7 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 
 		// Check if agent owns a gun
 		if agent.ownsGun {
-			record.5 += 1.0
+			record.4 += 1.0
 		}
 
 		// Kill agent if too old
@@ -41,7 +41,6 @@ func updateNodes(_ nodeList: [GraphNode<Agent>], within graph: Graph<Agent>, gen
 	            } while vicNode.value == agent
 	            changes.append {generator.executeCrime(on: vicNode, with: decision.0, gun: decision.1)}
 	        }
-			record.4 += Double(agent.connectedness)
 
 			// Now get your friends and have a party
 			var peers = [GraphNode<Agent>]() // Your m8s

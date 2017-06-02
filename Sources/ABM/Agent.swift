@@ -9,8 +9,6 @@ class Agent : Hashable {
 	var age: Int = 0 // How old is our agent?
 	// TODO: Does this need to be distributed at start?
 	var criminalHistory = false // Has the agent ever committed a violent crime?
-	// TODO: Do we want to keep this? Maybe useful output?
-	var connectedness: Double = 0
 	var ownsGun: Bool = false // Does the agent own a gun?
 
     /// A value that indicates whether this agent was already visited in a graph traversal
@@ -36,11 +34,6 @@ class Agent : Hashable {
 			ownsGun = false
 		}
 	}
-
-	// Returns the considered connectedness value for an edge with the given weight
-    public static func conVal(from weight: Double) -> Double{
-        return weight^^2
-    }
 
 	// Ensures that all attributes of the agents are within the imposed bounds
 	func checkAttributes() {
@@ -129,22 +122,15 @@ func deathProb(age: Int) -> Double {
 }
 
 // Add some useful functions to a graph if its nodes are agents
-// Primarily takes care of connectedness automatically, saving computation time
 extension Graph where T: Agent {
     func addEdge(from fst: GraphNode<T>, to snd: GraphNode<T>, weight: Double) {
         assert(nodes.has(staticHash: fst.hashValue) && nodes.has(staticHash: snd.hashValue))
         add_edge(from: fst, to: snd, weight: weight)
-        let con = Agent.conVal(from: weight)
-        fst.value.connectedness += con
-        snd.value.connectedness += con
     }
 
     func removeEdge(from fst: GraphNode<T>, to snd: GraphNode<T>) {
         assert(fst.edges[snd.hashValue] != nil && snd.edges[fst.hashValue] != nil)
-        let edge = remove_edge(from: fst, to: snd)! // assume edge is in graph
-        let con = Agent.conVal(from: edge.weight)
-        fst.value.connectedness -= con
-        snd.value.connectedness -= con
+        _ = remove_edge(from: fst, to: snd)! // assume edge is in graph
         assert(fst.edges[snd.hashValue] == nil && snd.edges[fst.hashValue] == nil)
     }
 

@@ -29,8 +29,7 @@ for val in values:
 	happiness.append(val[1])
 	crimes.append(val[2])
 	gunCrimes.append(val[3])
-	avgConnectedness.append(val[4])
-	gunPossession.append(val[5])
+	gunPossession.append(val[4])
 
 # The length or the data arrays
 length = len(popCount)
@@ -73,11 +72,6 @@ plt.plot(
 	happiness,
 	'y-',
 	label="Average happiness level")
-plt.plot(
-	range(0, length),
-	avgConnectedness,
-	'y:',
-	label="Average Connectedness value")
 plt.plot(
 	map(lambda n: n*AVG_INTERVAL, range(0, length/AVG_INTERVAL)),
 	crimes,

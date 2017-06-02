@@ -13,7 +13,6 @@ func storeGraph(_ graph: Graph<Agent>, to file: URL) {
         agentContent += "Agent:\n"
         agentContent += "\(agent.hashValue)\n"
         agentContent += "\(agent.age)\n"
-        agentContent += "\(agent.connectedness)\n"
         agentContent += "\(agent.criminalHistory)\n"
         agentContent += "\(agent.emotion.pleasure)\n"
         agentContent += "\(agent.emotion.arousal)\n"
@@ -56,7 +55,6 @@ func loadGraph(from file: URL, withSeed s: Bool = true) throws -> Graph<Agent> {
     while i < array.count {
         if array[i] == "Agent:" {
             let a = Agent(Int(array[i+1])!, age: Int(array[i+2])!)
-            a.connectedness = Double(array[i+3])!
             a.criminalHistory = Bool(array[i+4])!
             a.emotion = Emotion(Double(array[i+5])!, Double(array[i+6])!, Double(array[i+7])!)
             a.moral = Double(array[i+8])!

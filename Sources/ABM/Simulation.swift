@@ -17,7 +17,6 @@ typealias Record = (
 	happiness:		Double,		// happiness
 	crimeRate:		Double,		// Crime rate
 	gunCrimeRate:	Double,		// Gun crime rate
-	avgConnectedness: Double,		// Average connectedness
 	gunPossession:	Double		// Gun possession rate
 )
 
@@ -29,7 +28,6 @@ func +=(left: inout Record, right: Record) {
 	left.2 += right.2
 	left.3 += right.3
 	left.4 += right.4
-	left.5 += right.5
 }
 
 // Runs the simulation with the given parameters for the given number of days and returns the
@@ -86,7 +84,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	    tic()
 
 		// Initializing record values
-		var record = Record(0, 0.0, 0.0, 0.0, 0.0, 0.0)
+		var record = Record(0, 0.0, 0.0, 0.0, 0.0)
 		let cnt = graph.nodes.count
 		let hap = graph.nodes.values.map({$0.value.emotion.pleasure}).reduce(0.0, +)/Double(graph.nodes.count + 1)
 
@@ -124,8 +122,7 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		record.1 = Double(hap + 50.0)
 		record.2 = record.2 * 100.0 / Double(cnt)
 		record.3 = record.3 * 100.0 / Double(cnt)
-		record.4 = record.4 / Double(cnt)
-		record.5 = record.5 / Double(cnt) * 100.0
+		record.4 = record.4 / Double(cnt) * 100.0
 		crimeCounts += [record] // Add to overall result
 
 		// Print a pretty dot so we know we make progress
