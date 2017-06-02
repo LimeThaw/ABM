@@ -8,12 +8,12 @@ import Util
 
 let POP_SIZE = 20 // Size of the population; Number of parameter sets per generation
 let MATES_PER_ROUND = 4 // Number of new sets per old set - POP_SIZE/(MATES_PER_ROUND+1) sets will survive each round
-let ROUNDS = 2 // Number of rounds to do natural selection for
+let ROUNDS = 20 // Number of rounds to do natural selection for
 let MUTATION_RATE = 0.3 // Probability that any given parameter is perturbed randomly
 var uncertainty: Double = 0.5 // Maximum perturbation magnitude
 
 let DAYS = 30 // Number of days to simulate
-let POP = 100_000 // Number of agents to simulate
+let POP = 10_000 // Number of agents to simulate
 
 let RAND_POP_SIZE = 5000
 
@@ -89,11 +89,14 @@ func findParameters() {
 	rand = Random()
 	var best = [(Double, Parameters)]()
 
+	// Generate our age distribution
+	let ageDist = getAgeDist(POP)
+
 	// Initialize population for GA
 	var population = [Parameters]()
 
 	// Filter useless candidates from first generation with a random search
-	population = randomSearch(sets: POP_SIZE, days: DAYS, pop: POP)
+	population = randomSearch(sets: POP_SIZE, days: DAYS, pop: POP, ages: ageDist)
 
 	// Array to remember the badness value of each parameter set
 	var results = [(Double, Parameters)]()
@@ -115,7 +118,7 @@ func findParameters() {
 			}
 
 			// We need to simulate these
-			let val = runSimulation(pars, days: DAYS, population: POP, write: false)
+			let val = runSimulation(pars, days: DAYS, population: POP, write: false, ages: ageDist)
 
 			let out = val == Double.infinity ? "☠️" : "👍"
 			print(out, terminator: " ")
@@ -163,7 +166,7 @@ func findParameters() {
 	try? NSString(string: String(describing: best)).write(toFile: "population.txt", atomically: false, encoding: 2)
 }
 
-func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Parameters] {
+func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100, ages: [Int]? = nil) -> [Parameters] {
 
 	// Our best guesses
 	var best = [Parameters]()
@@ -197,7 +200,7 @@ func randomSearch(sets: Int = 100, days: Int = 100, pop: Int = 100) -> [Paramete
 		)
 
 		// Test it in simulation
-		let val = runSimulation(pars, days: days, population: pop, write: false)
+		let val = 1.0//runSimulation(pars, days: days, population: pop, write: false, ages: ages)
 
 		//if (best.count == 0 && val < Double.infinity) || (best.count > 0 && val < best[best.count-1].0) {
 		if val < Double.infinity {

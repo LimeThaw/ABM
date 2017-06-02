@@ -54,7 +54,12 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
         graph = Graph<Agent>(seed: RAND_SEED)
 
         // generate social network
-		let ageDist = ages == nil ? getAgeDist(n) : ages!
+		var ageDist = [Int]()
+		if ages == nil {
+			ageDist = getAgeDist(n)
+		} else {
+			ageDist = ages!
+		}
 		for age in ageDist {
             let newAgent = Agent(counter.next()!, age: age)
             newAgent.randomize(pars)
@@ -125,9 +130,11 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 		record.4 = record.4 / Double(cnt) * 100.0
 		crimeCounts += [record] // Add to overall result
 
-		// Print a pretty dot so we know we make progress
-		print(".", terminator:"")
-		fflush(stdout)
+		if write {
+			// Print a pretty dot so we know we make progress
+			print(".", terminator:"")
+			fflush(stdout)
+		}
 
 	    totalTime += toc()
 	}
@@ -135,12 +142,15 @@ func runSimulation(_ pars: Parameters, days: Int = 365, population n: Int = 100,
 	// Calculate the goodness/badness value as sum of differences squared
 	badness = deviation(of: crimeCounts)
 
-	// How good is our performance?
-	print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
-    storeGraph(graph, to: URL(fileURLWithPath: "graph.txt"))
-
 	// Write the simulation result to file "out.txt"
 	if write {
+		// How good is our performance?
+		print("Average time for one day: \(Double(totalTime)/1000000000/Double(days))s")
+
+		// Store the current simulation state
+	    storeGraph(graph, to: URL(fileURLWithPath: "graph.txt"))
+
+		// Store the results
 		try? NSString(string: String(describing: crimeCounts)).write(toFile: "out.txt", atomically: false, encoding: 2)
 	}
 
